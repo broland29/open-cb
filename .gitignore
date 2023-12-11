@@ -1,0 +1,24 @@
+# --- ignore hidden files/ directories except gitignore --- #
+.*
+!/.gitignore
+
+# --- documentation --- #
+doc
+
+# --- image processing module --- #
+ip/Images
+ip/OpenCV
+ip/x64
+*.vcxproj
+*.user
+
+# --- validation and response module --- #
+var/Debug
+var/packages
+var/test/Debug
+var/test/x64
+*.config
+var/x64
+*.sln
+*.filters
+
