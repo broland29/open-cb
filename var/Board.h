@@ -33,7 +33,7 @@ struct Metadata
     Color turn = Color::WHITE;
     int moveCount = 1;
 
-    int enPassantCol;  // -1 if en passant not possible, 0-7 if en passant possible on given column
+    int enPassantCol = -1;  // -1 if en passant not possible, 0-7 if en passant possible on given column
     Castle castle;
 
     void changeTurn()

@@ -31,10 +31,11 @@ namespace
 #define IS_BLACK_QUEEN(enc)     enc == BQ
 #define IS_BLACK_KING(enc)      enc == BK
 
-#define IS_WHITE(enc)   IS_WHITE_PAWN(enc) || IS_WHITE_BISHOP(enc) || IS_WHITE_KNIGHT(enc) || IS_WHITE_ROOK(enc) || IS_WHITE_QUEEN(enc) || IS_WHITE_KING(enc)
-#define IS_BLACK(enc)   IS_BLACK_PAWN(enc) || IS_BLACK_BISHOP(enc) || IS_BLACK_KNIGHT(enc) || IS_BLACK_ROOK(enc) || IS_BLACK_QUEEN(enc) || IS_BLACK_KING(enc)
+#define IS_WHITE(enc)                       IS_WHITE_PAWN(enc) || IS_WHITE_BISHOP(enc) || IS_WHITE_KNIGHT(enc) || IS_WHITE_ROOK(enc) || IS_WHITE_QUEEN(enc) || IS_WHITE_KING(enc)
+#define IS_BLACK(enc)                       IS_BLACK_PAWN(enc) || IS_BLACK_BISHOP(enc) || IS_BLACK_KNIGHT(enc) || IS_BLACK_ROOK(enc) || IS_BLACK_QUEEN(enc) || IS_BLACK_KING(enc)
+#define IS_ATTACKABLE(currEnc, destEnc)     IS_FREE(destEnc) || ((IS_WHITE(currEnc)) && (IS_BLACK(destEnc)) || (IS_BLACK(currEnc)) && (IS_WHITE(destEnc)))
+#define IS_NOT_FREE(enc)                    enc != FR  // better use this, since paranthesis error-prone in "if(!(IS_FREE(board[row][col])))"
 
-#define IS_NOT_FREE(enc)        enc != FR  // better use this, since paranthesis error-prone in "if(!(IS_FREE(board[row][col])))"
 
 void _cellInternalToAlgebraic(
     int row,

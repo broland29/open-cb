@@ -32,7 +32,7 @@ bool _isBlackMove(char prevBoard[8][8], std::vector<Change> changes, Metadata me
     }
 
     // --- move check --- //
-    if (!canPieceAttackCell(prevBoard, a.row, a.col, b.row, b.col, metadata))
+    if (!canPieceAttackCell(prevBoard, a.row, a.col, b.row, b.col, metadata.enPassantCol))
     {
         return false;
     }
@@ -120,7 +120,7 @@ bool _isWhiteMove(char prevBoard[8][8], std::vector<Change> changes, Metadata me
     }
 
     // --- move check --- //
-    if (!canPieceAttackCell(prevBoard, a.row, a.col, b.row, b.col, metadata))
+    if (!canPieceAttackCell(prevBoard, a.row, a.col, b.row, b.col, metadata.enPassantCol))
     {
         return false;
     }
@@ -209,7 +209,7 @@ bool _isBlackCapture(char prevBoard[8][8], std::vector<Change> changes, Metadata
     }
 
     // --- move check --- //
-    if (!canPieceAttackCell(prevBoard, a.row, a.col, b.row, b.col, metadata))
+    if (!canPieceAttackCell(prevBoard, a.row, a.col, b.row, b.col, metadata.enPassantCol))
     {
         return false;
     }
@@ -289,7 +289,7 @@ bool _isWhiteCapture(char prevBoard[8][8], std::vector<Change> changes, Metadata
     }
 
     // --- move check --- //
-    if (!canPieceAttackCell(prevBoard, a.row, a.col, b.row, b.col, metadata))
+    if (!canPieceAttackCell(prevBoard, a.row, a.col, b.row, b.col, metadata.enPassantCol))
     {
         return false;
     }
@@ -373,7 +373,7 @@ bool _isBlackEnPassant(char prevBoard[8][8], std::vector<Change> changes, Metada
     }
 
     // --- move check --- //
-    if (!canPieceAttackCell(prevBoard, a.row, a.col, b.row, b.col, metadata))
+    if (!canPieceAttackCell(prevBoard, a.row, a.col, b.row, b.col, metadata.enPassantCol))
     {
         return false;
     }
@@ -425,7 +425,7 @@ bool _isWhiteEnPassant(char prevBoard[8][8], std::vector<Change> changes, Metada
     }
 
     // --- move check --- //
-    if (!canPieceAttackCell(prevBoard, a.row, a.col, b.row, b.col, metadata))
+    if (!canPieceAttackCell(prevBoard, a.row, a.col, b.row, b.col, metadata.enPassantCol))
     {
         return false;
     }
@@ -634,6 +634,8 @@ void processMove(char prevBoard[][8], char currBoard[][8], Metadata metadata, ch
         return;
     }
 
+    /*              TODO
+
     // cannot put ourselves in check / cannot leave ourselves in check
     if (isKingInCheck(currBoard, metadata.turn, metadata))
     {
@@ -656,6 +658,7 @@ void processMove(char prevBoard[][8], char currBoard[][8], Metadata metadata, ch
     bool isOppositeKingInCheck = (metadata.turn == Color::WHITE)
         ? isKingInCheck(currBoard, Color::BLACK, metadata)
         : isKingInCheck(currBoard, Color::WHITE, metadata);
+        
 
     if (changes.size() == 2)
     {
@@ -715,7 +718,7 @@ void processMove(char prevBoard[][8], char currBoard[][8], Metadata metadata, ch
         strcpy(message, E_ILLEGAL_MOVE);
         return;
     }
-
+    */
     strcpy(message, E_ILLEGAL_MOVE);
     return;
 }

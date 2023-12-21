@@ -2,6 +2,14 @@
 
 #include "Board.h"
 
+enum class KingSituation
+{
+    FREE,
+    CHECK,
+    CHECKMATE,
+    STALEMATE
+};
+
 /* Functions in Attack.cpp check if piece can go from one cell to another
  * considering their moving logic and current board metadata. It does not
  * take into consideration any other information. Logic about other
@@ -29,6 +37,10 @@ int _checkPath(
     int dCol
 );
 
+/* CanXYZAttckCell - checks if piece of type XYZ can move from
+*  board[currRow][currCol] to board[destRow][destCol]. It only evaluates
+*  based on the board setup and on metadata.
+*/
 
 // Checks path considering pawn movement
 bool _canPawnAttackCell(
@@ -59,6 +71,7 @@ bool _canKnightAttackCell(
 );
 
 
+// Does not handle castling!
 bool _canRookAttackCell(
     char board[8][8],
     int currRow,
@@ -92,8 +105,9 @@ bool canPieceAttackCell(
     int currCol,
     int destRow,
     int destCol,
-    Metadata metadata
+    int enPassantCol
 );
+
 
 
 bool isCellInCheck(
@@ -104,14 +118,7 @@ bool isCellInCheck(
 );
 
 
-bool isKingInCheck(
-    char board[8][8],
-    Color kingColor,
-    Metadata metadata
-);
-
-
-bool isKingInCheckmate(
+KingSituation getKingSituation(
     char board[8][8],
     Color kingColor,
     Metadata metadata

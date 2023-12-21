@@ -2,9 +2,9 @@
 #include <assert.h>
 
 #include "Attack.h"
+#include <vector>
 
 
-// since board is 8x8, can be hardcoded both for row and column
 bool _isInside(int coord)
 {
     return coord >= 0 && coord < 8;
@@ -40,194 +40,212 @@ int _checkPath(char board[8][8], int currRow, int currCol, int destRow, int dest
 }
 
 
-
 bool _canPawnAttackCell(char board[8][8], int currRow, int currCol, int destRow, int destCol, int enPassantCol)
 {
     assert(IS_WHITE_PAWN(board[currRow][currCol]) || IS_BLACK_PAWN(board[currRow][currCol]));
+    assert(_isInside(currRow) && _isInside(currCol) && _isInside(destRow) && _isInside(destCol));
+    assert(enPassantCol >= -1 && enPassantCol <= 7);
 
     if (IS_WHITE_PAWN(board[currRow][currCol]))
     {
         if (destRow == currRow - 1)
         {
-            // simple white move
+            // simple move
             if (destCol == currCol && IS_FREE(board[destRow][destCol]))
             {
                 return true;
             }
-            // diagonal move
-            if (destCol == currCol - 1 || destCol == currCol + 1)
-            {
-                // en passant
-                if (currRow == 3 && enPassantCol == destCol)
-                {
-                    return true;
-                }
 
-                // simple capture
-                if (IS_BLACK(board[destRow][destCol]))
-                {
-                    return true;
-                }
+            // en passant left
+            if (destCol == currCol - 1 && IS_BLACK_PAWN(board[currRow][currCol - 1]) && currRow == 3 && enPassantCol == destCol && IS_FREE(board[destRow][destCol]))
+            {
+                return true;
+            }
+
+            // en passant right
+            if (destCol == currCol + 1 && IS_BLACK_PAWN(board[currRow][currCol + 1]) && currRow == 3 && enPassantCol == destCol && IS_FREE(board[destRow][destCol]))
+            {
+                return true;
+            }
+
+            // simple capture
+            if ((destCol == currCol - 1 || destCol == currCol + 1) && IS_BLACK(board[destRow][destCol]))
+            {
+                return true;
             }
         }
-
-        return false;
     }
-    else
+    else if (IS_BLACK_PAWN(board[currRow][currCol]))
     {
         if (destRow == currRow + 1)
         {
-            // simple black move
+            // simple move
             if (destCol == currCol && IS_FREE(board[destRow][destCol]))
             {
                 return true;
             }
-            // diagonal move
-            if (destCol == currCol - 1 || destCol == currCol + 1)
-            {
-                // en passant
-                if (currRow == 4 && enPassantCol == destCol)
-                {
-                    return true;
-                }
 
-                // simple capture
-                if (IS_WHITE(board[destRow][destCol]))
-                {
-                    return true;
-                }
+            // en passant left
+            if (destCol == currCol - 1 && IS_WHITE_PAWN(board[currRow][currCol - 1]) && currRow == 4 && enPassantCol == destCol)
+            {
+                return true;
+            }
+
+            // en passant right
+            if (destCol == currCol + 1 && IS_WHITE_PAWN(board[currRow][currCol + 1]) && currRow == 4 && enPassantCol == destCol)
+            {
+                return true;
+            }
+
+            // simple capture
+            if ((destCol == currCol - 1 || destCol == currCol + 1) && IS_WHITE(board[destRow][destCol]))
+            {
+                return true;
             }
         }
-
-        return false;
     }
+    return false;
 }
 
-// Checks path considering bishop movement
+
 bool _canBishopAttackCell(char board[8][8], int currRow, int currCol, int destRow, int destCol)
 {
+    assert(
+        IS_WHITE_BISHOP(board[currRow][currCol]) || IS_BLACK_BISHOP(board[currRow][currCol]) ||
+        IS_WHITE_QUEEN(board[currRow][currCol])  || IS_BLACK_QUEEN(board[currRow][currCol]));  // also used for queen movement
+    assert(_isInside(currRow) && _isInside(currCol) && _isInside(destRow) && _isInside(destCol));
+
     if (abs(destRow - currRow) != abs(destCol - currCol))
     {
         return false;  // not diagonal, cannot reach, not worth trying
     }
 
+    bool isPathFree = false;
     if (destRow > currRow)
     {
         if (destCol > currCol)  // go down-right
         {
-            return _checkPath(board, currRow, currCol, destRow, destCol, +1, +1) == 0;
+            isPathFree = (_checkPath(board, currRow, currCol, destRow, destCol, +1, +1) == 0);
         }
         else                    //go down-left
         {
-            return _checkPath(board, currRow, currCol, destRow, destCol, +1, -1) == 0;
+            isPathFree = (_checkPath(board, currRow, currCol, destRow, destCol, +1, -1) == 0);
         }
     }
     else
     {
         if (destCol > currCol)  // go up-right
         {
-            return _checkPath(board, currRow, currCol, destRow, destCol, -1, +1) == 0;
+            isPathFree = (_checkPath(board, currRow, currCol, destRow, destCol, -1, +1) == 0);
         }
         else                    // go up-left
         {
-            return _checkPath(board, currRow, currCol, destRow, destCol, -1, -1) == 0;
+            isPathFree = (_checkPath(board, currRow, currCol, destRow, destCol, -1, -1) == 0);
         }
     }
+    return isPathFree && (IS_ATTACKABLE(board[currRow][currCol], board[destRow][destCol]));
 }
 
 
-// Checks path considering knight movement
 bool _canKnightAttackCell(char board[8][8], int currRow, int currCol, int destRow, int destCol)
 {
-    // cases clockwise
-    if (destRow == currRow - 2 && destCol == currCol + 1 ||
-        destRow == currRow - 1 && destCol == currCol + 2 ||
-        destRow == currRow + 1 && destCol == currCol + 2 ||
-        destRow == currRow + 2 && destCol == currCol + 1 ||
-        destRow == currRow + 2 && destCol == currCol - 1 ||
-        destRow == currRow + 1 && destCol == currCol - 2 ||
-        destRow == currRow - 1 && destCol == currCol - 2 ||
-        destRow == currRow - 2 && destCol == currCol - 1)
+    assert(IS_WHITE_KNIGHT(board[currRow][currCol]) || IS_BLACK_KNIGHT(board[currRow][currCol]));
+    assert(_isInside(currRow) && _isInside(currCol) && _isInside(destRow) && _isInside(destCol));
+
+    // offsets clockwise
+    int di[8] = { -2, -1,  1,  2,  2,  1, -1, -2 };
+    int dj[8] = {  1,  2,  2,  1, -1, -2, -2, -1 };
+
+    bool respectsRule = false;
+    for (int i = 0; i < 8; i++)
     {
-        return true;
+        if (destRow == currRow + di[i] && destCol == currCol + dj[i])
+        {
+            respectsRule = true;
+            break;
+        }
     }
-    return false;
+
+    return respectsRule && (IS_ATTACKABLE(board[currRow][currCol], board[destRow][destCol]));
 }
 
 
 // Checks path considering rook movement
 bool _canRookAttackCell(char board[8][8], int currRow, int currCol, int destRow, int destCol)
 {
+    assert(
+        IS_WHITE_ROOK(board[currRow][currCol]) || IS_BLACK_ROOK(board[currRow][currCol]) ||
+        IS_WHITE_QUEEN(board[currRow][currCol]) || IS_BLACK_QUEEN(board[currRow][currCol]));  // also used for queen movement
+    assert(_isInside(currRow) && _isInside(currCol) && _isInside(destRow) && _isInside(destCol));
+
+    bool isPathFree = false;
     if (destRow == currRow)
     {
         if (destCol > currCol)  // go right
         {
-            return _checkPath(board, currRow, currCol, destRow, destCol, 0, +1) == 0;
+            isPathFree = (_checkPath(board, currRow, currCol, destRow, destCol, 0, +1) == 0);
         }
         else                    // go left
         {
-            return _checkPath(board, currRow, currCol, destRow, destCol, 0, -1) == 0;
+            isPathFree = (_checkPath(board, currRow, currCol, destRow, destCol, 0, -1) == 0);
         }
     }
     else if (destCol == currCol)
     {
         if (destRow > currRow)  // go down
         {
-            return _checkPath(board, currRow, currCol, destRow, destCol, +1, 0) == 0;
+            isPathFree = (_checkPath(board, currRow, currCol, destRow, destCol, +1, 0) == 0);
         }
         else                    // go up
         {
-            return _checkPath(board, currRow, currCol, destRow, destCol, -1, 0) == 0;
+            isPathFree = (_checkPath(board, currRow, currCol, destRow, destCol, -1, 0) == 0);
         }
     }
-    else
-    {
-        return false;  // not straight, cannot reach, not worth trying
-    }
+    return isPathFree && (IS_ATTACKABLE(board[currRow][currCol], board[destRow][destCol]));
 }
 
 
 // Checks path considering queen movement
 bool _canQueenAttackCell(char board[8][8], int currRow, int currCol, int destRow, int destCol)
 {
-    return _canBishopAttackCell(board, currRow, currCol, destRow, destCol) ||
-        _canRookAttackCell(board, currRow, currCol, destRow, destCol);
+    return
+        (_canBishopAttackCell(board, currRow, currCol, destRow, destCol) ||
+         _canRookAttackCell(board, currRow, currCol, destRow, destCol)) &&
+        (IS_ATTACKABLE(board[currRow][currCol], board[destRow][destCol]));
 }
-
 
 // Checks path considering queen movement
 bool _canKingAttackCell(char board[8][8], int currRow, int currCol, int destRow, int destCol)
 {
-    // cases clockwise
-    if (destRow == currRow - 1 && destCol == currCol ||
-        destRow == currRow - 1 && destCol == currCol + 1 ||
-        destRow == currRow && destCol == currCol + 1 ||
-        destRow == currRow + 1 && destCol == currCol + 1 ||
-        destRow == currRow + 1 && destCol == currCol ||
-        destRow == currRow + 1 && destCol == currCol - 1 ||
-        destRow == currRow && destCol == currCol - 1 ||
-        destRow == currRow - 1 && destCol == currCol - 1)
+    assert(IS_WHITE_KING(board[currRow][currCol]) || IS_BLACK_KING(board[currRow][currCol]));
+    assert(_isInside(currRow) && _isInside(currCol) && _isInside(destRow) && _isInside(destCol));
+
+    // offsets clockwise
+    int di[8] = { -1, -1,  0,  1,  1,  1,  0, -1 };
+    int dj[8] = {  0,  1,  1,  1,  0, -1, -1, -1 };
+
+    bool respectsRule = false;
+    for (int i = 0; i < 8; i++)
     {
-        return true;
+        if (destRow == currRow + di[i] && destCol == currCol + dj[i])
+        {
+            respectsRule = true;
+            break;
+        }
     }
-    return false;
+
+    return respectsRule && (IS_ATTACKABLE(board[currRow][currCol], board[destRow][destCol]));
 }
 
-// this only does step "can move be done"
-bool canPieceAttackCell(char board[8][8], int currRow, int currCol, int destRow, int destCol, Metadata metadata) {
-    // validate input
-    if (!_isInside(currRow) || !_isInside(currCol) || !_isInside(destRow) || !_isInside(destCol))
-    {
-        return false;
-    }
 
-    char piece = board[currRow][currCol];
+bool canPieceAttackCell(char board[8][8], int currRow, int currCol, int destRow, int destCol, int enPassantCol) {
+    assert(_isInside(currRow) && _isInside(currCol) && _isInside(destRow) && _isInside(destCol));
 
-    switch (piece)
+    switch (board[currRow][currCol])
     {
     case 'P':
     case 'p':
-        return _canPawnAttackCell(board, currRow, currCol, destRow, destCol, metadata.enPassantCol);
+        return _canPawnAttackCell(board, currRow, currCol, destRow, destCol, enPassantCol);
     case 'B':
     case 'b':
         return _canBishopAttackCell(board, currRow, currCol, destRow, destCol);
@@ -245,6 +263,7 @@ bool canPieceAttackCell(char board[8][8], int currRow, int currCol, int destRow,
         return _canKingAttackCell(board, currRow, currCol, destRow, destCol);
     default:
         std::cout << "Reached default in canPieceAttackCell!" << std::endl;
+        assert(false);
         return false;
     }
 }
@@ -252,6 +271,8 @@ bool canPieceAttackCell(char board[8][8], int currRow, int currCol, int destRow,
 // Checks if anything can attack cell (row, col)
 bool isCellInCheck(char board[8][8], int row, int col, Metadata metadata)
 {
+    assert(_isInside(row) && _isInside(col));
+
     // call canPieceAttackCell on each piece
     for (int i = 0; i < 8; i++)
     {
@@ -263,86 +284,217 @@ bool isCellInCheck(char board[8][8], int row, int col, Metadata metadata)
             }
             if (IS_NOT_FREE(board[i][j]))
             {
-                //if (canPieceAttackCell(board, i, j, row, col, metadata, false)) {
-                //    return true;  TODO
-                //}
+                if (canPieceAttackCell(board, i, j, row, col, metadata.enPassantCol)) {
+                    return true;
+                }
             }
         }
     }
     return false;
 }
 
-
-// Checks if king is in check
-bool isKingInCheck(char board[8][8], Color kingColor, Metadata metadata)
+std::vector<std::pair<int, int>> _getAttackers(char board[8][8], int kingRow, int kingCol, int enPassantCol)
 {
-    int kingRow, kingCol;
+    std::vector<std::pair<int, int>> attackers;
 
     for (int i = 0; i < 8; i++)
     {
         for (int j = 0; j < 8; j++)
         {
-            if (kingColor == Color::WHITE && IS_WHITE_KING(board[i][j]))
+            // skip king
+            if (i == kingRow && j == kingCol)
             {
-                kingRow = i;
-                kingCol = j;
-                goto _found;
+                continue;
             }
-            if (kingColor == Color::BLACK && IS_BLACK_KING(board[i][j]))
+
+            if (canPieceAttackCell(board, i, j, kingRow, kingCol, enPassantCol))
             {
-                kingRow = i;
-                kingCol = j;
-                goto _found;
+                attackers.push_back(std::pair<int, int>(i, j));
             }
         }
     }
-_found:
-    return isCellInCheck(board, kingRow, kingCol, metadata);
+
+    return attackers;
 }
 
-bool isKingInCheckmate(char board[8][8], Color kingColor, Metadata metadata)
+bool _getCanKingMove(char board[8][8], int kingRow, int kingCol, Metadata metadata)
 {
-    int kingRow, kingCol;
+    int di[8] = { -1, -1,  0,  1,  1,  1,  0, -1 };
+    int dj[8] = { 0,  1,  1,  1,  0, -1, -1, -1 };
 
     for (int i = 0; i < 8; i++)
     {
-        for (int j = 0; j < 8; j++)
-        {
-            if (kingColor == Color::WHITE && IS_WHITE_KING(board[i][j]))
-            {
-                kingRow = i;
-                kingCol = j;
-                goto _found;
-            }
-            if (kingColor == Color::BLACK && IS_BLACK_KING(board[i][j]))
-            {
-                kingRow = i;
-                kingCol = j;
-                goto _found;
-            }
-        }
-    }
-_found:
+        int destRow = kingRow + di[i];
+        int destCol = kingCol + dj[i];
 
-    // offset for current cell and all neighboring cells
-    int di[] = { 0, -1, -1,  0,  1,  1,  1,  0, -1 };
-    int dj[] = { 0,  0,  1,  1,  1,  0, -1, -1, -1 };
-    for (int i = 0; i < 9; i++)
-    {
-        int ci = kingRow + di[i];
-        int cj = kingCol + dj[i];
-
-        // skip invalid cells
-        if (ci < 0 || ci > 8 || cj < 0 || cj > 0)
+        // skip OOB cells
+        if (!_isInside(destRow) || !_isInside(destCol))
         {
             continue;
         }
 
-        // if king is not in check or there is one possibility to escape
-        if (!isCellInCheck(board, ci, cj, metadata))
+        // skip occupied cells
+        if (!(IS_ATTACKABLE(board[kingRow][kingCol], board[destRow][destCol])))
+        {
+            continue;
+        }
+
+        // build up setup for hypothetical move
+        char auxBoard[8][8];
+        copyBoard(auxBoard, board);
+        auxBoard[destRow][destCol] = board[kingRow][kingCol];
+        auxBoard[kingRow][kingCol] = FR;
+
+        // skip cell which would put king in check
+        if (isCellInCheck(auxBoard, destRow, destCol, metadata))
+        {
+            continue;
+        }
+
+        // cell board[destRow][destCol] is safe
+        return true;
+    }
+
+    return false;
+}
+
+bool _getCanOtherMove(char board[8][8], int kingRow, int kingCol, Color kingColor, int enPassantCol)
+{
+    for (int i = 0; i < 8; i++)
+    {
+        for (int j = 0; j < 8; j++)
+        {
+            // TODO - get color function?
+            // skip enemy piece
+            if (kingColor == Color::BLACK && (IS_WHITE(board[i][j])) || kingColor == Color::WHITE && (IS_BLACK(board[i][j])))
+            {
+                continue;
+            }
+
+            for (int u = 0; u < 8; u++)
+            {
+                for (int v = 0; v < 8; v++)
+                {
+                    // skip self
+                    if (u == i && v == j)
+                    {
+                        continue;
+                    }
+                    if (canPieceAttackCell(board, u, v, i, j, enPassantCol))
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+bool _getCanAttackerBeBlocked(char board[8][8], int kingRow, int kingCol, Color kingColor, int enPassantCol, std::vector<std::pair<int, int>> attackers)
+{
+    // no attackers
+    if (attackers.size() == 0)
+    {
+        return true;
+    }
+
+    // if just one attacker, maybe it can be captured
+    if (attackers.size() == 1)
+    {
+        int attackerRow = attackers[0].first;
+        int attackerCol = attackers[0].second;
+
+        for (int i = 0; i < 8; i++)
+        {
+            for (int j = 0; j < 8; j++)
+            {
+                // TODO - get color function?
+                // skip enemy piece
+                if (kingColor == Color::BLACK && (IS_WHITE(board[i][j])) || kingColor == Color::WHITE && (IS_BLACK(board[i][j])))
+                {
+                    continue;
+                }
+
+                // skip self
+                if (i == attackerRow && j == attackerCol)
+                {
+                    continue;
+                }
+
+                if (canPieceAttackCell(board, i, j, attackerRow, attackerCol, enPassantCol))
+                {
+                    return true;
+                }
+            }
+        }
+    }
+
+    // if more attackers, the only option is to move a piece such that it blocks each attack (could work for one attacker as well)
+    for (std::pair<int, int> attacker : attackers)
+    {
+        int attackerRow = attackers[0].first;
+        int attackerCol = attackers[0].second;
+
+        // no way to block knight
+        if (IS_WHITE_KNIGHT(board[attackerRow][attackerCol]) || IS_BLACK_KNIGHT(board[attackerRow][attackerCol]))
         {
             return false;
         }
+
+        return true;  // TODO implement
     }
-    return true;
+
+    return false;
+}
+
+
+KingSituation getKingSituation(char board[8][8], Color kingColor, Metadata metadata)
+{
+    // get king position
+    int kingRow, kingCol;
+    for (int i = 0; i < 8; i++)
+    {
+        for (int j = 0; j < 8; j++)
+        {
+            if (kingColor == Color::WHITE && IS_WHITE_KING(board[i][j]))
+            {
+                kingRow = i;
+                kingCol = j;
+                goto _found;
+            }
+            if (kingColor == Color::BLACK && IS_BLACK_KING(board[i][j]))
+            {
+                kingRow = i;
+                kingCol = j;
+                goto _found;
+            }
+        }
+    }
+    std::cout << "King not found!" << std::endl;
+    assert(false);
+_found:
+
+    std::vector<std::pair<int, int>> attackers = _getAttackers(board, kingRow, kingCol, metadata.enPassantCol);
+    bool canKingMove = _getCanKingMove(board, kingRow, kingCol, metadata);
+    bool canOtherMove = _getCanOtherMove(board, kingRow, kingCol, kingColor, metadata.enPassantCol);
+    bool canAttackersBeBlocked = _getCanAttackerBeBlocked(board, kingRow, kingCol, kingColor, metadata.enPassantCol, attackers);
+
+    if (attackers.size() == 0)
+    {
+        if (canKingMove || canOtherMove)
+        {
+            return KingSituation::FREE;
+        }
+        return KingSituation::STALEMATE;
+    }
+    else  // we have attackers, we are in check
+    {
+        if (canKingMove || canAttackersBeBlocked)
+        {
+            return KingSituation::CHECK;
+        }
+        return KingSituation::CHECKMATE;
+    }
 }
