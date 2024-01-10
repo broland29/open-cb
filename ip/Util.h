@@ -51,3 +51,7 @@ std::vector<Point2i> getPointsFromBinary(
     Mat_<uchar> img,
     int objectPixelColor = 255
 );
+
+
+// Gets the intersection of two lines defined by a pair of points
+int getIntersectionOfLines(std::pair<Point2i, Point2i> lineAB, std::pair<Point2i, Point2i> lineCD, Mat img, Point2i &intersection);

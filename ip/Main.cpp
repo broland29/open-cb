@@ -6,72 +6,149 @@
 #include "Canny.h"
 #include "Filter.h"
 
-#define BINARY_THRESHOLD 100
-#define IMAGE_WIDTH 500
-#define IMAGE_HEIGHT 500
-#define HOUGH_RO_STEP_SIZE 10
-#define HOUGH_THETA_STEP_SIZE 10
-#define HOUGH_WINDOW_SIZE 5
+#define IMAGE_WIDTH				500
+#define IMAGE_HEIGHT			500
+#define BINARY_THRESHOLD		150
+#define CLOSING_SIZE			6
+#define HOUGH_RO_STEP_SIZE		1
+#define HOUGH_THETA_STEP_SIZE	1
+#define HOUGH_WINDOW_SIZE		3
+#define HOUGH_NUMBER_OF_LINES	10
 
-#define TEST_FILE_PATH "Images\\img001.jpg"
+#define TEST_FILE_PATH "Images\\img002.jpg"
 
+
+
+Mat_<Vec3b> extractCell(Mat_<Vec3b> img, int cellRow, int cellCol)
+{
+	assert(img.rows == img.cols);
+	int unit = img.rows / 8;
+	Rect ROI(cellRow * unit, cellCol * unit, unit, unit);
+	std::cout << unit;
+	//Rect ROI(50, 50, 100, 100);
+	Mat_<Vec3b> cell = img(ROI);
+	return cell;
+}
 
 int main()
 {
-	// read image in both grayscale and color version
-	Mat_<uchar> imgOriginalGrayscale = imread(TEST_FILE_PATH, IMREAD_GRAYSCALE);
-	if (imgOriginalGrayscale.empty())
+	int fileNo = 1;
+	char fileName[100];
+	while (true)
 	{
-		std::cout << "Could not open image!" << std::endl;
-		return 1;
+		sprintf(fileName, "Images\\img_%02d.jpeg", fileNo++);
+
+		Mat_<uchar> imgOriginalGrayscale = imread(fileName, IMREAD_GRAYSCALE);
+		if (imgOriginalGrayscale.empty())
+		{
+			std::cout << "Break: file " << fileName << " not found!" << std::endl;
+			break;  // no more images
+		}
+		Mat_<Vec3b> imgOriginalColor = imread(fileName, IMREAD_COLOR);
+		if (imgOriginalColor.empty())
+		{
+			std::cout << "Break: file " << fileName << " not found!" << std::endl;
+			break;
+		}
+
+		// resize both to same dimensions
+		Mat_<uchar> imgResizedGrayscale;
+		resize(imgOriginalGrayscale, imgResizedGrayscale, cv::Size(IMAGE_WIDTH, IMAGE_HEIGHT));
+		Mat_<Vec3b> imgResizedColor;
+		resize(imgOriginalColor, imgResizedColor, cv::Size(IMAGE_WIDTH, IMAGE_HEIGHT));
+
+		// filter to reduce noise
+		Mat_<uchar> imgGauss = gaussianFilter(imgResizedGrayscale, 7);
+
+		// get binary image from filtered image
+		Mat_<uchar> imgBinary = grayscaleToBinary(imgGauss, BINARY_THRESHOLD);
+
+		// perform closing on binary image to remove unnecessarry details
+		uchar selPattern[CLOSING_SIZE * CLOSING_SIZE ] = { 0 };
+		const cv::Mat_<uchar> sel = cv::Mat(7, 7, CV_8UC1, selPattern);
+		Mat_<uchar> imgClosed = closing(imgBinary, sel);
+
+		// perform canny edge detection on closed image
+		Mat_<uchar> imgCanny = canny(imgClosed);
+
+		// perform hough on the image resulted from canny
+		std::vector<Point2i> points = getPointsFromBinary(imgCanny);
+		std::vector<std::pair<Point2i, Point2i>> lines = hough(
+			points,
+			imgResizedColor,
+			HOUGH_RO_STEP_SIZE,
+			HOUGH_THETA_STEP_SIZE,
+			HOUGH_WINDOW_SIZE,
+			HOUGH_NUMBER_OF_LINES
+		);
+		Mat_<uchar> imgCorners;
+		imgBinary.copyTo(imgCorners);
+		for (int i = 0; i < lines.size(); i++)
+		{
+			for (int j = i + 1; j < lines.size(); j++)
+			{
+				Point2i intersection;
+				if (getIntersectionOfLines(lines[i], lines[j], imgCorners, intersection) == 0)
+				{
+					drawCrossGrayscale(imgCorners, intersection, 50, 100);
+					std::cout << "Lines [" << lines[i].first << "," << lines[i].second;
+					std::cout << "] and [" << lines[j].first << "," << lines[j].second;
+					std::cout << "] intersect in [" << intersection << "]." << std::endl;
+				}
+			}
+			//std::cout << lines[i].first << " " << lines[i].second << std::endl;
+		}
+
+		// visualize each step
+		imshow("imgGrayscale", imgResizedGrayscale);
+		imshow("imgGauss", imgGauss);
+		imshow("imgBinary", imgBinary);
+		imshow("imgClosed", imgClosed);
+		imshow("imgCanny", imgCanny);
+		imshow("imgCorners1", imgCorners);
+		waitKey();
 	}
-	Mat_<Vec3b> imgOriginalColor = imread(TEST_FILE_PATH, IMREAD_COLOR);
-	if (imgOriginalColor.empty())
-	{
-		std::cout << "Could not open image!" << std::endl;
-		return 1;
-	}
 
-	// resize both to same dimensions
-	Mat_<uchar> imgResizedGrayscale;
-	resize(imgOriginalGrayscale, imgResizedGrayscale, cv::Size(IMAGE_WIDTH, IMAGE_HEIGHT));
-	Mat_<Vec3b> imgResizedColor;
-	resize(imgOriginalColor, imgResizedColor, cv::Size(IMAGE_WIDTH, IMAGE_HEIGHT));
+	/*
+	Point2d ul(135, 93);
+	Point2d ur(380, 90);
+	Point2d dl(63, 410);
+	Point2d dr(470, 400);
+	drawCrossGrayscale(imgBinary, ul, 50, 100);
+	drawCrossGrayscale(imgBinary, ur, 50, 100);
+	drawCrossGrayscale(imgBinary, dl, 50, 100);
+	drawCrossGrayscale(imgBinary, dr, 50, 100);
 
-	// filter to reduce noise
-	Mat_<uchar> imgGauss = gaussianFilter(imgResizedGrayscale, 7);
+	std::vector<Point2f> srcCorners;
+	srcCorners.push_back(ul);
+	srcCorners.push_back(ur);
+	srcCorners.push_back(dr);
+	srcCorners.push_back(dl);
 
-	// get binary image from filtered image
-	Mat_<uchar> imgBinary = grayscaleToBinary(imgGauss, BINARY_THRESHOLD);
+	std::vector<Point2f> dstCorners;
+	dstCorners.push_back(Point2d(0, 0));
+	dstCorners.push_back(Point2d(500, 0));
+	dstCorners.push_back(Point2d(500, 500));
+	dstCorners.push_back(Point2d(0, 500));
 
-	// perform closing on binary image to remove unnecessarry details
-	uchar selPattern[] = {
-		0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0
-	};
-	const cv::Mat_<uchar> sel = cv::Mat(7, 7, CV_8UC1, selPattern);
-	Mat_<uchar> imgClosed = closing(imgBinary, sel);
+	Mat M = getPerspectiveTransform(srcCorners, dstCorners);
+	Mat imgWarped;
+	warpPerspective(imgResizedColor, imgWarped, M, Size(500, 500));
 
-	// perform canny edge detection on closed image
-	Mat_<uchar> imgCanny = canny(imgClosed);
+	imshow("imgCorners", imgBinary);
+	imshow("imgWarped", imgWarped);
 
-	// perform hough on the image resulted from canny
-	std::vector<Point2i> points = getPointsFromBinary(imgCanny);
-	Mat_<Vec3b> imgHough = hough(points, imgResizedColor);
+	int border = 50;
+	Rect ROI(border, border, 500 - 2 * border, 500 - 2 * border);
+	Mat_<Vec3b> imgROI = imgWarped(ROI);
+	Mat_<Vec3b> imgCell = extractCell(imgROI, 7, 7);
+	imshow("imgROI", imgROI);
+	imshow("imgCell", imgCell);
 
-	// visualize each step
-	imshow("imgGrayscale", imgResizedGrayscale);
-	imshow("imgGauss",	imgGauss);
-	imshow("imgBinary", imgBinary);
-	imshow("imgClosed", imgClosed);
-	imshow("imgCanny", imgCanny);
-	imshow("imgHough", imgHough);
+	//Mat_<Vec3b> cell()
+
+
 	waitKey();
-
+	*/
 	return 0;
 }

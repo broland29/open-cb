@@ -12,7 +12,11 @@ struct Peak
 
 
 // performs Hough, returns line image?
-Mat_<Vec3b> hough(
-    std::vector<Point2i> points,
-    cv::Mat_<cv::Vec3b> imgBorder
+std::vector<std::pair<Point2i, Point2i>> hough(
+	std::vector<Point2i> points,
+	cv::Mat_<cv::Vec3b> imgBorder,
+	int roStepSize,
+	int thetaStepSize,
+	int windowSize,
+	int noOfLines
 );

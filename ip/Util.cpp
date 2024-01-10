@@ -93,3 +93,41 @@ std::vector<Point2i> getPointsFromBinary(Mat_<uchar> img, int objectPixelColor)
 
 	return points;
 }
+
+
+// https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection#Given_two_points_on_each_line
+int getIntersectionOfLines(std::pair<Point2i, Point2i> lineAB, std::pair<Point2i, Point2i> lineCD, Mat img, Point2i &intersection)
+{
+	int x1 = lineAB.first.x;
+	int y1 = lineAB.first.y;
+	int x2 = lineAB.second.x;
+	int y2 = lineAB.second.y;
+	int x3 = lineCD.first.x;
+	int y3 = lineCD.first.y;
+	int x4 = lineCD.second.x;
+	int y4 = lineCD.second.y;
+
+	int denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+	if (denom == 0)
+	{
+		std::cout << "Lines [" << lineAB.first << "," << lineAB.second;
+		std::cout << "] and [" << lineCD.first << "," << lineCD.second;
+		std::cout << "] are parallel!" << std::endl;
+		return 1;
+	}
+
+	intersection = Point2i(
+		((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / denom,
+		((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / denom
+	);
+
+	if (!isInside(img, intersection.y, intersection.x))
+	{
+		std::cout << "Lines [" << lineAB.first << "," << lineAB.second;
+		std::cout << "] and [" << lineCD.first << "," << lineCD.second;
+		std::cout << "] intersect outside of image!" << std::endl;
+		return 2;
+	}
+
+	return 0;
+}
