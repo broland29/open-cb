@@ -2,6 +2,54 @@
 #include "Util.h"
 
 
+Mat_<Vec3b> lineRoTheta::drawLine(Mat_<Vec3b> img)
+{
+	Mat_<Vec3b> linesImg = img.clone();
+	float thetaRadian = theta * PI / 180;  // sin, cos expects radians
+
+	Point2i A, B;
+	if (thetaRadian > -(PI / 4) && thetaRadian < PI / 4)  // avoids division by 0
+	{
+		A = Point2i(0, ro / sin(thetaRadian));  // take x = 0
+		B = Point2i(linesImg.cols, (ro - linesImg.cols * cos(thetaRadian)) / sin(thetaRadian));
+	}
+	else
+	{
+		A = Point2i(ro / cos(thetaRadian), 0);
+		B = Point2i((ro - linesImg.rows * sin(thetaRadian)) / cos(thetaRadian), linesImg.rows);
+	}
+	line(linesImg, A, B, Scalar(0, 255, 0), 3);
+
+	return linesImg;
+}
+
+
+int lineRoTheta::getIntersection(lineRoTheta otherLine, Point2i &intersectionPoint)
+{
+	// https://stackoverflow.com/questions/383480/intersection-of-two-lines-defined-in-rho-theta-parameterization
+	float r1 = ro;
+	float t1 = theta * PI / 180;  // sin, cos expects radians
+	float r2 = otherLine.ro;
+	float t2 = otherLine.theta * PI / 180;
+
+	float cost1 = cos(t1);
+	float sint1 = sin(t1);
+	float cost2 = cos(t2);
+	float sint2 = sin(t2);
+	float det = cost1 * sint2 - sint1 * cost2;
+	if (det == 0)
+	{
+		return 1;
+	}
+
+	intersectionPoint = Point2i(
+		( sint2 * r1 - sint1 * r2) / det,
+		(-cost2 * r1 + cost1 * r2) / det
+	);
+	return 0;
+}
+
+
 bool isInside(Mat img, int i, int j)
 {
 	return (i >= 0 && i < img.rows) && (j >= 0 && j < img.cols);

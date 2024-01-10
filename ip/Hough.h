@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Util.h"
 
 struct Peak
 {
@@ -12,7 +13,7 @@ struct Peak
 
 
 // performs Hough, returns line image?
-std::vector<std::pair<Point2i, Point2i>> hough(
+std::vector<lineRoTheta> hough(
 	std::vector<Point2i> points,
 	cv::Mat_<cv::Vec3b> imgBorder,
 	int roStepSize,

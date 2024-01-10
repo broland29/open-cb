@@ -73,7 +73,7 @@ int main()
 
 		// perform hough on the image resulted from canny
 		std::vector<Point2i> points = getPointsFromBinary(imgCanny);
-		std::vector<std::pair<Point2i, Point2i>> lines = hough(
+		std::vector<lineRoTheta> lines = hough(
 			points,
 			imgResizedColor,
 			HOUGH_RO_STEP_SIZE,
@@ -81,6 +81,47 @@ int main()
 			HOUGH_WINDOW_SIZE,
 			HOUGH_NUMBER_OF_LINES
 		);
+
+		// draw the resulting lines from Hough
+		Mat_<Vec3b> imgLines = imgResizedColor.clone();
+		for (lineRoTheta line : lines)
+		{
+			imgLines = line.drawLine(imgLines);
+		}
+
+		// get intersection of each line with each other, and if inside image, draw a cross
+		Mat_<Vec3b> imgCorners = imgResizedColor.clone();
+		for (int i = 0; i < lines.size(); i++)
+		{
+			for (int j = i + 1; j < lines.size(); j++)
+			{
+				Point2i intersection;
+				int ret = lines[i].getIntersection(lines[j], intersection);
+				if (ret == 1)
+				{
+					std::cout << "Lines [" << lines[i].ro << "," << lines[i].theta;
+					std::cout << "] and [" << lines[j].ro << "," << lines[j].theta;
+					std::cout << "] are parallel!" << std::endl;
+					continue;
+				}
+
+				if (!isInside(imgCorners, intersection.y, intersection.x))
+				{
+					std::cout << "Lines [" << lines[i].ro << "," << lines[i].theta;
+					std::cout << "] and [" << lines[j].ro << "," << lines[j].theta;
+					std::cout << "] intersect out of the image, in [" << intersection << "]." << std::endl;
+					continue;
+				}
+
+				drawCrossColor(imgCorners, intersection, 50, Vec3b(0, 0, 255));
+				std::cout << "Lines [" << lines[i].ro << "," << lines[i].theta;
+				std::cout << "] and [" << lines[j].ro << "," << lines[j].theta;
+				std::cout << "] intersect in [" << intersection << "]." << std::endl;
+			}
+			//std::cout << lines[i].first << " " << lines[i].second << std::endl;
+		}
+
+		/*
 		Mat_<uchar> imgCorners;
 		imgBinary.copyTo(imgCorners);
 		for (int i = 0; i < lines.size(); i++)
@@ -98,6 +139,7 @@ int main()
 			}
 			//std::cout << lines[i].first << " " << lines[i].second << std::endl;
 		}
+		*/
 
 		// visualize each step
 		imshow("imgGrayscale", imgResizedGrayscale);
@@ -105,6 +147,7 @@ int main()
 		imshow("imgBinary", imgBinary);
 		imshow("imgClosed", imgClosed);
 		imshow("imgCanny", imgCanny);
+		imshow("imgLines", imgLines);
 		imshow("imgCorners1", imgCorners);
 		waitKey();
 	}

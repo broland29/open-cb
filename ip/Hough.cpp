@@ -1,9 +1,8 @@
 #include "stdafx.h"
-#include "Util.h"
 #include "Hough.h"
 
 
-std::vector<std::pair<Point2i, Point2i>> hough(
+std::vector<lineRoTheta> hough(
 	std::vector<Point2i> points,
 	cv::Mat_<cv::Vec3b> imgBorder,
 	int roStepSize,
@@ -98,28 +97,11 @@ std::vector<std::pair<Point2i, Point2i>> hough(
 		std::cout << "Number of lines cut down to " << noOfLines << " !" << std::endl;
 	}
 
-	std::vector<std::pair<Point2i, Point2i>> lines;
+	std::vector<lineRoTheta> lines;
 	for (int i = 0; i < noOfLines; i++)
 	{
-		float thetaRadian = peaks[i].theta * PI / 180;  // sin, cos expects radians
-		int ro = peaks[i].ro;
-		// std::cout << thetaRadian << " " << ro << std::endl;
-		Point2i A, B;
-		if (thetaRadian > -(PI / 4) && thetaRadian < PI / 4)  // avoids division by 0
-		{
-			A = Point2i(0, ro / sin(thetaRadian));  // take x = 0
-			B = Point2i(linesImg.cols, (ro - linesImg.cols * cos(thetaRadian)) / sin(thetaRadian));
-		}
-		else
-		{
-			A = Point2i(ro / cos(thetaRadian), 0);
-			B = Point2i((ro - linesImg.rows * sin(thetaRadian)) / cos(thetaRadian), linesImg.rows);
-		}
-		line(linesImg, A, B, Scalar(0, 255, 0), 3);
-		lines.push_back(std::pair<Point2i, Point2i>(A, B));
-		// std::cout << A << " " << B << std::endl;
+		lines.push_back(lineRoTheta{ peaks[i].ro, peaks[i].theta });
 	}
-	imshow("linesImg", linesImg);
 
 	/*
 	std::vector<Point2i> corners;

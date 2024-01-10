@@ -9,6 +9,18 @@ using namespace cv;
 
 #define PI 3.14159265
 
+// "The normal parameterization of a line consists of representing the line
+// by its normal vector and the distance from origin to the line."
+struct lineRoTheta
+{
+    int ro;     // distance in pixels [0, DiameterOfImage]
+    int theta;  // angle in grades [0, 360]
+
+    Mat_<Vec3b> drawLine(Mat_<Vec3b> img);
+
+    int getIntersection(lineRoTheta otherLine, Point2i &intersectionPoint);
+};
+
 
 // Checks if pixel (i,j) is inside img's boundaries
 bool isInside(
@@ -54,4 +66,9 @@ std::vector<Point2i> getPointsFromBinary(
 
 
 // Gets the intersection of two lines defined by a pair of points
-int getIntersectionOfLines(std::pair<Point2i, Point2i> lineAB, std::pair<Point2i, Point2i> lineCD, Mat img, Point2i &intersection);
+int getIntersectionOfLines(
+    std::pair<Point2i, Point2i> lineAB,
+    std::pair<Point2i, Point2i> lineCD,
+    Mat img,
+    Point2i &intersection
+);
