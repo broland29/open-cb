@@ -17,17 +17,20 @@
 
 #define TEST_FILE_PATH "Images\\img002.jpg"
 
+#define SHOW_IMAGES false
+#define GENERATE_IMAGES true
 
 
-Mat_<Vec3b> extractCell(Mat_<Vec3b> img, int cellRow, int cellCol)
+
+Mat_<Vec3b> extractCell(int i, int j, Rect ROI, Mat_<Vec3b> imgWarped)
 {
-	assert(img.rows == img.cols);
-	int unit = img.rows / 8;
-	Rect ROI(cellRow * unit, cellCol * unit, unit, unit);
-	std::cout << unit;
-	//Rect ROI(50, 50, 100, 100);
-	Mat_<Vec3b> cell = img(ROI);
-	return cell;
+	int stepX = ROI.width / 8;
+	int stepY = ROI.height / 8;
+
+	Rect ROICell(ROI.x + stepX * i, ROI.y + stepY * (j - 1), stepX, stepY * 2);
+	Mat_<Vec3b> imgCell = imgWarped(ROICell);
+
+	return imgCell;
 }
 
 int main()
@@ -36,7 +39,7 @@ int main()
 	char fileName[100];
 	while (true)
 	{
-		sprintf(fileName, "Images\\img_%02d.jpeg", fileNo++);
+		sprintf(fileName, "Images\\img_%02d.jpeg", fileNo);
 
 		Mat_<uchar> imgOriginalGrayscale = imread(fileName, IMREAD_GRAYSCALE);
 		if (imgOriginalGrayscale.empty())
@@ -90,7 +93,8 @@ int main()
 		}
 
 		// get intersection of each line with each other, and if inside image, draw a cross
-		Mat_<Vec3b> imgCorners = imgResizedColor.clone();
+		std::vector<Point2i> intersections;
+		Mat_<Vec3b> imgIntersections = imgResizedColor.clone();
 		for (int i = 0; i < lines.size(); i++)
 		{
 			for (int j = i + 1; j < lines.size(); j++)
@@ -105,7 +109,7 @@ int main()
 					continue;
 				}
 
-				if (!isInside(imgCorners, intersection.y, intersection.x))
+				if (!isInside(imgIntersections, intersection.y, intersection.x))
 				{
 					std::cout << "Lines [" << lines[i].ro << "," << lines[i].theta;
 					std::cout << "] and [" << lines[j].ro << "," << lines[j].theta;
@@ -113,7 +117,8 @@ int main()
 					continue;
 				}
 
-				drawCrossColor(imgCorners, intersection, 50, Vec3b(0, 0, 255));
+				intersections.push_back(intersection);
+				drawCrossColor(imgIntersections, intersection, 50, Vec3b(0, 0, 255));
 				std::cout << "Lines [" << lines[i].ro << "," << lines[i].theta;
 				std::cout << "] and [" << lines[j].ro << "," << lines[j].theta;
 				std::cout << "] intersect in [" << intersection << "]." << std::endl;
@@ -121,77 +126,126 @@ int main()
 			//std::cout << lines[i].first << " " << lines[i].second << std::endl;
 		}
 
-		/*
-		Mat_<uchar> imgCorners;
-		imgBinary.copyTo(imgCorners);
-		for (int i = 0; i < lines.size(); i++)
+		std::cout << "Intersections:" << std::endl;
+		for (Point2i intersection : intersections)
 		{
-			for (int j = i + 1; j < lines.size(); j++)
+			std::cout << intersection << std::endl;
+		}
+		std::cout << std::endl;
+
+		// get corners from intersections
+		Point2i cornerChessboardTL = intersections[0];
+		Point2i cornerChessboardTR = intersections[0];
+		Point2i cornerChessboardBL = intersections[0];
+		Point2i cornerChessboardBR = intersections[0];
+		Point2i cornerImageTL = Point2i(0, 0);
+		Point2i cornerImageTR = Point2i(imgResizedColor.cols, 0);
+		Point2i cornerImageBL = Point2i(0, imgResizedColor.rows);
+		Point2i cornerImageBR = Point2i(imgResizedColor.cols, imgResizedColor.rows);
+		double minDistanceTL = euclideanDistance(cornerChessboardTL, cornerImageTL);
+		double minDistanceTR = euclideanDistance(cornerChessboardTR, cornerImageTR);
+		double minDistanceBL = euclideanDistance(cornerChessboardBL, cornerImageBL);
+		double minDistanceBR = euclideanDistance(cornerChessboardBR, cornerImageBR);
+
+		for (int i = 1; i < intersections.size(); i++)
+		{
+			Point2i point = intersections[i];
+			if (euclideanDistance(point, cornerImageTL) < minDistanceTL)
 			{
-				Point2i intersection;
-				if (getIntersectionOfLines(lines[i], lines[j], imgCorners, intersection) == 0)
+				cornerChessboardTL = point;
+				minDistanceTL = euclideanDistance(point, cornerImageTL);
+			}
+			if (euclideanDistance(point, cornerImageTR) < minDistanceTR)
+			{
+				cornerChessboardTR = point;
+				minDistanceTR = euclideanDistance(point, cornerImageTR);
+			}
+			if (euclideanDistance(point, cornerImageBL) < minDistanceBL)
+			{
+				cornerChessboardBL = point;
+				minDistanceBL = euclideanDistance(point, cornerImageBL);
+			}
+			if (euclideanDistance(point, cornerImageBR) < minDistanceBR)
+			{
+				cornerChessboardBR = point;
+				minDistanceBR = euclideanDistance(point, cornerImageBR);
+			}
+		}
+
+		std::cout << "minX: " << cornerChessboardTL << std::endl;
+		std::cout << "maxX: " << cornerChessboardTR << std::endl;
+		std::cout << "minY: " << cornerChessboardBL << std::endl;
+		std::cout << "maxY: " << cornerChessboardBR << std::endl;
+		Mat_<Vec3b> imgCorners = imgResizedColor.clone();
+		drawCrossColor(imgCorners, cornerChessboardTL, 50, Vec3b(0, 0, 255));
+		drawCrossColor(imgCorners, cornerChessboardTR, 50, Vec3b(0, 0, 255));
+		drawCrossColor(imgCorners, cornerChessboardBL, 50, Vec3b(0, 0, 255));
+		drawCrossColor(imgCorners, cornerChessboardBR, 50, Vec3b(0, 0, 255));
+
+		// orders important
+		std::vector<Point2f> srcCorners;
+		srcCorners.push_back(cornerChessboardTL);
+		srcCorners.push_back(cornerChessboardTR);
+		srcCorners.push_back(cornerChessboardBR);
+		srcCorners.push_back(cornerChessboardBL);
+		std::vector<Point2f> dstCorners;
+		dstCorners.push_back(Point2d(0, 0));
+		dstCorners.push_back(Point2d(500, 0));
+		dstCorners.push_back(Point2d(500, 500));
+		dstCorners.push_back(Point2d(0, 500));
+
+		// perform rectification
+		Mat M = getPerspectiveTransform(srcCorners, dstCorners);
+		Mat_<Vec3b> imgWarped;
+		warpPerspective(imgResizedColor, imgWarped, M, Size(500, 500));
+
+		// remove border
+		int roiX = 50;
+		int roiY = 60;
+		int roiWidth = 400;
+		int roiHeight = 370;
+		Rect ROI(roiX, roiY, roiWidth, roiHeight);
+		Mat_<Vec3b> imgROI = imgWarped(ROI);
+
+		Mat_<Vec3b> imgCell00 = extractCell(0, 0, ROI, imgWarped);
+		Mat_<Vec3b> imgCell77 = extractCell(7, 7, ROI, imgWarped);
+		Mat_<Vec3b> imgCell34 = extractCell(3, 4, ROI, imgWarped);
+
+		if (GENERATE_IMAGES)
+		{
+			for (int i = 0; i < 8; i++)
+			{
+				for (int j = 0; j < 8; j++)
 				{
-					drawCrossGrayscale(imgCorners, intersection, 50, 100);
-					std::cout << "Lines [" << lines[i].first << "," << lines[i].second;
-					std::cout << "] and [" << lines[j].first << "," << lines[j].second;
-					std::cout << "] intersect in [" << intersection << "]." << std::endl;
+					Mat_<Vec3b> imgCell = extractCell(i, j, ROI, imgWarped);
+					sprintf(fileName, "Cells\\cell_%02d%02d%02d.jpeg", fileNo, i, j);
+					imwrite(fileName, imgCell);
 				}
 			}
-			//std::cout << lines[i].first << " " << lines[i].second << std::endl;
 		}
-		*/
 
-		// visualize each step
-		imshow("imgGrayscale", imgResizedGrayscale);
-		imshow("imgGauss", imgGauss);
-		imshow("imgBinary", imgBinary);
-		imshow("imgClosed", imgClosed);
-		imshow("imgCanny", imgCanny);
-		imshow("imgLines", imgLines);
-		imshow("imgCorners1", imgCorners);
-		waitKey();
+		if (SHOW_IMAGES)
+		{
+			// visualize each step
+			imshow("imgGrayscale", imgResizedGrayscale);
+			imshow("imgGauss", imgGauss);
+			imshow("imgBinary", imgBinary);
+			imshow("imgClosed", imgClosed);
+			imshow("imgCanny", imgCanny);
+			imshow("imgLines", imgLines);
+			imshow("imgIntersections", imgIntersections);
+			imshow("imgCorners", imgCorners);
+			imshow("imgWarped", imgWarped);
+			imshow("imgROI", imgROI);
+			imshow("imgCell00", imgCell00);
+			imshow("imgCell77", imgCell77);
+			imshow("imgCell34", imgCell34);
+
+			waitKey();
+		}
+
+		fileNo++;
 	}
 
-	/*
-	Point2d ul(135, 93);
-	Point2d ur(380, 90);
-	Point2d dl(63, 410);
-	Point2d dr(470, 400);
-	drawCrossGrayscale(imgBinary, ul, 50, 100);
-	drawCrossGrayscale(imgBinary, ur, 50, 100);
-	drawCrossGrayscale(imgBinary, dl, 50, 100);
-	drawCrossGrayscale(imgBinary, dr, 50, 100);
-
-	std::vector<Point2f> srcCorners;
-	srcCorners.push_back(ul);
-	srcCorners.push_back(ur);
-	srcCorners.push_back(dr);
-	srcCorners.push_back(dl);
-
-	std::vector<Point2f> dstCorners;
-	dstCorners.push_back(Point2d(0, 0));
-	dstCorners.push_back(Point2d(500, 0));
-	dstCorners.push_back(Point2d(500, 500));
-	dstCorners.push_back(Point2d(0, 500));
-
-	Mat M = getPerspectiveTransform(srcCorners, dstCorners);
-	Mat imgWarped;
-	warpPerspective(imgResizedColor, imgWarped, M, Size(500, 500));
-
-	imshow("imgCorners", imgBinary);
-	imshow("imgWarped", imgWarped);
-
-	int border = 50;
-	Rect ROI(border, border, 500 - 2 * border, 500 - 2 * border);
-	Mat_<Vec3b> imgROI = imgWarped(ROI);
-	Mat_<Vec3b> imgCell = extractCell(imgROI, 7, 7);
-	imshow("imgROI", imgROI);
-	imshow("imgCell", imgCell);
-
-	//Mat_<Vec3b> cell()
-
-
-	waitKey();
-	*/
 	return 0;
 }

@@ -179,3 +179,9 @@ int getIntersectionOfLines(std::pair<Point2i, Point2i> lineAB, std::pair<Point2i
 
 	return 0;
 }
+
+
+double euclideanDistance(Point2i a, Point2i b)
+{
+	return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
+}

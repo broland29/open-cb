@@ -72,3 +72,5 @@ int getIntersectionOfLines(
     Mat img,
     Point2i &intersection
 );
+
+double euclideanDistance(Point2i a, Point2i b);
