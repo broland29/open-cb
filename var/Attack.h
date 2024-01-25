@@ -114,7 +114,7 @@ bool isCellInCheck(
     char board[8][8],
     int row,
     int col,
-    Metadata metadata
+    int enPassantCol
 );
 
 

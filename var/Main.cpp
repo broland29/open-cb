@@ -6,7 +6,6 @@
 
 #include "Attack.h"
 #include "Board.h"
-#include "Main.h"
 #include "Move.h"
 
 #pragma warning(disable : 4996)
@@ -14,111 +13,43 @@
 
 
 #include "Server.h"
+#include "Validator.h"
 
 int main()
 {
-    return server_main();
+    Server server;
+    server.connect();
 
-    /*
-    std::ofstream log("log.txt");
-    if (!log.is_open())
-    {
-        std::cout << "Could not open log." << std::endl;
-        return 1;
-    }
-
-    char folderName[256];
-    char resultName[256];
-    char fileName[256];
-    int folderCount = 0;
-    int fileCount;
+    Validator validator;
 
     while (true)
     {
-        sprintf(folderName, "test\\test_main\\test_%03d", folderCount++);
-        log << "Folder name: " << folderName << std::endl;
-        struct stat buffer;
-        if (stat(folderName, &buffer) != 0)
+        char board[8][8], cmd, reply[SEND_BUFFER_SIZE];
+
+        int ret = server.receiveMessage(board, cmd);
+        if (ret != 0)
         {
-            log << "Could not open folder " << folderName << "." << std::endl;
-            break;
+            std::cout << "Quitting switch case" << std::endl;
+            goto _over;
         }
 
-        sprintf(resultName, "%s\\result.txt", folderName);
-        log << "Result name: " << resultName << std::endl;
-        std::ofstream result(resultName);
-        if (!result.is_open())
+        switch (cmd)
         {
-            log << "Could not open result (" << resultName << ")." << std::endl;
+        case 'b':  // board
+            validator.validateBoard(board, reply);
+            server.sendMessage(reply);
             break;
-        }
-
-        fileCount = 0;
-        Metadata metadata;
-        char prevBoard[8][8];
-        char currBoard[8][8];
-
-        while (true)
-        {
-            sprintf(fileName, "%s\\board_%03d.txt", folderName, fileCount++);
-            log << "File name: " << fileName << std::endl;
-            std::ifstream file(fileName);
-            if (!file.is_open())
-            {
-                log << "Could not open file " << fileName << "." << std::endl;
-                result.close();
-                break;
-            }
-
-            if (fileCount == 0)
-            {
-                readBoard(currBoard, file);
-                printBoard(currBoard, log);
-                if (isBoardInitialSetup(currBoard))
-                {
-                    continue;  // take next board
-                }
-
-                result.close();
-                break;  // illegal setup, run over
-            }
-            else
-            {
-                copyBoard(prevBoard, currBoard);
-                readBoard(currBoard, file);
-                printBoard(currBoard, log);
-
-                char encoding[10];
-                char message[100];
-                processMove(prevBoard, currBoard, metadata, message, encoding, log);
-                std::cout << "In main: " << encoding << std::endl;
-                if (strcmp(message, S_SUCCESS))
-                {
-                    if (metadata.turn == Color::WHITE)
-                    {
-                        result << metadata.moveCount << ". " << encoding << " ";
-                    }
-                    else
-                    {
-                        result << encoding << std::endl;
-                        metadata.moveCount++;
-                    }
-                    metadata.changeTurn();
-                }
-                else
-                {
-                    result << message << std::endl;
-                    result.close();
-                    break;  // bad move, run over
-                }
-
-                // todo - if en passant made possible next round, set it
-                // if not, set -1
-            }
+        case 'e':  // end
+            strcpy(reply, "I[VAR] Got end command, quitting");
+            server.sendMessage(reply);
+            goto _over;
+        default:
+            strcpy(reply, "I[VAR] Unknown command");
+            server.sendMessage(reply);
+            std::cout << "Unknown command " << cmd << std::endl;
         }
     }
-
-    log << "Closing log." << std::endl;
-    log.close();
-    */
+_over:
+    server.close();
+    return 0;
 }

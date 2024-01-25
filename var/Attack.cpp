@@ -289,7 +289,7 @@ bool canPieceAttackCell(char board[8][8], int currRow, int currCol, int destRow,
 }
 
 // Checks if anything can attack cell (row, col)
-bool isCellInCheck(char board[8][8], int row, int col, Metadata metadata)
+bool isCellInCheck(char board[8][8], int row, int col, int enPassantCol)
 {
     assert(_isInside(row) && _isInside(col));
 
@@ -304,7 +304,7 @@ bool isCellInCheck(char board[8][8], int row, int col, Metadata metadata)
             }
             if (IS_NOT_FREE(board[i][j]))
             {
-                if (canPieceAttackCell(board, i, j, row, col, metadata.enPassantCol)) {
+                if (canPieceAttackCell(board, i, j, row, col, enPassantCol)) {
                     return true;
                 }
             }
@@ -373,7 +373,7 @@ bool _getCanKingMove(char board[8][8], int kingRow, int kingCol, Metadata metada
         auxBoard[kingRow][kingCol] = FR;
 
         // skip cell which would put king in check
-        if (isCellInCheck(auxBoard, destRow, destCol, metadata))
+        if (isCellInCheck(auxBoard, destRow, destCol, metadata.enPassantCol))
         {
             continue;
         }
@@ -439,7 +439,7 @@ bool _getCanAttackerBeBlocked(char board[8][8], int kingRow, int kingCol, Color 
             {
                 // TODO - get color function?
                 // skip enemy piece
-                if (kingColor == Color::BLACK && (IS_WHITE(board[i][j])) || kingColor == Color::WHITE && (IS_BLACK(board[i][j])))
+                if (kingColor == Color::BLACK && IS_WHITE(board[i][j]) || kingColor == Color::WHITE && IS_BLACK(board[i][j]))
                 {
                     continue;
                 }
@@ -460,37 +460,107 @@ bool _getCanAttackerBeBlocked(char board[8][8], int kingRow, int kingCol, Color 
 
     // if more attackers, the only option is to move a piece such that it blocks each attack (could work for one attacker as well)
     int attackingPath[8][8] = { 0 };
-    /*
-    for (Attacker attacker : attackers)
+
+    for (const Attacker &attacker : attackers)
     {
-        // reconstruct attacker path (TODO: move to method "get attacker path" ?)
+        // reconstruct attacker path
+        int di, dj, arow, acol;
         switch (attacker.enc)
         {
+            // these have "attack range of 1" (or knight), cannot be blocked
             case WP:
             case BP:
             case WN:
             case BN:
             case WK:
             case BK:
-                return false;  // these have "attack range of 1" (or knight), cannot be blocked
+                return false;
                 break;
+            // these have linear attacks which might be blockable ("longer than 1")
             case WB:
             case BB:
-
             case WR:
             case BR:
-
-            
             case WQ:
             case BQ:
-
-            
-
+                di = attacker.row - kingRow;
+                dj = attacker.row - kingCol;
+                if (di == 1 || di == -1 || dj == 1 || di == -1)
+                {
+                    return false;  // "attack range of 1"
+                }
+                arow = attacker.row;
+                acol = attacker.col;
+                while (arow != kingRow)
+                {
+                    attackingPath[arow][acol]++;
+                    arow += di;
+                    acol += dj;
+                }
         }
-
-        return true;  // TODO implement
     }
-    */
+
+    int crossRow = -1, crossCol;  // attacking paths may cross each other, if there is one such crossing, it may be blocked
+    for (int i = 0; i < 8; i++)
+    {
+        for (int j = 0; j < 8; j++)
+        {
+            if (attackingPath[i][j] > 1)
+            {
+                if (crossRow != -1)
+                {
+                    return false;  // there already is a cross point, two such points mean its impossible to block
+                }
+                crossRow = i;
+                crossCol = j;
+            }
+        }
+    }
+
+    // could do fancier logic, but for now, just try blocking each attacking path
+    for (int i = 0; i < 8; i++)
+    {
+        for (int j = 0; j < 8; j++)
+        {
+            // not attacking path, not of interest
+            if (attackingPath[i][j] == 0)
+            {
+                continue;
+            }
+
+            for (int u = 0; u < 8; u++)
+            {
+                for (int v = 0; v < 8; v++)
+                {
+                    // skip self
+                    if (i == u && j == v)
+                    {
+                        continue;
+                    }
+                    // skip attackers' mates
+                    if (IS_WHITE(attackers[0].enc) && IS_WHITE(board[u][v]) || IS_BLACK(attackers[0].enc) && IS_BLACK(board[u][v]))
+                    {
+                        continue;
+                    }
+                    if (!canPieceAttackCell(board, u, v, i, j, -1))
+                    {
+                        continue;
+                    }
+
+                    // build up setup for hypothetical move
+                    char auxBoard[8][8];
+                    copyBoard(auxBoard, board);
+                    auxBoard[u][v] = board[i][j];
+                    auxBoard[i][j] = FR;
+
+                    if (!isCellInCheck(auxBoard, kingRow, kingCol, -1))
+                    {
+                        return true;  // found a solution!
+                    }
+                }
+            }
+        }
+    }
 
     return false;
 }

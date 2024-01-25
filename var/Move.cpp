@@ -491,8 +491,8 @@ bool _isBlackCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
         b.row == 0 && b.col == 7 &&
         c.row == 0 && c.col == 6 &&
         d.row == 0 && d.col == 5 &&
-        !isCellInCheck(prevBoard, 0, 5, metadata),
-        !isCellInCheck(prevBoard, 0, 6, metadata))
+        !isCellInCheck(prevBoard, 0, 5, metadata.enPassantCol),
+        !isCellInCheck(prevBoard, 0, 6, metadata.enPassantCol))
     {
         moveInternalToAlgebraic(
             'x',
@@ -510,8 +510,8 @@ bool _isBlackCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
         c.row == 0 && c.col == 2 &&
         d.row == 0 && d.col == 3 &&
         IS_FREE(prevBoard[0][1]) &&  // no change shall be there since only 4 changes
-        !isCellInCheck(prevBoard, 0, 3, metadata),
-        !isCellInCheck(prevBoard, 0, 2, metadata))
+        !isCellInCheck(prevBoard, 0, 3, metadata.enPassantCol),
+        !isCellInCheck(prevBoard, 0, 2, metadata.enPassantCol))
     {
         moveInternalToAlgebraic(
             'x',
@@ -575,8 +575,8 @@ bool _isWhiteCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
         b.row == 7 && b.col == 7 &&
         c.row == 7 && c.col == 6 &&
         d.row == 7 && d.col == 5 &&
-        !isCellInCheck(prevBoard, 7, 5, metadata),
-        !isCellInCheck(prevBoard, 7, 6, metadata))
+        !isCellInCheck(prevBoard, 7, 5, metadata.enPassantCol),
+        !isCellInCheck(prevBoard, 7, 6, metadata.enPassantCol))
     {
         moveInternalToAlgebraic(
             'x',
@@ -594,8 +594,8 @@ bool _isWhiteCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
         c.row == 7 && c.col == 2 &&
         d.row == 7 && d.col == 3 &&
         IS_FREE(prevBoard[7][1]) &&  // no change shall be there since only 4 changes
-        !isCellInCheck(prevBoard, 7, 3, metadata),
-        !isCellInCheck(prevBoard, 7, 2, metadata))
+        !isCellInCheck(prevBoard, 7, 3, metadata.enPassantCol),
+        !isCellInCheck(prevBoard, 7, 2, metadata.enPassantCol))
     {
         moveInternalToAlgebraic(
             'x',
@@ -612,7 +612,7 @@ bool _isWhiteCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
 // Checks if prevBoard to currBoard transition can happen in one legal move.
 //      If yes, message will contain S_SUCCESS (message.h) and encoding will contain the encoding of the move
 //      If not, message will contain the corresponding error message (message.h) and encoding must be discarded
-void processMove(char prevBoard[][8], char currBoard[][8], Metadata metadata, char message[100], char encoding[10], std::ofstream& log)
+void processMove(char prevBoard[][8], char currBoard[][8], Metadata metadata, char message[200])
 {
     // gather changed cells and needed info
     std::vector<Change> changes;
@@ -629,61 +629,62 @@ void processMove(char prevBoard[][8], char currBoard[][8], Metadata metadata, ch
 
     if (changes.size() == 0)
     {
-        log << "No movement." << std::endl;
-        strcpy(message, S_SUCCESS);
+        strcpy(message, "LNo movement");
         return;
     }
 
-    /*              TODO
-
-    // cannot put ourselves in check / cannot leave ourselves in check
-    if (isKingInCheck(currBoard, metadata.turn, metadata))
+    KingSituation turnKingSituation;
+    KingSituation oppositeKingSituation;
+    if (metadata.turn == Color::WHITE)
     {
-        if (isKingInCheck(prevBoard, metadata.turn, metadata))
-        {
-            strcpy(message, E_DOES_NOT_SAVE_KING);
-            return;
-        }
-        else
-        {
-            strcpy(message, E_PUTS_KING_IN_CHECK);
-            return;
-        }
+        turnKingSituation = getKingSituation(currBoard, Color::WHITE, metadata);
+        oppositeKingSituation = getKingSituation(currBoard, Color::BLACK, metadata);
+    }
+    else
+    {
+        turnKingSituation = getKingSituation(currBoard, Color::BLACK, metadata);
+        oppositeKingSituation = getKingSituation(currBoard, Color::WHITE, metadata);
     }
 
-    bool isOppositeKingInCheckmate = (metadata.turn == Color::WHITE)
-        ? isKingInCheckmate(currBoard, Color::BLACK, metadata)
-        : isKingInCheckmate(currBoard, Color::WHITE, metadata);
+    // cannot put ourselves in check / cannot leave ourselves in check
+    if (turnKingSituation == KingSituation::CHECKMATE)
+    {
+        strcpy(message, "ICannot put yourself/ leave yourself in checkmate");
+        return;
+    }
+    if (turnKingSituation == KingSituation::CHECK)
+    {
+        strcpy(message, "ICannot put yourself/ leave yourself in check");
+        return;
+    }
 
-    bool isOppositeKingInCheck = (metadata.turn == Color::WHITE)
-        ? isKingInCheck(currBoard, Color::BLACK, metadata)
-        : isKingInCheck(currBoard, Color::WHITE, metadata);
-        
+    bool isOppositeKingInCheck = (oppositeKingSituation == KingSituation::CHECK);
+    bool isOppositeKingInCheckmate = (oppositeKingSituation == KingSituation::CHECKMATE);
+    char encoding[10];
 
     if (changes.size() == 2)
     {
         if (_isBlackMove(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, encoding))
         {
-            strcpy(message, S_SUCCESS);
+            sprintf(message, "L%-39s%s", "Black move", encoding);
             return;
         }
         if (_isWhiteMove(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, encoding))
         {
-            strcpy(message, S_SUCCESS);
-            std::cout << "In processMove: " << encoding << std::endl;
+            sprintf(message, "L%-39s%s", "White move", encoding);
             return;
         }
         if (_isBlackCapture(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, encoding))
         {
-            strcpy(message, S_SUCCESS);
+            sprintf(message, "L%-39s%s", "Black capture", encoding);
             return;
         }
         if (_isWhiteCapture(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, encoding))
         {
-            strcpy(message, S_SUCCESS);
+            sprintf(message, "L%-39s%s", "White capture", encoding);
             return;
         }
-        strcpy(message, E_ILLEGAL_MOVE);
+        strcpy(message, "I2-change move not recognized");
         return;
     }
 
@@ -691,15 +692,15 @@ void processMove(char prevBoard[][8], char currBoard[][8], Metadata metadata, ch
     {
         if (_isBlackEnPassant(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, encoding))
         {
-            strcpy(message, S_SUCCESS);
+            sprintf(message, "L%-39s%s", "Black en passant", encoding);
             return;
         }
         if (_isWhiteEnPassant(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, encoding))
         {
-            strcpy(message, S_SUCCESS);
+            sprintf(message, "L%-39s%s", "White en passant", encoding);
             return;
         }
-        strcpy(message, E_ILLEGAL_MOVE);
+        strcpy(message, "I3-change move not recognized");
         return;
     }
 
@@ -707,18 +708,18 @@ void processMove(char prevBoard[][8], char currBoard[][8], Metadata metadata, ch
     {
         if (_isBlackCastle(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, encoding))
         {
-            strcpy(message, S_SUCCESS);
+            sprintf(message, "L%-39s%s", "Black castle", encoding);
             return;
         }
         if (_isWhiteCastle(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, encoding))
         {
-            strcpy(message, S_SUCCESS);
+            sprintf(message, "L%-39s%s", "White castle", encoding);
             return;
         }
-        strcpy(message, E_ILLEGAL_MOVE);
+        strcpy(message, "I4-change move not recognized");
         return;
     }
-    */
-    strcpy(message, E_ILLEGAL_MOVE);
+
+    strcpy(message, "IMove not recognized");
     return;
 }
