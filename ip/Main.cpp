@@ -1,4 +1,6 @@
 #include "stdafx.h"
+#include <iostream>
+/*
 #include "Util.h"
 #include "Conversion.h"
 #include "Morphological.h"
@@ -6,7 +8,8 @@
 #include "Canny.h"
 #include "Filter.h"
 #include "KNearestNeighbors.h"
-
+#include <thread>
+*/
 #define IMAGE_WIDTH				500
 #define IMAGE_HEIGHT			500
 #define BINARY_THRESHOLD		150
@@ -18,12 +21,19 @@
 
 #define TEST_FILE_PATH "Images\\img002.jpg"
 
-#define SHOW_IMAGES false
+#define SHOW_IMAGES true
 #define GENERATE_IMAGES false
-#define CLASSIFY true
+#define CLASSIFY false
 
+// already included?
+#include <winsock2.h>
+#include <ws2tcpip.h>
 
+#define SERVER_IP "127.0.0.1"
+#define SERVER_PORT 55555
+#include "Client.h"
 
+/*
 Mat_<Vec3b> extractCell(int i, int j, Rect ROI, Mat_<Vec3b> imgWarped)
 {
 	int stepX = ROI.width / 8;
@@ -35,8 +45,94 @@ Mat_<Vec3b> extractCell(int i, int j, Rect ROI, Mat_<Vec3b> imgWarped)
 	return imgCell;
 }
 
+void screenshotThreadFunction(VideoCapture videoCapture)
+{
+	Mat_<Vec3b> imgFrame;
+	videoCapture.read(imgFrame);
+	imshow("screenshotThread", imgFrame);
+	waitKey();
+}
+
+void videoThreadFunction()
+{
+	VideoCapture videoCapture;
+	//videoCapture.open("http://192.168.100.34:8080/video");
+	videoCapture.open(0);
+
+	if (!videoCapture.isOpened())
+	{
+		std::cout << "Could not open camera!" << std::endl;
+		return;
+	}
+
+	Mat_<Vec3b> imgFrame;
+	int keyPressed;
+	for (;;)
+	{
+		videoCapture.read(imgFrame);
+
+		if (imgFrame.empty())
+		{
+			std::cout << "Empty frame!" << std::endl;
+			break;
+		}
+		imshow("videoThread", imgFrame);
+
+		keyPressed = waitKey(5);
+		if (keyPressed == 'e')
+		{
+			std::cout << "e pressed" << std::endl;
+			break;
+		}
+		else if (keyPressed == 's')
+		{
+			std::cout << "s pressed" << std::endl;
+			std::thread screenshotThread(screenshotThreadFunction, videoCapture);
+			screenshotThread.detach();  // https://stackoverflow.com/questions/39742155/c-single-threaded-works-on-new-thread-it-calls-abort
+		}
+	}
+}
+*/
+
 int main()
 {
+	return client_main();
+	/*
+	std::thread videoThread(videoThreadFunction);
+	videoThread.join();
+	*/
+	/*
+	//videoCapture.set(CAP_PROP_BUFFERSIZE, 1);
+
+	namedWindow("imgFrame", 1);
+	char fileName[100];
+	int count = 0;
+	int keyPressed = 'I';
+
+	//std::thread threads[2];
+	while (1)
+	{
+		switch (keyPressed)
+		{
+		case ' ':
+			std::cout << "Space pressed!" << std::endl;
+			sprintf(fileName, "CameraTest\\Frame_%04d.jpeg", count++);
+			imwrite(fileName, imgFrame);
+			break;
+		case 'e':
+			std::cout << "E pressed!" << std::endl;
+			return 0;
+		}
+
+		std::cout << "Read frame!" << std::endl;
+		videoCapture >> imgFrame;
+		
+		imshow("imgFrame", imgFrame);
+
+		keyPressed = waitKey(0);
+	}
+	*/
+	/*
 	if (CLASSIFY)
 	{
 		goto _skip;
@@ -422,6 +518,6 @@ _skip:
 
 		std::cout << "Accuracy: " << accuracy << std::endl;
 	}
-
+	*/
 	return 0;
 }

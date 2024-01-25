@@ -74,6 +74,14 @@ bool _canPawnAttackCell(char board[8][8], int currRow, int currCol, int destRow,
                 return true;
             }
         }
+        else if (destRow == currRow - 2)
+        {
+            // long simple move
+            if (destCol == currCol && currRow == 6 && IS_FREE(board[5][destCol]) && IS_FREE(board[4][destCol]))
+            {
+                return true;
+            }
+        }
     }
     else if (IS_BLACK_PAWN(board[currRow][currCol]))
     {
@@ -99,6 +107,18 @@ bool _canPawnAttackCell(char board[8][8], int currRow, int currCol, int destRow,
 
             // simple capture
             if ((destCol == currCol - 1 || destCol == currCol + 1) && IS_WHITE(board[destRow][destCol]))
+            {
+                return true;
+            }
+        }
+        else if (destRow == currRow + 2)
+        {
+            std::cout << (destCol == currCol) << std::endl;
+            std::cout << (currRow == 1) << std::endl;
+            std::cout << (IS_FREE(board[2][destCol])) << std::endl;
+            std::cout << (IS_FREE(board[3][destCol])) << std::endl;
+            // long simple move
+            if (destCol == currCol && currRow == 1 && (IS_FREE(board[2][destCol]) && (IS_FREE(board[3][destCol]))))
             {
                 return true;
             }
@@ -293,9 +313,16 @@ bool isCellInCheck(char board[8][8], int row, int col, Metadata metadata)
     return false;
 }
 
-std::vector<std::pair<int, int>> _getAttackers(char board[8][8], int kingRow, int kingCol, int enPassantCol)
+struct Attacker
 {
-    std::vector<std::pair<int, int>> attackers;
+    int row;
+    int col;
+    char enc;
+};
+
+std::vector<Attacker> _getAttackers(char board[8][8], int kingRow, int kingCol, int enPassantCol)
+{
+    std::vector<Attacker> attackers;
 
     for (int i = 0; i < 8; i++)
     {
@@ -309,7 +336,7 @@ std::vector<std::pair<int, int>> _getAttackers(char board[8][8], int kingRow, in
 
             if (canPieceAttackCell(board, i, j, kingRow, kingCol, enPassantCol))
             {
-                attackers.push_back(std::pair<int, int>(i, j));
+                attackers.push_back(Attacker{i, j, board[i][j]});
             }
         }
     }
@@ -392,7 +419,7 @@ bool _getCanOtherMove(char board[8][8], int kingRow, int kingCol, Color kingColo
     return false;
 }
 
-bool _getCanAttackerBeBlocked(char board[8][8], int kingRow, int kingCol, Color kingColor, int enPassantCol, std::vector<std::pair<int, int>> attackers)
+bool _getCanAttackerBeBlocked(char board[8][8], int kingRow, int kingCol, Color kingColor, int enPassantCol, std::vector<Attacker> attackers)
 {
     // no attackers
     if (attackers.size() == 0)
@@ -403,8 +430,8 @@ bool _getCanAttackerBeBlocked(char board[8][8], int kingRow, int kingCol, Color 
     // if just one attacker, maybe it can be captured
     if (attackers.size() == 1)
     {
-        int attackerRow = attackers[0].first;
-        int attackerCol = attackers[0].second;
+        int attackerRow = attackers[0].row;
+        int attackerCol = attackers[0].col;
 
         for (int i = 0; i < 8; i++)
         {
@@ -432,19 +459,38 @@ bool _getCanAttackerBeBlocked(char board[8][8], int kingRow, int kingCol, Color 
     }
 
     // if more attackers, the only option is to move a piece such that it blocks each attack (could work for one attacker as well)
-    for (std::pair<int, int> attacker : attackers)
+    int attackingPath[8][8] = { 0 };
+    /*
+    for (Attacker attacker : attackers)
     {
-        int attackerRow = attackers[0].first;
-        int attackerCol = attackers[0].second;
-
-        // no way to block knight
-        if (IS_WHITE_KNIGHT(board[attackerRow][attackerCol]) || IS_BLACK_KNIGHT(board[attackerRow][attackerCol]))
+        // reconstruct attacker path (TODO: move to method "get attacker path" ?)
+        switch (attacker.enc)
         {
-            return false;
+            case WP:
+            case BP:
+            case WN:
+            case BN:
+            case WK:
+            case BK:
+                return false;  // these have "attack range of 1" (or knight), cannot be blocked
+                break;
+            case WB:
+            case BB:
+
+            case WR:
+            case BR:
+
+            
+            case WQ:
+            case BQ:
+
+            
+
         }
 
         return true;  // TODO implement
     }
+    */
 
     return false;
 }
@@ -476,7 +522,7 @@ KingSituation getKingSituation(char board[8][8], Color kingColor, Metadata metad
     assert(false);
 _found:
 
-    std::vector<std::pair<int, int>> attackers = _getAttackers(board, kingRow, kingCol, metadata.enPassantCol);
+    std::vector<Attacker> attackers = _getAttackers(board, kingRow, kingCol, metadata.enPassantCol);
     bool canKingMove = _getCanKingMove(board, kingRow, kingCol, metadata);
     bool canOtherMove = _getCanOtherMove(board, kingRow, kingCol, kingColor, metadata.enPassantCol);
     bool canAttackersBeBlocked = _getCanAttackerBeBlocked(board, kingRow, kingCol, kingColor, metadata.enPassantCol, attackers);

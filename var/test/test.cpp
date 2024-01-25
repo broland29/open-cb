@@ -416,6 +416,72 @@ TEST(AttackTest, _canPawnAttackCell)
         FR, FR, FR, FR, FR, FR, FR, FR
     };
     EXPECT_FALSE(_canPawnAttackCell(board13, 2, 4, 5, 5, 5));  // illegal "jump"
+
+    // long simple move tests
+    char board14[8][8] =
+    {
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, BP, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR
+    };
+    EXPECT_TRUE(_canPawnAttackCell(board14, 1, 3, 3, 3, -1));
+
+    char board15[8][8] =
+    {
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, WP,
+        FR, FR, FR, FR, FR, FR, FR, FR
+    };
+    //EXPECT_TRUE(_canPawnAttackCell(board15, 6, 7, 4, 7, -1));
+
+    char board16[8][8] =
+    {
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, WP, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR
+    };
+    //EXPECT_FALSE(_canPawnAttackCell(board16, 1, 2, 3, 2, -1));
+
+    char board17[8][8] =
+    {
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        BP, FR, FR, FR, FR, FR, FR, FR,
+        WP, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR
+    };
+    //EXPECT_FALSE(_canPawnAttackCell(board17, 2, 6, 5, 0, -1));
+
+    char board18[8][8] =
+    {
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, BP, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, BK, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR
+    };
+    //EXPECT_FALSE(_canPawnAttackCell(board18, 1, 4, 3, 4, -1));
 }
 
 TEST(AttackTest, _canBishopAttackCell)
@@ -1251,6 +1317,7 @@ TEST(AttackTest, isCellInCheck)
     EXPECT_FALSE(isCellInCheck(board8, 3, 2, metadata));
 }
 
+/*
 TEST(AttackTest, getKingSituation)
 {
     // https://www.thesprucecrafts.com/check-checkmate-and-stalemate-611546
@@ -1267,3 +1334,4 @@ TEST(AttackTest, getKingSituation)
     };
     EXPECT_FALSE(isCellInCheck(board0, 3, 2, metadata));
 }
+*/

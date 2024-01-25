@@ -11,8 +11,15 @@
 
 #pragma warning(disable : 4996)
 
+
+
+#include "Server.h"
+
 int main()
 {
+    return server_main();
+
+    /*
     std::ofstream log("log.txt");
     if (!log.is_open())
     {
@@ -113,4 +120,5 @@ int main()
 
     log << "Closing log." << std::endl;
     log.close();
+    */
 }
