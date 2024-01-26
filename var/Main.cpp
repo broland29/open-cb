@@ -14,9 +14,14 @@
 
 #include "Server.h"
 #include "Validator.h"
+#include "Logger.h"
 
 int main()
 {
+    initLogger();
+    SPDLOG_TRACE("Incorrect setup");
+
+    /*
     Server server;
     server.connect();
 
@@ -51,5 +56,6 @@ int main()
     }
 _over:
     server.close();
+    */
     return 0;
 }

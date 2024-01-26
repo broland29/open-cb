@@ -1,4 +1,6 @@
 #include "Move.h"
+#include "Logger.h"
+
 
 bool _isBlackMove(char prevBoard[8][8], std::vector<Change> changes, Metadata metadata, bool isOppositeKingInCheck, bool isOppositeKingInCheckmate, char encoding[10])
 {
@@ -59,11 +61,7 @@ bool _isBlackMove(char prevBoard[8][8], std::vector<Change> changes, Metadata me
         }
         else if (a.wasBlackPawn() && a.row == 1 && b.row == 3)
         {
-            /* TODO
-            metadata.enPassant.isPossible = true;
-            metadata.enPassant.row = b.row;
-            metadata.enPassant.col = b.col;
-            */
+            metadata.enPassantCol = b.col;
         }
 
         moveInternalToAlgebraic(
@@ -93,6 +91,7 @@ bool _isWhiteMove(char prevBoard[8][8], std::vector<Change> changes, Metadata me
     // --- turn check --- //
     if (metadata.turn != Color::WHITE)
     {
+        SPDLOG_TRACE("Not white turn");
         return false;
     }
 
@@ -116,12 +115,14 @@ bool _isWhiteMove(char prevBoard[8][8], std::vector<Change> changes, Metadata me
 
     if (aCount != 1 || bCount != 1)
     {
+        SPDLOG_TRACE("Incorrect setup");
         return false;
     }
 
     // --- move check --- //
     if (!canPieceAttackCell(prevBoard, a.row, a.col, b.row, b.col, metadata.enPassantCol))
     {
+        SPDLOG_TRACE("Incorrect move");
         return false;
     }
 
@@ -147,25 +148,22 @@ bool _isWhiteMove(char prevBoard[8][8], std::vector<Change> changes, Metadata me
         }
         else if (a.wasWhitePawn() && a.row == 6 && b.row == 4)
         {
-            /* TODO
-            metadata.enPassant.isPossible = true;
-            metadata.enPassant.row = b.row;
-            metadata.enPassant.col = b.col;
-            */
+            metadata.enPassantCol = b.col;
         }
 
+        SPDLOG_TRACE("Simple move");
         moveInternalToAlgebraic(
             a.prev,
             a.row, a.col,
             b.row, b.col,
             false, false, false, isOppositeKingInCheck, isOppositeKingInCheckmate, false, false, 'x', encoding);
-        std::cout << "In isWhiteMove: " << encoding << std::endl;
         return true;
     }
 
     // promotion
     if (a.wasWhitePawn() && (b.isWhiteBishop() || b.isWhiteKnight() || b.isWhiteRook() || b.isWhiteQueen()))
     {
+        SPDLOG_TRACE("Promotion");
         moveInternalToAlgebraic(
             a.prev,
             a.row, a.col,
@@ -174,6 +172,7 @@ bool _isWhiteMove(char prevBoard[8][8], std::vector<Change> changes, Metadata me
         return true;
     }
 
+    SPDLOG_TRACE("Unrecognized move");
     return false;
 }
 
