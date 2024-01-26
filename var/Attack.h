@@ -121,5 +121,5 @@ bool isCellInCheck(
 KingSituation getKingSituation(
     char board[8][8],
     Color kingColor,
-    Metadata metadata
+    int enPassantCol
 );

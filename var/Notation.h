@@ -33,8 +33,10 @@ namespace
 
 #define IS_WHITE(enc)                       (IS_WHITE_PAWN(enc) || IS_WHITE_BISHOP(enc) || IS_WHITE_KNIGHT(enc) || IS_WHITE_ROOK(enc) || IS_WHITE_QUEEN(enc) || IS_WHITE_KING(enc))
 #define IS_BLACK(enc)                       (IS_BLACK_PAWN(enc) || IS_BLACK_BISHOP(enc) || IS_BLACK_KNIGHT(enc) || IS_BLACK_ROOK(enc) || IS_BLACK_QUEEN(enc) || IS_BLACK_KING(enc))
-#define IS_ATTACKABLE(currEnc, destEnc)     (IS_FREE(destEnc) || ((IS_WHITE(currEnc)) && (IS_BLACK(destEnc)) || (IS_BLACK(currEnc)) && (IS_WHITE(destEnc))))
-#define IS_NOT_FREE(enc)                    (enc != FR)  // better use this, since paranthesis error-prone in "if(!(IS_FREE(board[row][col])))"
+
+#define IS_ATTACKABLE(currEnc, destEnc)     (IS_FREE(destEnc) || IS_WHITE(currEnc) && IS_BLACK(destEnc) || IS_BLACK(currEnc) && IS_WHITE(destEnc))
+#define IS_SAME_COLOR(currEnc, destEnc)     (IS_WHITE(currEnc) && IS_WHITE(destEnc) || IS_BLACK(currEnc) && IS_BLACK(destEnc))
+#define IS_NOT_FREE(enc)                    (IS_WHITE(enc) || IS_BLACK(enc))
 
 
 void _cellInternalToAlgebraic(

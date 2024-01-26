@@ -637,13 +637,13 @@ void processMove(char prevBoard[][8], char currBoard[][8], Metadata metadata, ch
     KingSituation oppositeKingSituation;
     if (metadata.turn == Color::WHITE)
     {
-        turnKingSituation = getKingSituation(currBoard, Color::WHITE, metadata);
-        oppositeKingSituation = getKingSituation(currBoard, Color::BLACK, metadata);
+        turnKingSituation = getKingSituation(currBoard, Color::WHITE, metadata.enPassantCol);
+        oppositeKingSituation = getKingSituation(currBoard, Color::BLACK, metadata.enPassantCol);
     }
     else
     {
-        turnKingSituation = getKingSituation(currBoard, Color::BLACK, metadata);
-        oppositeKingSituation = getKingSituation(currBoard, Color::WHITE, metadata);
+        turnKingSituation = getKingSituation(currBoard, Color::BLACK, metadata.enPassantCol);
+        oppositeKingSituation = getKingSituation(currBoard, Color::WHITE, metadata.enPassantCol);
     }
 
     // cannot put ourselves in check / cannot leave ourselves in check
