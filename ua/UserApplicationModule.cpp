@@ -1,19 +1,4 @@
-// https://www.youtube.com/watch?v=Wi9nQTDFF4U&t=5208s
-
 #include "UserApplicationModule.h"
-#include <QLabel>
-#include <QMovie>
-#include <QPushButton>
-#include <QMenu>
-#include <QLineEdit>
-#include <QHBoxLayout>
-#include <QVBoxLayout>
-#include <QGridLayout>
-#include <QRadioButton>
-#include <QCheckBox>
-#include <QTime>
-#include <QTimer>
-#include <QListWidget>
 
 UserApplicationModule::UserApplicationModule(QWidget *parent)
     : QMainWindow(parent)
@@ -44,7 +29,7 @@ UserApplicationModule::UserApplicationModule(QWidget *parent)
     middleLeftWidget->setStyleSheet("background-color:green");
 
     QPixmap cameraOnePlaceholder = QPixmap(":/UserApplicationModule/placeholder.jpeg");
-    QLabel* cameraOneImageLabel = new QLabel();
+    cameraOneImageLabel = new QLabel();
     cameraOneImageLabel->setFixedWidth(230);
     cameraOneImageLabel->setPixmap(cameraOnePlaceholder.scaled(cameraOneImageLabel->width(), cameraOneImageLabel->height(), Qt::KeepAspectRatio));
     middleLeftLayout->addWidget(cameraOneImageLabel);
@@ -52,7 +37,7 @@ UserApplicationModule::UserApplicationModule(QWidget *parent)
     middleLeftLayout->addWidget(cameraOneTextLabel);
 
     QPixmap cameraTwoPlaceholder = QPixmap(":/UserApplicationModule/placeholder.jpeg");
-    QLabel* cameraTwoImageLabel = new QLabel();
+    cameraTwoImageLabel = new QLabel();
     cameraTwoImageLabel->setFixedWidth(230);
     cameraTwoImageLabel->setPixmap(cameraTwoPlaceholder.scaled(cameraTwoImageLabel->width(), cameraTwoImageLabel->height(), Qt::KeepAspectRatio));
     middleLeftLayout->addWidget(cameraTwoImageLabel);
@@ -73,7 +58,6 @@ UserApplicationModule::UserApplicationModule(QWidget *parent)
     middleRightLayout->addWidget(resultWidget, 0, Qt::AlignHCenter);
 
     QStringList items = (QStringList() << "FR" << "WP" << "WB" << "WN" << "WR" << "WQ" << "WK" << "BP" << "BB" << "BN" << "BR" << "BQ" << "BK");
-    std::array<QComboBox*, 64> comboBoxes;
     int flat;
     for (int i = 0; i < 8; i++)
     {
@@ -90,8 +74,9 @@ UserApplicationModule::UserApplicationModule(QWidget *parent)
     QHBoxLayout* radioLayout = new QHBoxLayout(radioWidget);
     radioWidget->setFixedHeight(50);
     radioWidget->setStyleSheet("background-color:magenta");
-    QRadioButton* trainRadioButton = new QRadioButton("Train");
-    QRadioButton* testRadioButton = new QRadioButton("Test");
+    trainRadioButton = new QRadioButton("Train");
+    trainRadioButton->click();
+    testRadioButton = new QRadioButton("Test");
     radioLayout->addWidget(trainRadioButton);
     radioLayout->addWidget(testRadioButton);
     middleRightLayout->addWidget(radioWidget);
@@ -100,8 +85,8 @@ UserApplicationModule::UserApplicationModule(QWidget *parent)
     QHBoxLayout* actionLayout = new QHBoxLayout(actionWidget);
     actionWidget->setFixedHeight(50);
     actionWidget->setStyleSheet("background-color:darkRed");
-    QPushButton* runButton = new QPushButton("Run KNN");
-    QPushButton* resetButton = new QPushButton("Reset KNN");
+    runButton = new QPushButton("Run KNN");
+    resetButton = new QPushButton("Reset KNN");
     actionLayout->addWidget(runButton);
     actionLayout->addWidget(resetButton);
     middleRightLayout->addWidget(actionWidget);
@@ -114,7 +99,7 @@ UserApplicationModule::UserApplicationModule(QWidget *parent)
     // -- message -- //
     QWidget* messageWidget = new QWidget;
     QHBoxLayout* messageLayout = new QHBoxLayout(messageWidget);
-    QLabel* messageLabel = new QLabel("message");
+    messageLabel = new QLabel("message");
     messageLayout->addWidget(messageLabel);
     messageWidget->setStyleSheet("background-color:cyan");
     messageWidget->setFixedHeight(50);
@@ -122,10 +107,10 @@ UserApplicationModule::UserApplicationModule(QWidget *parent)
     // -- bottom -- //
     QWidget* bottomWidget = new QWidget;
     QHBoxLayout* bottomLayout = new QHBoxLayout(bottomWidget);
-    QPushButton* getImageButton = new QPushButton("Get image");
-    QPushButton* sendToVARButton = new QPushButton("Send to VAR");
-    QPushButton* helpButton = new QPushButton("Help");
-    QPushButton* exitButton = new QPushButton("Exit");
+    getImageButton = new QPushButton("Get image");
+    sendToVARButton = new QPushButton("Send to VAR");
+    helpButton = new QPushButton("Help");
+    exitButton = new QPushButton("Exit");
     bottomLayout->addWidget(getImageButton);
     bottomLayout->addWidget(sendToVARButton);
     bottomLayout->addWidget(helpButton);
@@ -140,9 +125,45 @@ UserApplicationModule::UserApplicationModule(QWidget *parent)
 
     centralWidget->setLayout(centralLayout);
     setCentralWidget(centralWidget);
+
+    connect(runButton, SIGNAL(clicked()), this, SLOT(runButtonClicked()));
+    connect(resetButton, SIGNAL(clicked()), this, SLOT(resetButtonClicked()));
+    connect(getImageButton, SIGNAL(clicked()), this, SLOT(getImageButtonClicked()));
+    connect(sendToVARButton, SIGNAL(clicked()), this, SLOT(sendToVARButtonClicked()));
+    connect(helpButton, SIGNAL(clicked()), this, SLOT(helpButtonClicked()));
+    connect(exitButton, SIGNAL(clicked()), this, SLOT(exitButtonClicked()));
     //ui.setupUi(this);
 }
 
 UserApplicationModule::~UserApplicationModule()
 {}
 
+void UserApplicationModule::runButtonClicked()
+{
+    messageLabel->setText("Run not implemented");
+}
+
+void UserApplicationModule::resetButtonClicked()
+{
+    messageLabel->setText("Reset not implemented");
+}
+
+void UserApplicationModule::getImageButtonClicked()
+{
+    messageLabel->setText("Get image not implemented");
+}
+
+void UserApplicationModule::sendToVARButtonClicked()
+{
+    messageLabel->setText("Send to VAR not implemented");
+}
+
+void UserApplicationModule::helpButtonClicked()
+{
+    messageLabel->setText("Help not implemented");
+}
+
+void UserApplicationModule::exitButtonClicked()
+{
+    messageLabel->setText("Exit not implemented");
+}
