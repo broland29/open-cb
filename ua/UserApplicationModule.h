@@ -50,4 +50,8 @@ public slots:
     void sendToVARButtonClicked();
     void helpButtonClicked();
     void exitButtonClicked();
+    void setImageSlot();
+
+signals:
+    void requestImageSignal();
 };

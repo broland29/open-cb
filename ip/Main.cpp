@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "Util.h"
 #include <iostream>
 /*
 #include "Util.h"
@@ -10,8 +11,7 @@
 #include "KNearestNeighbors.h"
 #include <thread>
 */
-#define IMAGE_WIDTH				500
-#define IMAGE_HEIGHT			500
+
 #define BINARY_THRESHOLD		150
 #define CLOSING_SIZE			6
 #define HOUGH_RO_STEP_SIZE		1
@@ -26,8 +26,8 @@
 #define CLASSIFY false
 
 // already included?
-#include <winsock2.h>
-#include <ws2tcpip.h>
+//#include <winsock2.h>
+//#include <ws2tcpip.h>
 
 #define SERVER_IP "127.0.0.1"
 #define SERVER_PORT 55555
@@ -94,8 +94,58 @@ void videoThreadFunction()
 }
 */
 
+
+
+int testCameras()
+{
+	// 1 seems to be main camera
+	cv::VideoCapture cameraOne(0);
+	cv::VideoCapture cameraTwo(2);
+
+	if (!cameraOne.isOpened())
+	{
+		std::cout << "Could not open camera one!" << std::endl;
+		return 1;
+	}
+	if (!cameraTwo.isOpened())
+	{
+		std::cout << "Could not open camera one!" << std::endl;
+		return 1;
+	}
+
+	Mat_<Vec3b> imgOriginalColorOne, imgOriginalColorTwo;
+	while (true)
+	{
+		cameraOne >> imgOriginalColorOne;
+		cameraTwo >> imgOriginalColorTwo;
+
+		Mat_<Vec3b> imgResizedColorOne, imgResizedColorTwo;
+		resize(imgOriginalColorOne, imgResizedColorOne, cv::Size(IMAGE_WIDTH, IMAGE_HEIGHT));
+		resize(imgOriginalColorTwo, imgResizedColorTwo, cv::Size(IMAGE_WIDTH, IMAGE_HEIGHT));
+
+		imshow("imgResizedColorOne", imgResizedColorOne);
+		imshow("imgResizedColorTwo", imgResizedColorTwo);
+
+		int c = waitKey(40);
+		if (27 == char(c))  // esc
+		{
+			std::cout << "exiting" << std::endl;
+			break;
+		}
+		if (char(c) == 'i')
+		{
+			std::cout << "saving images" << std::endl;
+			imwrite(PATH_IMG_CAM_ONE, imgResizedColorOne);
+			imwrite(PATH_IMG_CAM_TWO, imgResizedColorTwo);
+		}
+	}
+	cameraOne.release();
+	cameraTwo.release();
+}
+
 int main()
 {
+	//testCameras();
 	return client_main();
 	/*
 	std::thread videoThread(videoThreadFunction);

@@ -9,6 +9,11 @@ using namespace cv;
 
 #define PI 3.14159265
 
+#define IMAGE_WIDTH				500
+#define IMAGE_HEIGHT			500
+#define PATH_IMG_CAM_ONE        "C:\\open-cb\\ua\\preview\\cam1.jpeg"
+#define PATH_IMG_CAM_TWO        "C:\\open-cb\\ua\\preview\\cam2.jpeg"
+
 // "The normal parameterization of a line consists of representing the line
 // by its normal vector and the distance from origin to the line."
 struct lineRoTheta

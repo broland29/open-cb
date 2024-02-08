@@ -151,6 +151,7 @@ void UserApplicationModule::resetButtonClicked()
 void UserApplicationModule::getImageButtonClicked()
 {
     messageLabel->setText("Get image not implemented");
+    requestImageSignal();
 }
 
 void UserApplicationModule::sendToVARButtonClicked()
@@ -166,4 +167,30 @@ void UserApplicationModule::helpButtonClicked()
 void UserApplicationModule::exitButtonClicked()
 {
     messageLabel->setText("Exit not implemented");
+}
+
+#define PATH_IMG_CAM_ONE "preview\\cam1.jpeg"
+#define PATH_IMG_CAM_TWO "preview\\cam2.jpeg"
+
+void UserApplicationModule::setImageSlot()
+{
+    messageLabel->setText("Set image fired! Yippie!");
+
+    QImage cameraOneImage, cameraTwoImage;
+    if (cameraOneImage.load(PATH_IMG_CAM_ONE) == false)
+    {
+        messageLabel->setText("Could not load" + QString::fromUtf8(PATH_IMG_CAM_ONE));
+        return;
+    }
+    if (cameraTwoImage.load(PATH_IMG_CAM_TWO) == false)
+    {
+        messageLabel->setText("Could not load" + QString::fromUtf8(PATH_IMG_CAM_TWO));
+        return;
+    }
+
+    QPixmap cameraOnePixmap = QPixmap::fromImage(cameraOneImage);
+    QPixmap cameraTwoPixmap = QPixmap::fromImage(cameraTwoImage);
+
+    cameraOneImageLabel->setPixmap(cameraOnePixmap.scaled(cameraOneImageLabel->width(), cameraOneImageLabel->height(), Qt::KeepAspectRatio));
+    cameraTwoImageLabel->setPixmap(cameraTwoPixmap.scaled(cameraTwoImageLabel->width(), cameraTwoImageLabel->height(), Qt::KeepAspectRatio));
 }

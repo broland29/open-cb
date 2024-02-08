@@ -13,21 +13,23 @@ class Wrap : public QThread
 
 int main(int argc, char *argv[])
 {
-    //qDebug() << ">>>> before\n";
     QApplication a(argc, argv);
-    //qDebug() << ">>>> after\n";
-    //Wrap* wrap = new Wrap();
-    //wrap->start();
     UserApplicationModule w;
     w.show();
 
-    // is putting this here the solution?
-    Server* server1 = new Server("server1");
-    Server* server2 = new Server("server2");
-    Server* server3 = new Server("server3");
-    server1->start();  // calls QThread run
-    server2->start();  // calls QThread run
-    server3->start();  // calls QThread run
+    // create server thread
+    QThread* serverThread = new QThread;
+    Server* serverWorker = new Server;
+    QObject::connect(serverThread, &QThread::started, serverWorker, &Server::doWork);
+    QObject::connect(serverWorker, &Server::workDone, serverThread, &QThread::quit);
+    QObject::connect(serverThread, &QThread::finished, serverWorker, &Server::deleteLater);
+
+    // cross - thread communication
+    QObject::connect(&w, &UserApplicationModule::requestImageSignal, serverWorker, &Server::requestImageSlot);  // press button, send request to IP
+    QObject::connect(serverWorker, &Server::setImageSignal, &w, &UserApplicationModule::setImageSlot);  // get response from IP, set preview images
+
+    serverWorker->moveToThread(serverThread);
+    serverThread->start();
 
     int ret = a.exec();
     return ret;

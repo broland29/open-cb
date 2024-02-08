@@ -12,8 +12,30 @@
 #define SEND_BUFFER_SIZE    200
 #define RECV_BUFFER_SIZE    200
 
-class Server : public QThread
+class Server : public QObject
 {
+    Q_OBJECT
+
+public:
+    Server();
+    ~Server();
+private:
+    int socketConnect();
+    //int receiveImage();
+
+public slots:
+    void doWork();
+    void deleteLater();
+    void requestImageSlot();
+
+signals:
+    void workDone();
+    void setImageSignal();
+
+private:
+    SOCKET serverSocket;
+    SOCKET acceptSocket;
+    /*
 private:
     SOCKET serverSocket;
     SOCKET acceptSocket;
@@ -30,7 +52,5 @@ public:
     int sendMessage(char message[SEND_BUFFER_SIZE]);
 
     int close();
-
-    // override QThread run
-    void run();
+    */
 };
