@@ -152,7 +152,7 @@ void Server::doWork()
     */
 }
 
-void Server::sendBoardToIPTrainSlot(QString board)
+void Server::sendToTrainSlot(QString board)
 {
     board.prepend("t");
     QByteArray byteArray = board.toLatin1();
@@ -161,9 +161,25 @@ void Server::sendBoardToIPTrainSlot(QString board)
     _sendMessage(acceptSocket, msg);
 }
 
-void Server::resetKnnSlot()
+void Server::sendToTestSlot(QString board)
 {
-    char msg[2] = "r";
+    board.prepend("T");
+    QByteArray byteArray = board.toLatin1();
+    char* msg = byteArray.data();
+    qDebug() << "Will send " << msg << " to IP";
+    _sendMessage(acceptSocket, msg);
+}
+
+void Server::resetTrainSlot()
+{
+    char msg[4] = "r";
+    qDebug() << "Will send " << msg << " to IP";
+    _sendMessage(acceptSocket, msg);
+}
+
+void Server::resetTestSlot()
+{
+    char msg[4] = "R";
     qDebug() << "Will send " << msg << " to IP";
     _sendMessage(acceptSocket, msg);
 }

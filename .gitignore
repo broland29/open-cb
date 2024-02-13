@@ -11,6 +11,10 @@ ip/OpenCV
 ip/x64
 *.vcxproj
 *.user
+ip/CameraTest
+ip/Cells
+ip/CellsDemo
+ip/Images2
 
 # --- validation and response module --- #
 var/Debug
@@ -22,3 +26,12 @@ var/x64
 *.sln
 *.filters
 
+# --- user application module --- #
+ua/*.jpeg
+ua/*.gif
+ua/resource.h
+*.aps
+*.qrc
+*.rc
+ua/preview
+ua/x64

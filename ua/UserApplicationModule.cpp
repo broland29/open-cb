@@ -63,33 +63,38 @@ UserApplicationModule::UserApplicationModule(QWidget *parent)
     {
         for (int j = 0; j < 8; j++)
         {
-            flat = i + j * 8;
+            flat = i * 8 + j;
             comboBoxes[flat] = new QComboBox;
             comboBoxes[flat]->addItems(items);
             resultLayout->addWidget(comboBoxes[flat], i, j);
         }
     }
 
-    QWidget* radioWidget = new QWidget;
-    QHBoxLayout* radioLayout = new QHBoxLayout(radioWidget);
-    radioWidget->setFixedHeight(50);
-    radioWidget->setStyleSheet("background-color:magenta");
-    trainRadioButton = new QRadioButton("Train");
-    trainRadioButton->click();
-    testRadioButton = new QRadioButton("Test");
-    radioLayout->addWidget(trainRadioButton);
-    radioLayout->addWidget(testRadioButton);
-    middleRightLayout->addWidget(radioWidget);
-
     QWidget* actionWidget = new QWidget;
-    QHBoxLayout* actionLayout = new QHBoxLayout(actionWidget);
-    actionWidget->setFixedHeight(50);
+    QGridLayout* actionLayout = new QGridLayout(actionWidget);
+    actionWidget->setFixedHeight(130);
     actionWidget->setStyleSheet("background-color:darkRed");
-    runButton = new QPushButton("Run KNN");
-    resetButton = new QPushButton("Reset KNN");
-    actionLayout->addWidget(runButton);
-    actionLayout->addWidget(resetButton);
+    sendToTrainButton = new QPushButton("Send to Train");
+    sendToTestButton = new QPushButton("Send to Test");
+    runTrainButton = new QPushButton("Run Train");
+    runTestButton = new QPushButton("Run Test");
+    resetTrainButton = new QPushButton("Reset Train");
+    resetTestButton = new QPushButton("Reset Test");
+    actionLayout->addWidget(sendToTrainButton, 0, 0);
+    actionLayout->addWidget(sendToTestButton, 0, 1);
+    actionLayout->addWidget(runTrainButton, 1, 0);
+    actionLayout->addWidget(runTestButton, 1, 1);
+    actionLayout->addWidget(resetTrainButton, 2, 0);
+    actionLayout->addWidget(resetTestButton, 2, 1);
+
+    QWidget* checkboxWidget = new QWidget;
+    QHBoxLayout* checkboxLayout = new QHBoxLayout(checkboxWidget);
+    classifyWhenGettingImageCheckbox = new QCheckBox("Classify when getting image");
+    checkboxLayout->addWidget(classifyWhenGettingImageCheckbox, 0, Qt::AlignCenter);
+    //checkboxWidget->setFixedHeight(50);
+
     middleRightLayout->addWidget(actionWidget);
+    middleRightLayout->addWidget(checkboxWidget);
 
     middleLayout->addWidget(middleLeftWidget);
     middleLayout->addWidget(middleRightWidget);
@@ -126,8 +131,13 @@ UserApplicationModule::UserApplicationModule(QWidget *parent)
     centralWidget->setLayout(centralLayout);
     setCentralWidget(centralWidget);
 
-    connect(runButton, SIGNAL(clicked()), this, SLOT(runButtonClicked()));
-    connect(resetButton, SIGNAL(clicked()), this, SLOT(resetButtonClicked()));
+    connect(sendToTrainButton, SIGNAL(clicked()), this, SLOT(sendToTrainButtonClicked()));
+    connect(sendToTestButton, SIGNAL(clicked()), this, SLOT(sendToTestButtonClicked()));
+    connect(runTrainButton, SIGNAL(clicked()), this, SLOT(runTrainButtonClicked()));
+    connect(runTestButton, SIGNAL(clicked()), this, SLOT(runTestButtonClicked()));
+    connect(resetTrainButton, SIGNAL(clicked()), this, SLOT(resetTrainButtonClicked()));
+    connect(resetTestButton, SIGNAL(clicked()), this, SLOT(resetTestButtonClicked()));
+
     connect(getImageButton, SIGNAL(clicked()), this, SLOT(getImageButtonClicked()));
     connect(sendToVARButton, SIGNAL(clicked()), this, SLOT(sendToVARButtonClicked()));
     connect(helpButton, SIGNAL(clicked()), this, SLOT(helpButtonClicked()));
@@ -138,7 +148,7 @@ UserApplicationModule::UserApplicationModule(QWidget *parent)
 UserApplicationModule::~UserApplicationModule()
 {}
 
-void UserApplicationModule::runButtonClicked()
+QString UserApplicationModule::_extractComboBoxes()
 {
     QString board;
     board.resize(64);
@@ -146,7 +156,7 @@ void UserApplicationModule::runButtonClicked()
     {
         QString enc = comboBoxes[i]->currentText();  // == overloaded for QString
 
-        if      (enc == "FR") { board[i] = '*'; }
+        if (enc == "FR") { board[i] = '*'; }
         else if (enc == "WP") { board[i] = 'P'; }
         else if (enc == "WB") { board[i] = 'B'; }
         else if (enc == "WN") { board[i] = 'N'; }
@@ -161,23 +171,48 @@ void UserApplicationModule::runButtonClicked()
         else if (enc == "BK") { board[i] = 'k'; }
         else
         {
-            messageLabel->setText("Unknown comboBox value " + enc);
-            return;
+            return "Unknown comboBox value " + enc;
         }
     }
-    messageLabel->setText(board);
-
-    if (trainRadioButton->isChecked())
-    {
-        emit sendBoardToIPTrainSignal(board);
-    }
-    
+    return board;
 }
 
-void UserApplicationModule::resetButtonClicked()
+void UserApplicationModule::sendToTrainButtonClicked()
 {
-    messageLabel->setText("Reset pressed");
-    emit resetKnnSignal();
+    messageLabel->setText("sendToTrainButtonClicked");
+    QString board = _extractComboBoxes();
+    messageLabel->setText(board);
+    emit sendToTrainSignal(board);
+}
+
+void UserApplicationModule::sendToTestButtonClicked()
+{
+    messageLabel->setText("sendToTestButtonClicked");
+    QString board = _extractComboBoxes();
+    messageLabel->setText(board);
+    emit sendToTestSignal(board);
+}
+
+void UserApplicationModule::runTrainButtonClicked()
+{
+    messageLabel->setText("runTrainButtonClicked");
+}
+
+void UserApplicationModule::runTestButtonClicked()
+{
+    messageLabel->setText("runTestButtonClicked");
+}
+
+void UserApplicationModule::resetTrainButtonClicked()
+{
+    messageLabel->setText("resetTrainButtonClicked");
+    emit resetTrainSignal();
+}
+
+void UserApplicationModule::resetTestButtonClicked()
+{
+    messageLabel->setText("resetTestButtonClicked");
+    emit resetTestSignal();
 }
 
 void UserApplicationModule::getImageButtonClicked()

@@ -27,8 +27,12 @@ public slots:
     void doWork();
     void deleteLater();
     void requestImageSlot();
-    void sendBoardToIPTrainSlot(QString board);
-    void resetKnnSlot();
+    
+    void sendToTrainSlot(QString board);
+    void sendToTestSlot(QString board);
+    
+    void resetTrainSlot();
+    void resetTestSlot();
 
 signals:
     void workDone();

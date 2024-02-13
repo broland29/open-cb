@@ -12,6 +12,7 @@
 #include <QComboBox>
 #include <QPushButton>
 #include <QRadioButton>
+#include <QCheckBox>
 
 
 class UserApplicationModule : public QMainWindow
@@ -21,16 +22,20 @@ class UserApplicationModule : public QMainWindow
 public:
     UserApplicationModule(QWidget *parent = nullptr);
     ~UserApplicationModule();
+    QString _extractComboBoxes();
 
 private:
     // -- middle -- //
     QLabel* cameraOneImageLabel;
     QLabel* cameraTwoImageLabel;
     std::array<QComboBox*, 64> comboBoxes;
-    QRadioButton* trainRadioButton;
-    QRadioButton* testRadioButton;
-    QPushButton* runButton;
-    QPushButton* resetButton;
+    QPushButton* sendToTrainButton;
+    QPushButton* sendToTestButton;
+    QPushButton* runTrainButton;
+    QPushButton* runTestButton;
+    QPushButton* resetTrainButton;
+    QPushButton* resetTestButton;
+    QCheckBox* classifyWhenGettingImageCheckbox;
 
     // -- message -- //
     QLabel* messageLabel;
@@ -44,16 +49,26 @@ private:
     Ui::UserApplicationModuleClass ui;
 
 public slots:
-    void runButtonClicked();
-    void resetButtonClicked();
+    void sendToTrainButtonClicked();
+    void sendToTestButtonClicked();
+    void runTrainButtonClicked();
+    void runTestButtonClicked();
+    void resetTrainButtonClicked();
+    void resetTestButtonClicked();
+
     void getImageButtonClicked();
     void sendToVARButtonClicked();
     void helpButtonClicked();
     void exitButtonClicked();
+
     void setImageSlot();
 
 signals:
     void requestImageSignal();
-    void sendBoardToIPTrainSignal(QString board);
-    void resetKnnSignal();
+    
+    void sendToTrainSignal(QString board);
+    void sendToTestSignal(QString board);
+    
+    void resetTrainSignal();
+    void resetTestSignal();
 };

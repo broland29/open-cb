@@ -156,9 +156,22 @@ int client_main()
 			}
 			continue;
 		}
-		if (cmd == 't')
+		if (cmd == 't' || cmd == 'T')
 		{
-			std::cout << "got cmd = train " << std::endl;
+			char prefix[20];
+			if (cmd == 't')
+			{
+				strcpy(prefix, "persistence\\train");
+			}
+			else if (cmd == 'T')
+			{
+				strcpy(prefix, "persistence\\test");
+			}
+			else
+			{
+				std::cout << "Unknown command " << recvBuffer << std::endl;
+				continue;
+			}
 
 			// left part of board detected by cam1, right part by cam2
 			// however, each camera sees what's closer to it as "lower cells" (different perspective)
@@ -186,11 +199,11 @@ int client_main()
 					mapCharToFolder(recvBuffer[1 + rightRow * 8 + rightCol], rightFolder);
 
 					sprintf(leftPath,
-						"persistence\\train\\%s\\no%02d_row%02d_col%02d%_left.jpeg",
-						leftFolder, currentFileNo, leftRow, leftCol);
+						"%s\\%s\\no%02d_row%02d_col%02d%_left.jpeg",
+						prefix, leftFolder, currentFileNo, leftRow, leftCol);
 					sprintf(rightPath,
-						"persistence\\train\\%s\\no%02d_row%02d_col%02d%_right.jpeg",
-						rightFolder, currentFileNo, rightRow, rightCol
+						"%s\\%s\\no%02d_row%02d_col%02d%_right.jpeg",
+						prefix, rightFolder, currentFileNo, rightRow, rightCol
 					);
 
 					// extraxt and save cell
@@ -214,13 +227,28 @@ int client_main()
 
 			continue;
 		}
-		if (cmd == 'r')  // reset knn
+		if (cmd == 'r' || cmd == 'R')  // reset knn
 		{
+			char prefix[20];
+			if (cmd == 'r')
+			{
+				strcpy(prefix, "persistence\\train");
+			}
+			else if (cmd == 'R')
+			{
+				strcpy(prefix, "persistence\\test");
+			}
+			else
+			{
+				std::cout << "Unknown command " << recvBuffer << std::endl;
+				continue;
+			}
+
 			char folders[13][3] = { "FR", "WP", "WB", "WN", "WR", "WQ", "WK", "BP", "BB", "BN", "BR", "BQ", "BK" };
 			char path[256];
 			for (int i = 0; i < 13; i++)
 			{
-				sprintf(path, "persistence\\train\\%s", folders[i]);
+				sprintf(path, "%s\\%s", prefix, folders[i]);
 
 				// delete folder
 				std::error_code errorCode;
