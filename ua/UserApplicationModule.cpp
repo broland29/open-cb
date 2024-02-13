@@ -140,12 +140,44 @@ UserApplicationModule::~UserApplicationModule()
 
 void UserApplicationModule::runButtonClicked()
 {
-    messageLabel->setText("Run not implemented");
+    QString board;
+    board.resize(64);
+    for (int i = 0; i < 64; i++)
+    {
+        QString enc = comboBoxes[i]->currentText();  // == overloaded for QString
+
+        if      (enc == "FR") { board[i] = '*'; }
+        else if (enc == "WP") { board[i] = 'P'; }
+        else if (enc == "WB") { board[i] = 'B'; }
+        else if (enc == "WN") { board[i] = 'N'; }
+        else if (enc == "WR") { board[i] = 'R'; }
+        else if (enc == "WQ") { board[i] = 'Q'; }
+        else if (enc == "WK") { board[i] = 'K'; }
+        else if (enc == "BP") { board[i] = 'p'; }
+        else if (enc == "BB") { board[i] = 'b'; }
+        else if (enc == "BN") { board[i] = 'n'; }
+        else if (enc == "BR") { board[i] = 'r'; }
+        else if (enc == "BQ") { board[i] = 'q'; }
+        else if (enc == "BK") { board[i] = 'k'; }
+        else
+        {
+            messageLabel->setText("Unknown comboBox value " + enc);
+            return;
+        }
+    }
+    messageLabel->setText(board);
+
+    if (trainRadioButton->isChecked())
+    {
+        emit sendBoardToIPTrainSignal(board);
+    }
+    
 }
 
 void UserApplicationModule::resetButtonClicked()
 {
-    messageLabel->setText("Reset not implemented");
+    messageLabel->setText("Reset pressed");
+    emit resetKnnSignal();
 }
 
 void UserApplicationModule::getImageButtonClicked()

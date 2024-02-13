@@ -5,9 +5,30 @@
 #include "Client.h"
 #include "Util.h"
 
+#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
+#include <experimental/filesystem>
+
+namespace fs = std::experimental::filesystem;
+
 #define SERVER_IP "127.0.0.1"
 #define SERVER_PORT 55555
 
+// functions to translate coordinate system from left/right camera to main
+// ex: lr - left camera row, mc - main camera column
+// see cams.drawio
+int leftToMain(int lr, int lc, int &mr, int &mc)
+{
+	mr = lc;
+	mc = 7 - lr;
+	return 1;
+}
+
+int rightToMain(int rr, int rc, int& mr, int& mc)
+{
+	mr = 7 - rc;
+	mc = rr;
+	return 1;
+}
 
 
 int client_main()
@@ -48,6 +69,7 @@ int client_main()
 	std::cout << "connect() success." << std::endl;
 
 	char cmd = 'x';
+	int currentFileNo = 0;
 	while (true)
 	{
 		// recieve message
@@ -115,8 +137,8 @@ int client_main()
 			resize(imgOriginalColorTwo, imgResizedColorTwo, cv::Size(IMAGE_WIDTH, IMAGE_HEIGHT));
 
 
-			imwrite(PATH_IMG_CAM_ONE, imgResizedColorOne);
-			imwrite(PATH_IMG_CAM_TWO, imgResizedColorTwo);
+			cv::imwrite(PATH_IMG_CAM_ONE, imgResizedColorOne);
+			cv::imwrite(PATH_IMG_CAM_TWO, imgResizedColorTwo);
 
 			cameraOne.release();
 			cameraTwo.release();
@@ -133,6 +155,86 @@ int client_main()
 				WSACleanup();
 			}
 			continue;
+		}
+		if (cmd == 't')
+		{
+			std::cout << "got cmd = train " << std::endl;
+
+			// left part of board detected by cam1, right part by cam2
+			// however, each camera sees what's closer to it as "lower cells" (different perspective)
+			Mat_<Vec3b> imgCamLeft = imread(PATH_DUMMY_IMG_CAM_ONE, IMREAD_COLOR);
+			Mat_<Vec3b> imgCamRight = imread(PATH_DUMMY_IMG_CAM_TWO, IMREAD_COLOR);
+
+			for (int i = 4; i < 8; i++)
+			{
+				for (int j = 0; j < 8; j++)
+				{
+					// coordinate conversion for naming
+					// i, j (coord system of camera x) -> xRow, xCol (main coord system)
+					int leftRow, leftCol, rightRow, rightCol;
+					leftToMain(i, j, leftRow, leftCol);
+					rightToMain(i, j, rightRow, rightCol);
+
+					// path creation
+					char leftPath[256];
+					char rightPath[256];
+					char leftFolder[3];
+					char rightFolder[3];
+
+					// encoding given in main coord system by user; gives folder
+					mapCharToFolder(recvBuffer[1 + leftRow * 8 + leftCol], leftFolder);
+					mapCharToFolder(recvBuffer[1 + rightRow * 8 + rightCol], rightFolder);
+
+					sprintf(leftPath,
+						"persistence\\train\\%s\\no%02d_row%02d_col%02d%_left.jpeg",
+						leftFolder, currentFileNo, leftRow, leftCol);
+					sprintf(rightPath,
+						"persistence\\train\\%s\\no%02d_row%02d_col%02d%_right.jpeg",
+						rightFolder, currentFileNo, rightRow, rightCol
+					);
+
+					// extraxt and save cell
+					Mat_<Vec3b> imgCellCamLeft = extractCell(i, j, imgCamLeft);
+					Mat_<Vec3b> imgCellCamRight = extractCell(i, j, imgCamRight);
+
+					if (cv::imwrite(leftPath, imgCellCamLeft) == false)
+					{
+						std::cout << "Error saving to " << leftPath << std::endl;
+						break;
+					}
+					if (cv::imwrite(rightPath, imgCellCamRight) == false)
+					{
+						std::cout << "Error saving to " << rightPath << std::endl;
+						break;
+					}
+					std::cout << "Images saved to " << leftPath << " and " << rightPath << std::endl;
+				}
+			}
+			currentFileNo++;
+
+			continue;
+		}
+		if (cmd == 'r')  // reset knn
+		{
+			char folders[13][3] = { "FR", "WP", "WB", "WN", "WR", "WQ", "WK", "BP", "BB", "BN", "BR", "BQ", "BK" };
+			char path[256];
+			for (int i = 0; i < 13; i++)
+			{
+				sprintf(path, "persistence\\train\\%s", folders[i]);
+
+				// delete folder
+				std::error_code errorCode;
+				if (fs::remove_all(path, errorCode) == -1)
+				{
+					std::cout << "remove_all: " << errorCode.message() << std::endl;
+				}
+
+				// re-create folder
+				if (fs::create_directory(path, errorCode) == false)
+				{
+					std::cout << "create_directory: " << errorCode.message() << std::endl;
+				}
+			}
 		}
 	}
 

@@ -27,6 +27,8 @@ int main(int argc, char *argv[])
     // cross - thread communication
     QObject::connect(&w, &UserApplicationModule::requestImageSignal, serverWorker, &Server::requestImageSlot);  // press button, send request to IP
     QObject::connect(serverWorker, &Server::setImageSignal, &w, &UserApplicationModule::setImageSlot);  // get response from IP, set preview images
+    QObject::connect(&w, &UserApplicationModule::sendBoardToIPTrainSignal, serverWorker, &Server::sendBoardToIPTrainSlot);  // runKNN train
+    QObject::connect(&w, &UserApplicationModule::resetKnnSignal, serverWorker, &Server::resetKnnSlot);  // press resetKnn button
 
     serverWorker->moveToThread(serverThread);
     serverThread->start();

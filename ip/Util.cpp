@@ -185,3 +185,39 @@ double euclideanDistance(Point2i a, Point2i b)
 {
 	return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
 }
+
+
+Mat_<Vec3b> extractCell(int i, int j, Mat_<Vec3b> img)
+{
+	int stepX = img.cols / 8;
+	int stepY = img.rows / 8;
+
+	return img(Rect{
+		stepX * j,              // x
+		stepY * (i - 1),        // y - start from cell above
+		stepX,                  // width
+		stepY * 2               // height - two cells
+		});
+}
+
+
+void mapCharToFolder(char enc, char folder[3])
+{
+	switch (enc)
+	{
+	case '*': strcpy(folder, "FR"); return;
+	case 'P': strcpy(folder, "WP"); return;
+	case 'B': strcpy(folder, "WB"); return;
+	case 'N': strcpy(folder, "WN"); return;
+	case 'R': strcpy(folder, "WR"); return;
+	case 'Q': strcpy(folder, "WQ"); return;
+	case 'K': strcpy(folder, "WK"); return;
+	case 'p': strcpy(folder, "BP"); return;
+	case 'b': strcpy(folder, "BB"); return;
+	case 'n': strcpy(folder, "BN"); return;
+	case 'r': strcpy(folder, "BR"); return;
+	case 'q': strcpy(folder, "BQ"); return;
+	case 'k': strcpy(folder, "BK"); return;
+	default: std::cout << "Unrecognized enc " << enc << std::endl;
+	}
+}

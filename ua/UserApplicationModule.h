@@ -54,4 +54,6 @@ public slots:
 
 signals:
     void requestImageSignal();
+    void sendBoardToIPTrainSignal(QString board);
+    void resetKnnSignal();
 };

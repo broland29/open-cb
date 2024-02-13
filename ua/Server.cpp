@@ -136,7 +136,6 @@ void Server::requestImageSlot()
     }
 }
 
-
 void Server::doWork()
 {
     socketConnect();
@@ -153,7 +152,21 @@ void Server::doWork()
     */
 }
 
+void Server::sendBoardToIPTrainSlot(QString board)
+{
+    board.prepend("t");
+    QByteArray byteArray = board.toLatin1();
+    char* msg = byteArray.data();
+    qDebug() << "Will send " << msg << " to IP";
+    _sendMessage(acceptSocket, msg);
+}
 
+void Server::resetKnnSlot()
+{
+    char msg[2] = "r";
+    qDebug() << "Will send " << msg << " to IP";
+    _sendMessage(acceptSocket, msg);
+}
 
 void Server::deleteLater()
 {

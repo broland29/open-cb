@@ -13,6 +13,8 @@ using namespace cv;
 #define IMAGE_HEIGHT			500
 #define PATH_IMG_CAM_ONE        "C:\\open-cb\\ua\\preview\\cam1.jpeg"
 #define PATH_IMG_CAM_TWO        "C:\\open-cb\\ua\\preview\\cam2.jpeg"
+#define PATH_DUMMY_IMG_CAM_ONE  "C:\\open-cb\\ua\\preview\\dummy_cam_left.jpeg"
+#define PATH_DUMMY_IMG_CAM_TWO  "C:\\open-cb\\ua\\preview\\dummy_cam_right.jpeg"
 
 // "The normal parameterization of a line consists of representing the line
 // by its normal vector and the distance from origin to the line."
@@ -79,3 +81,11 @@ int getIntersectionOfLines(
 );
 
 double euclideanDistance(Point2i a, Point2i b);
+
+
+// extracts cell of interest and cell above as well
+// fails for row 0, since out of bounds. but it should not be used for row 0! since only lower part of interest
+Mat_<Vec3b> extractCell(int i, int j, Mat_<Vec3b> img);
+
+
+void mapCharToFolder(char enc, char folder[3]);

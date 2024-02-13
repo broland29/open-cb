@@ -143,10 +143,30 @@ int testCameras()
 	cameraTwo.release();
 }
 
+void testExtractCell()
+{
+	Mat_<Vec3b> img = imread(PATH_DUMMY_IMG_CAM_ONE, IMREAD_COLOR);
+	Mat_<Vec3b> cell1 = extractCell(1, 1, img);
+	Mat_<Vec3b> cell2 = extractCell(7, 7, img);
+	//Mat_<Vec3b> cell3 = extractCell(0, 3, img);
+	Mat_<Vec3b> cell4 = extractCell(2, 7, img);
+	imshow("imgCamLeft", img);
+	imshow("imgCamRight", img);
+	imshow("cell1", cell1);
+	imshow("cell2", cell2);
+	//imshow("cell3", cell3);
+	imshow("cell4", cell4);
+	waitKey();
+}
+
 int main()
 {
 	//testCameras();
+	//testExtractCell();
+	
 	return client_main();
+	
+	
 	/*
 	std::thread videoThread(videoThreadFunction);
 	videoThread.join();
