@@ -35,12 +35,14 @@ public slots:
     void resetTestSlotIP();
 
     void requestImageSlotIP(bool classifyWhenGettingImage);
+    void sendToVARSlotVAR(QString board);
     void exitSlotIP();
     void exitSlotVAR();
 
 signals:
     void workDone();
     void requestImageReplySignalIP(QString board);
+    void sendToVARReplySignalVAR(QString message);
 
 private:
     SOCKET serverSocket;

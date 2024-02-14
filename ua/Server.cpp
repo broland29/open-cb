@@ -231,6 +231,20 @@ void Server::requestImageSlotIP(bool classifyWhenGettingImage)
     requestImageReplySignalIP(board);
 }
 
+void Server::sendToVARSlotVAR(QString board)
+{
+    board.prepend("b");
+    QByteArray byteArray = board.toLatin1();
+    char* msg = byteArray.data();
+    qDebug() << "Will send " << msg << " to IP";
+    _sendMessage(VARSocket, msg);
+
+    char recvBuffer[RECV_BUFFER_SIZE];
+    _receiveMessage(VARSocket, recvBuffer);
+    qDebug() << "Got:" << recvBuffer;
+    emit sendToVARReplySignalVAR(QString::fromLatin1(recvBuffer));
+}
+
 void Server::exitSlotIP()
 {
     char msg[2] = "e";

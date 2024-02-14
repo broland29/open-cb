@@ -2,8 +2,45 @@
 #include <ws2tcpip.h>
 #include <iostream>
 
+#include "Validator.h"
+
 #define SERVER_IP "127.0.0.1"
 #define SERVER_PORT 55555
+
+void b(Validator validator, char recvBuffer[200], SOCKET clientSocket)
+{
+	char board[8][8];
+	for (int i = 0; i < 8; i++)
+	{
+		for (int j = 0; j < 8; j++)
+		{
+			board[i][j] = recvBuffer[i * 8 + j + 1];
+		}
+	}
+	std::cout << "Got board: ";
+	for (int i = 0; i < 8; i++)
+	{
+		for (int j = 0; j < 8; j++)
+		{
+			std::cout << board[i][j] << " ";
+		}
+		std::cout << std::endl;
+	}
+
+	char sendBuffer[200];
+	validator.validateBoard(board, sendBuffer);
+
+	int sendByteCount = send(clientSocket, sendBuffer, 200, 0);
+	if (sendByteCount > 0)
+	{
+		std::cout << "send() success." << std::endl;
+	}
+	else
+	{
+		std::cout << "send() error: " << WSAGetLastError();
+		WSACleanup();
+	}
+}
 
 int client_main()
 {
@@ -43,6 +80,8 @@ int client_main()
 	std::cout << "connect() success." << std::endl;
 
 	char cmd = 'x';
+	Validator validator;
+
 	while (true)
 	{
 		// recieve message
@@ -63,6 +102,9 @@ int client_main()
 		case 'e':
 			std::cout << "got cmd = exit" << std::endl;
 			break;
+		case 'b':
+			b(validator, recvBuffer, clientSocket);
+			continue;
 		default:
 			std::cout << "unknown command" << std::endl;
 			continue;

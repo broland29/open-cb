@@ -61,7 +61,8 @@ public slots:
     void helpButtonClicked();
     void exitButtonClicked();
 
-    void requestImageReplySlot(QString board);
+    void requestImageReplySlotIP(QString board);
+    void sendToVARReplySlotVAR(QString message);
 
 signals:
     void sendToTrainSignalIP(QString board);
@@ -72,6 +73,7 @@ signals:
     void resetTestSignalIP();
 
     void requestImageSignalIP(bool classifyWhenGettingImage);
+    void sendToVARSignalVAR(QString board);
     void exitSignalIP();
     void exitSignalVAR();
 };

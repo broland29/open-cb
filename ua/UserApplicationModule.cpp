@@ -69,6 +69,27 @@ UserApplicationModule::UserApplicationModule(QWidget *parent)
             resultLayout->addWidget(comboBoxes[flat], i, j);
         }
     }
+    comboBoxes[0]->setCurrentText("BR");
+    comboBoxes[1]->setCurrentText("BN");
+    comboBoxes[2]->setCurrentText("BB");
+    comboBoxes[3]->setCurrentText("BQ");
+    comboBoxes[4]->setCurrentText("BK");
+    comboBoxes[5]->setCurrentText("BB");
+    comboBoxes[6]->setCurrentText("BN");
+    comboBoxes[7]->setCurrentText("BR");
+    for (int i = 0; i < 8; i++)
+    {
+        comboBoxes[8 + i]->setCurrentText("BP");
+        comboBoxes[8 * 6 + i]->setCurrentText("WP");
+    }
+    comboBoxes[56]->setCurrentText("WR");
+    comboBoxes[57]->setCurrentText("WN");
+    comboBoxes[58]->setCurrentText("WB");
+    comboBoxes[59]->setCurrentText("WQ");
+    comboBoxes[60]->setCurrentText("WK");
+    comboBoxes[61]->setCurrentText("WB");
+    comboBoxes[62]->setCurrentText("WN");
+    comboBoxes[63]->setCurrentText("WR");
 
     QWidget* actionWidget = new QWidget;
     QGridLayout* actionLayout = new QGridLayout(actionWidget);
@@ -179,7 +200,6 @@ QString UserApplicationModule::_extractComboBoxes()
 
 void UserApplicationModule::sendToTrainButtonClicked()
 {
-    messageLabel->setText("sendToTrainButtonClicked");
     QString board = _extractComboBoxes();
     messageLabel->setText(board);
     emit sendToTrainSignalIP(board);
@@ -187,7 +207,6 @@ void UserApplicationModule::sendToTrainButtonClicked()
 
 void UserApplicationModule::sendToTestButtonClicked()
 {
-    messageLabel->setText("sendToTestButtonClicked");
     QString board = _extractComboBoxes();
     messageLabel->setText(board);
     emit sendToTestSignalIP(board);
@@ -225,7 +244,9 @@ void UserApplicationModule::getImageButtonClicked()
 
 void UserApplicationModule::sendToVARButtonClicked()
 {
-    messageLabel->setText("Send to VAR not implemented");
+    QString board = _extractComboBoxes();
+    messageLabel->setText(board);
+    emit sendToVARSignalVAR(board);
 }
 
 void UserApplicationModule::helpButtonClicked()
@@ -243,7 +264,7 @@ void UserApplicationModule::exitButtonClicked()
 #define PATH_IMG_CAM_ONE "preview\\cam1.jpeg"
 #define PATH_IMG_CAM_TWO "preview\\cam2.jpeg"
 
-void UserApplicationModule::requestImageReplySlot(QString board)
+void UserApplicationModule::requestImageReplySlotIP(QString board)
 {
     messageLabel->setText("Set image fired! Yippie!");
 
@@ -286,4 +307,9 @@ void UserApplicationModule::requestImageReplySlot(QString board)
             return;
         }
     }
+}
+
+void UserApplicationModule::sendToVARReplySlotVAR(QString message)
+{
+    messageLabel->setText(message);
 }
