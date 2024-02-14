@@ -15,6 +15,8 @@ ip/CameraTest
 ip/Cells
 ip/CellsDemo
 ip/Images2
+ip/persistence/test/*
+ip/persistence/train/*
 
 # --- validation and response module --- #
 var/Debug

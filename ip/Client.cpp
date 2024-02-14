@@ -4,6 +4,7 @@
 #include <ws2tcpip.h>
 #include "Client.h"
 #include "Util.h"
+#include "KNearestNeighbors.h"
 
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 #include <experimental/filesystem>
@@ -89,7 +90,7 @@ int client_main()
 		if (cmd == 'e')  // exit
 		{
 			std::cout << "got cmd = exit" << std::endl;
-			break;
+			return 0;
 		}
 		if (cmd == 'i')  // request image
 		{
@@ -263,6 +264,163 @@ int client_main()
 					std::cout << "create_directory: " << errorCode.message() << std::endl;
 				}
 			}
+		}
+		if (cmd == 'x')
+		{
+			// KNN is a lazy learner, does not have a training phase
+			continue;
+		}
+		if (cmd == 'X')
+		{
+			const int C = 13;  // number of classes
+			const std::array<std::string, C> classes = {
+				"black_bishop",
+				"black_king",
+				"black_knight",
+				"black_pawn",
+				"black_queen",
+				"black_rook",
+				"free",
+				"white_bishop",
+				"white_king",
+				"white_knight",
+				"white_pawn",
+				"white_queen",
+				"white_rook"
+			};
+
+			std::map<std::string, std::vector<Mat_<Vec3b>>> trainImages;
+			std::map<std::string, std::vector<Mat_<Vec3b>>> testImages;
+
+			// insert empty vectors for each class
+			for (int i = 0; i < C; i++)
+			{
+				trainImages.insert(
+					std::pair<std::string, std::vector<Mat_<Vec3b>>>(
+						classes[i],
+						std::vector<Mat_<Vec3b>>()
+						));
+				testImages.insert(
+					std::pair<std::string, std::vector<Mat_<Vec3b>>>(
+						classes[i],
+						std::vector<Mat_<Vec3b>>()
+						));
+			}
+
+			char folders[13][3] = { "FR", "WP", "WB", "WN", "WR", "WQ", "WK", "BP", "BB", "BN", "BR", "BQ", "BK" };
+			char path[256];
+			for (int i = 0; i < 13; i++)
+			{
+				sprintf(path, "persistence\\train\\%s", folders[i]);
+				for (const auto& entry : fs::directory_iterator(path))
+				{
+					std::string pathString{ entry.path().string() };
+					std::cout << pathString << std::endl;
+
+					Mat_<Vec3b> img = imread(pathString, IMREAD_COLOR);
+					if (img.empty())
+					{
+						std::cout << "Could not open file at path: " << pathString << std::endl;
+						break;
+					}
+
+					// store image
+					trainImages[classes[i]].push_back(img);
+				}
+
+				sprintf(path, "persistence\\test\\%s", folders[i]);
+				for (const auto& entry : fs::directory_iterator(path))
+				{
+					std::string pathString{ entry.path().string() };
+					std::cout << pathString << std::endl;
+
+					Mat_<Vec3b> img = imread(pathString, IMREAD_COLOR);
+					if (img.empty())
+					{
+						std::cout << "Could not open file at path: " << pathString << std::endl;
+						break;
+					}
+
+					// store image
+					testImages[classes[i]].push_back(img);
+				}
+			}
+
+			// instantiate classifier (includes training)
+			KNearestNeighborsClassifier classifier(trainImages, 5);
+
+			// testing phase
+			Mat_<double> confusionMatrix(C, C, 0.0);  // row: predicted class  col: actual class
+			for (auto const& pair : testImages)
+			{
+				std::string actualClass = pair.first;           // class
+				std::vector<Mat_<Vec3b>> images = pair.second;  // vector of images
+				for (Mat_<Vec3b> image : images)
+				{
+					std::string predictedClass = classifier.classify(image);
+
+					int predictedClassIndex, actualClassIndex;
+					for (int i = 0; i < C; i++)
+					{
+						if (actualClass == classes[i])
+						{
+							actualClassIndex = i;
+						}
+						if (predictedClass == classes[i])
+						{
+							predictedClassIndex = i;
+						}
+					}
+
+					confusionMatrix(actualClassIndex, predictedClassIndex)++;
+				}
+			}
+
+			double correct = 0;
+			double wrong = 0;
+			for (int i = 0; i < C; i++)
+			{
+				for (int j = 0; j < C; j++)
+				{
+					if (i == j)
+					{
+						correct += confusionMatrix(i, j);
+					}
+					else
+					{
+						wrong += confusionMatrix(i, j);
+					}
+				}
+			}
+			double accuracy = correct / (correct + wrong);
+
+			std::cout << "Train images:" << std::endl;
+			int total = 0;
+			for (auto const& pair : trainImages)
+			{
+				total += pair.second.size();
+				std::cout << pair.first << ": " << pair.second.size() << std::endl;
+			}
+			std::cout << "Total: " << total << std::endl << std::endl;
+
+			total = 0;
+			std::cout << "Test images:" << std::endl;
+			for (auto const& pair : testImages)
+			{
+				total += pair.second.size();
+				std::cout << pair.first << ": " << pair.second.size() << std::endl;
+			}
+			std::cout << "Total: " << total << std::endl << std::endl;
+
+			std::cout << "Confusion matrix:" << std::endl;
+			std::cout << "Classes: ";
+			for (int i = 0; i < classes.size(); i++)
+			{
+				std::cout << " (" << i << ":" << classes[i] << ")";
+			}
+			std::cout << std::endl << confusionMatrix << std::endl << std::endl;
+
+			std::cout << "Accuracy: " << accuracy << std::endl;
 		}
 	}
 

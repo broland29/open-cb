@@ -30,9 +30,12 @@ public slots:
     
     void sendToTrainSlot(QString board);
     void sendToTestSlot(QString board);
-    
+    void runTrainSlot();
+    void runTestSlot();
     void resetTrainSlot();
     void resetTestSlot();
+
+    void exitSlot();
 
 signals:
     void workDone();

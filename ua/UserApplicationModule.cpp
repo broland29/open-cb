@@ -196,11 +196,13 @@ void UserApplicationModule::sendToTestButtonClicked()
 void UserApplicationModule::runTrainButtonClicked()
 {
     messageLabel->setText("runTrainButtonClicked");
+    emit runTrainSignal();
 }
 
 void UserApplicationModule::runTestButtonClicked()
 {
     messageLabel->setText("runTestButtonClicked");
+    emit runTestSignal();
 }
 
 void UserApplicationModule::resetTrainButtonClicked()
@@ -233,7 +235,8 @@ void UserApplicationModule::helpButtonClicked()
 
 void UserApplicationModule::exitButtonClicked()
 {
-    messageLabel->setText("Exit not implemented");
+    emit exitSignal();
+    QCoreApplication::quit();
 }
 
 #define PATH_IMG_CAM_ONE "preview\\cam1.jpeg"

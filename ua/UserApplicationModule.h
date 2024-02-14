@@ -65,10 +65,13 @@ public slots:
 
 signals:
     void requestImageSignal();
-    
+
     void sendToTrainSignal(QString board);
     void sendToTestSignal(QString board);
-    
+    void runTrainSignal();
+    void runTestSignal();
     void resetTrainSignal();
     void resetTestSignal();
+
+    void exitSignal();
 };

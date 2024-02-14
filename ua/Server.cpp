@@ -170,6 +170,20 @@ void Server::sendToTestSlot(QString board)
     _sendMessage(acceptSocket, msg);
 }
 
+void Server::runTrainSlot()
+{
+    char msg[4] = "x";
+    qDebug() << "Will send " << msg << " to IP";
+    _sendMessage(acceptSocket, msg);
+}
+
+void Server::runTestSlot()
+{
+    char msg[4] = "X";
+    qDebug() << "Will send " << msg << " to IP";
+    _sendMessage(acceptSocket, msg);
+}
+
 void Server::resetTrainSlot()
 {
     char msg[4] = "r";
@@ -180,6 +194,13 @@ void Server::resetTrainSlot()
 void Server::resetTestSlot()
 {
     char msg[4] = "R";
+    qDebug() << "Will send " << msg << " to IP";
+    _sendMessage(acceptSocket, msg);
+}
+
+void Server::exitSlot()
+{
+    char msg[2] = "e";
     qDebug() << "Will send " << msg << " to IP";
     _sendMessage(acceptSocket, msg);
 }
