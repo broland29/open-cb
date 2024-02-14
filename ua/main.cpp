@@ -25,9 +25,9 @@ int main(int argc, char *argv[])
     QObject::connect(serverThread, &QThread::finished, serverWorker, &Server::deleteLater);
 
     // cross - thread communication
-    QObject::connect(&w, &UserApplicationModule::requestImageSignal, serverWorker, &Server::requestImageSlot);  // press button, send request to IP
-    QObject::connect(serverWorker, &Server::setImageSignal, &w, &UserApplicationModule::setImageSlot);  // get response from IP, set preview images
-    
+    QObject::connect(&w, &UserApplicationModule::requestImageSignal, serverWorker, &Server::requestImageSlot);            // press button, send request to IP
+    QObject::connect(serverWorker, &Server::requestImageReplySignal, &w, &UserApplicationModule::requestImageReplySlot);  // get reply from IP, set preview images and optionally the comboboxes
+
     QObject::connect(&w, &UserApplicationModule::sendToTrainSignal, serverWorker, &Server::sendToTrainSlot);    // sendToTrainButton clicked
     QObject::connect(&w, &UserApplicationModule::sendToTestSignal, serverWorker, &Server::sendToTestSlot);      // sendToTrainButton clicked
     QObject::connect(&w, &UserApplicationModule::runTrainSignal, serverWorker, &Server::runTrainSlot);          // runTrainButton clicked

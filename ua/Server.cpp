@@ -117,24 +117,7 @@ int _receiveMessage(SOCKET acceptSocket, char message[RECV_BUFFER_SIZE])
 }
 
 
-void Server::requestImageSlot()
-{
-    qDebug() << "entered requestImage";
-    char requestImageMessage[] = "i";
-    _sendMessage(acceptSocket, requestImageMessage);
-    char recvBuffer[RECV_BUFFER_SIZE];
-    _receiveMessage(acceptSocket, recvBuffer);
-    
-    if (recvBuffer[0] == 's')
-    {
-        qDebug() << "got success";
-        setImageSignal();
-    }
-    else
-    {
-        qDebug() << "did not get success";
-    }
-}
+
 
 void Server::doWork()
 {
@@ -196,6 +179,46 @@ void Server::resetTestSlot()
     char msg[4] = "R";
     qDebug() << "Will send " << msg << " to IP";
     _sendMessage(acceptSocket, msg);
+}
+
+
+
+void Server::requestImageSlot(bool classifyWhenGettingImage)
+{
+    qDebug() << "entered requestImage";
+
+    char msg[1];
+    if (classifyWhenGettingImage)
+    {
+        msg[0] = 'I';
+    }
+    else
+    {
+        msg[0] = 'i';
+    }
+    _sendMessage(acceptSocket, msg);
+
+    char recvBuffer[RECV_BUFFER_SIZE];
+    _receiveMessage(acceptSocket, recvBuffer);
+
+    if (recvBuffer[0] != 's')
+    {
+        qDebug() << "did not get success";
+        return;
+    }
+
+    QString board;
+    board.resize(64);
+    if (classifyWhenGettingImage)
+    {
+        char boardChar[65];
+        strncpy(boardChar, recvBuffer + 1, 64);
+        boardChar[64] = '\0';
+        board = QString::fromLatin1(boardChar);
+    }
+
+    // notify GUI that preview can be loaded from predefined path
+    requestImageReplySignal(board);
 }
 
 void Server::exitSlot()

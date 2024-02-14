@@ -92,7 +92,7 @@ int client_main()
 			std::cout << "got cmd = exit" << std::endl;
 			return 0;
 		}
-		if (cmd == 'i')  // request image
+		if (cmd == 'i' || cmd == 'I')  // request image
 		{
 			std::cout << "got cmd = request image" << std::endl;
 
@@ -143,6 +143,111 @@ int client_main()
 
 			cameraOne.release();
 			cameraTwo.release();
+
+			if (cmd == 'I')  // also classify
+			{
+				// get train images (similar to train)
+				const int C = 13;
+				const std::array<std::string, C> classes = {
+					"black_bishop",
+					"black_king",
+					"black_knight",
+					"black_pawn",
+					"black_queen",
+					"black_rook",
+					"free",
+					"white_bishop",
+					"white_king",
+					"white_knight",
+					"white_pawn",
+					"white_queen",
+					"white_rook"
+				};
+
+				std::map<std::string, std::vector<Mat_<Vec3b>>> trainImages;
+
+				for (int i = 0; i < C; i++)
+				{
+					trainImages.insert(
+						std::pair<std::string, std::vector<Mat_<Vec3b>>>(
+							classes[i],
+							std::vector<Mat_<Vec3b>>()
+							));
+				}
+
+				char folders[13][3] = { "FR", "WP", "WB", "WN", "WR", "WQ", "WK", "BP", "BB", "BN", "BR", "BQ", "BK" };
+				char path[256];
+				for (int i = 0; i < 13; i++)
+				{
+					sprintf(path, "persistence\\train\\%s", folders[i]);
+					for (const auto& entry : fs::directory_iterator(path))
+					{
+						std::string pathString{ entry.path().string() };
+						std::cout << pathString << std::endl;
+
+						Mat_<Vec3b> img = imread(pathString, IMREAD_COLOR);
+						if (img.empty())
+						{
+							std::cout << "Could not open file at path: " << pathString << std::endl;
+							break;
+						}
+
+						trainImages[classes[i]].push_back(img);
+					}
+				}
+
+				// read images and extract cells (similar to send to train/test)
+				Mat_<Vec3b> imgCamLeft = imread(PATH_IMG_CAM_ONE, IMREAD_COLOR);
+				Mat_<Vec3b> imgCamRight = imread(PATH_IMG_CAM_TWO, IMREAD_COLOR);
+				std::array<std::array<Mat_<Vec3b>, 8>, 8> cells;
+
+				for (int i = 4; i < 8; i++)
+				{
+					for (int j = 0; j < 8; j++)
+					{
+						// coordinate conversion for naming
+						// i, j (coord system of camera x) -> xRow, xCol (main coord system)
+						int leftRow, leftCol, rightRow, rightCol;
+						leftToMain(i, j, leftRow, leftCol);
+						rightToMain(i, j, rightRow, rightCol);
+
+						// extract and save cell
+						Mat_<Vec3b> imgCellCamLeft = extractCell(i, j, imgCamLeft);
+						Mat_<Vec3b> imgCellCamRight = extractCell(i, j, imgCamRight);
+						cells[leftRow][leftCol] = imgCellCamLeft;
+						cells[rightRow][rightCol] = imgCellCamRight;
+					}
+				}
+
+				// classify cells and "build" board
+				KNearestNeighborsClassifier classifier(trainImages, 5);
+				for (int i = 0; i < 8; i++)
+				{
+					for (int j = 0; j < 8; j++)
+					{
+						std::string classPredicted = classifier.classify(cells[i][j]);
+
+						if (classPredicted == "FR") { sendBuffer[i * 8 + j] = '*'; }
+						else if (classPredicted == "WP") { sendBuffer[i * 8 + j] = 'P'; }
+						else if (classPredicted == "WB") { sendBuffer[i * 8 + j] = 'B'; }
+						else if (classPredicted == "WN") { sendBuffer[i * 8 + j] = 'N'; }
+						else if (classPredicted == "WR") { sendBuffer[i * 8 + j] = 'R'; }
+						else if (classPredicted == "WQ") { sendBuffer[i * 8 + j] = 'Q'; }
+						else if (classPredicted == "WK") { sendBuffer[i * 8 + j] = 'K'; }
+						else if (classPredicted == "BP") { sendBuffer[i * 8 + j] = 'p'; }
+						else if (classPredicted == "BB") { sendBuffer[i * 8 + j] = 'b'; }
+						else if (classPredicted == "BN") { sendBuffer[i * 8 + j] = 'n'; }
+						else if (classPredicted == "BR") { sendBuffer[i * 8 + j] = 'r'; }
+						else if (classPredicted == "BQ") { sendBuffer[i * 8 + j] = 'q'; }
+						else if (classPredicted == "BK") { sendBuffer[i * 8 + j] = 'k'; }
+						else
+						{
+							std::cout << "Unknown class " << classPredicted << std::endl;
+							return 1;
+						}
+					}
+				}
+			}
 
 			// notify UA about success
 			int sendByteCount = send(clientSocket, sendBuffer, 200, 0);
@@ -207,7 +312,7 @@ int client_main()
 						prefix, rightFolder, currentFileNo, rightRow, rightCol
 					);
 
-					// extraxt and save cell
+					// extract and save cell
 					Mat_<Vec3b> imgCellCamLeft = extractCell(i, j, imgCamLeft);
 					Mat_<Vec3b> imgCellCamRight = extractCell(i, j, imgCamRight);
 

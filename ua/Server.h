@@ -26,7 +26,6 @@ private:
 public slots:
     void doWork();
     void deleteLater();
-    void requestImageSlot();
     
     void sendToTrainSlot(QString board);
     void sendToTestSlot(QString board);
@@ -35,31 +34,14 @@ public slots:
     void resetTrainSlot();
     void resetTestSlot();
 
+    void requestImageSlot(bool classifyWhenGettingImage);
     void exitSlot();
 
 signals:
     void workDone();
-    void setImageSignal();
+    void requestImageReplySignal(QString board);
 
 private:
     SOCKET serverSocket;
     SOCKET acceptSocket;
-    /*
-private:
-    SOCKET serverSocket;
-    SOCKET acceptSocket;
-    char name[10];
-
-public:
-    Server(const char name[10]);
-
-    // initializes socket and connects to one client
-    int connect();
-
-    int receiveMessage(char board[8][8], char& cmd);
-
-    int sendMessage(char message[SEND_BUFFER_SIZE]);
-
-    int close();
-    */
 };

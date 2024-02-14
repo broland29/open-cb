@@ -61,11 +61,9 @@ public slots:
     void helpButtonClicked();
     void exitButtonClicked();
 
-    void setImageSlot();
+    void requestImageReplySlot(QString board);
 
 signals:
-    void requestImageSignal();
-
     void sendToTrainSignal(QString board);
     void sendToTestSignal(QString board);
     void runTrainSignal();
@@ -73,5 +71,6 @@ signals:
     void resetTrainSignal();
     void resetTestSignal();
 
+    void requestImageSignal(bool classifyWhenGettingImage);
     void exitSignal();
 };

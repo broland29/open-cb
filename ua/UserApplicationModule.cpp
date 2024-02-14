@@ -219,8 +219,8 @@ void UserApplicationModule::resetTestButtonClicked()
 
 void UserApplicationModule::getImageButtonClicked()
 {
-    messageLabel->setText("Get image not implemented");
-    requestImageSignal();
+    messageLabel->setText("getImageButtonClicked");
+    emit requestImageSignal(classifyWhenGettingImageCheckbox->isChecked());
 }
 
 void UserApplicationModule::sendToVARButtonClicked()
@@ -242,7 +242,7 @@ void UserApplicationModule::exitButtonClicked()
 #define PATH_IMG_CAM_ONE "preview\\cam1.jpeg"
 #define PATH_IMG_CAM_TWO "preview\\cam2.jpeg"
 
-void UserApplicationModule::setImageSlot()
+void UserApplicationModule::requestImageReplySlot(QString board)
 {
     messageLabel->setText("Set image fired! Yippie!");
 
@@ -263,4 +263,26 @@ void UserApplicationModule::setImageSlot()
 
     cameraOneImageLabel->setPixmap(cameraOnePixmap.scaled(cameraOneImageLabel->width(), cameraOneImageLabel->height(), Qt::KeepAspectRatio));
     cameraTwoImageLabel->setPixmap(cameraTwoPixmap.scaled(cameraTwoImageLabel->width(), cameraTwoImageLabel->height(), Qt::KeepAspectRatio));
+
+    for (int i = 0; i < 64; i++)
+    {
+        if (board[i] == '*') { comboBoxes[i]->setCurrentText("FR"); }
+        else if (board[i] == 'P') { comboBoxes[i]->setCurrentText("WP"); }
+        else if (board[i] == 'B') { comboBoxes[i]->setCurrentText("WB"); }
+        else if (board[i] == 'N') { comboBoxes[i]->setCurrentText("WN"); }
+        else if (board[i] == 'R') { comboBoxes[i]->setCurrentText("WR"); }
+        else if (board[i] == 'Q') { comboBoxes[i]->setCurrentText("WQ"); }
+        else if (board[i] == 'K') { comboBoxes[i]->setCurrentText("WK"); }
+        else if (board[i] == 'p') { comboBoxes[i]->setCurrentText("BP"); }
+        else if (board[i] == 'b') { comboBoxes[i]->setCurrentText("BB"); }
+        else if (board[i] == 'n') { comboBoxes[i]->setCurrentText("BN"); }
+        else if (board[i] == 'r') { comboBoxes[i]->setCurrentText("BR"); }
+        else if (board[i] == 'q') { comboBoxes[i]->setCurrentText("BQ"); }
+        else if (board[i] == 'k') { comboBoxes[i]->setCurrentText("BK"); }
+        else
+        {
+            messageLabel->setText(QString("Unknown board value ") + board[i]);
+            return;
+        }
+    }
 }
