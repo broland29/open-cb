@@ -12,7 +12,7 @@
 
 
 
-#include "Server.h"
+#include "Client.h"
 #include "Validator.h"
 #include "Logger.h"
 
@@ -21,6 +21,7 @@ int main()
     initLogger();
     SPDLOG_TRACE("Incorrect setup");
 
+    return client_main();
     /*
     Server server;
     server.connect();
@@ -57,5 +58,4 @@ int main()
 _over:
     server.close();
     */
-    return 0;
 }

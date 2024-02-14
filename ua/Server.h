@@ -27,21 +27,23 @@ public slots:
     void doWork();
     void deleteLater();
     
-    void sendToTrainSlot(QString board);
-    void sendToTestSlot(QString board);
-    void runTrainSlot();
-    void runTestSlot();
-    void resetTrainSlot();
-    void resetTestSlot();
+    void sendToTrainSlotIP(QString board);
+    void sendToTestSlotIP(QString board);
+    void runTrainSlotIP();
+    void runTestSlotIP();
+    void resetTrainSlotIP();
+    void resetTestSlotIP();
 
-    void requestImageSlot(bool classifyWhenGettingImage);
-    void exitSlot();
+    void requestImageSlotIP(bool classifyWhenGettingImage);
+    void exitSlotIP();
+    void exitSlotVAR();
 
 signals:
     void workDone();
-    void requestImageReplySignal(QString board);
+    void requestImageReplySignalIP(QString board);
 
 private:
     SOCKET serverSocket;
-    SOCKET acceptSocket;
+    SOCKET IPSocket;
+    SOCKET VARSocket;
 };

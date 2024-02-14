@@ -2,92 +2,10 @@
 #include "Logger.h"
 
 
-bool _isBlackMove(char prevBoard[8][8], std::vector<Change> changes, Metadata metadata, bool isOppositeKingInCheck, bool isOppositeKingInCheckmate, char encoding[10])
-{
-    // --- turn check --- //
-    if (metadata.turn != Color::BLACK)
-    {
-        return false;
-    }
-
-    // --- setup --- //
-    Change a, b;
-    int aCount = 0, bCount = 0;
-
-    for (int i = 0; i < 2; i++)
-    {
-        if (changes[i].wasBlack() && changes[i].isFree())
-        {
-            a = changes[i];
-            aCount++;
-        }
-        else if (changes[i].wasFree() && changes[i].isBlack())
-        {
-            b = changes[i];
-            bCount++;
-        }
-    }
-
-    if (aCount != 1 || bCount != 1)
-    {
-        return false;
-    }
-
-    // --- move check --- //
-    if (!canPieceAttackCell(prevBoard, a.row, a.col, b.row, b.col, metadata.enPassantCol))
-    {
-        return false;
-    }
-
-    // --- special checks --- //
-    // simple move
-    if (a.prev == b.curr)
-    {
-        // check if move affecting castling or en passant
-        if (a.wasBlackKing())
-        {
-            metadata.castle.didBlackKingMove = true;
-        }
-        else if (a.wasBlackRook() && a.row == 0)
-        {
-            if (a.col == 0)
-            {
-                metadata.castle.didBlackQueensideRookMove = true;
-            }
-            else if (a.col == 7)
-            {
-                metadata.castle.didBlackKingsideRookMove = true;
-            }
-        }
-        else if (a.wasBlackPawn() && a.row == 1 && b.row == 3)
-        {
-            metadata.enPassantCol = b.col;
-        }
-
-        moveInternalToAlgebraic(
-            a.prev,
-            a.row, a.col,
-            b.row, b.col,
-            false, false, false, isOppositeKingInCheck, isOppositeKingInCheckmate, false, false, 'x', encoding);
-        return true;
-    }
-
-    // promotion
-    if (a.wasBlackPawn() && (b.isBlackBishop() || b.isBlackKnight() || b.isBlackRook() || b.isBlackQueen()))
-    {
-        moveInternalToAlgebraic(
-            a.prev,
-            a.row, a.col,
-            b.row, b.col,
-            false, false, false, isOppositeKingInCheck, isOppositeKingInCheckmate, false, true, b.curr, encoding);
-        return true;
-    }
-
-    return false;
-}
-
 bool _isWhiteMove(char prevBoard[8][8], std::vector<Change> changes, Metadata metadata, bool isOppositeKingInCheck, bool isOppositeKingInCheckmate, char encoding[10])
 {
+    assert(changes.size() == 2);
+
     // --- turn check --- //
     if (metadata.turn != Color::WHITE)
     {
@@ -176,8 +94,10 @@ bool _isWhiteMove(char prevBoard[8][8], std::vector<Change> changes, Metadata me
     return false;
 }
 
-bool _isBlackCapture(char prevBoard[8][8], std::vector<Change> changes, Metadata metadata, bool isOppositeKingInCheck, bool isOppositeKingInCheckmate, char encoding[10])
+bool _isBlackMove(char prevBoard[8][8], std::vector<Change> changes, Metadata metadata, bool isOppositeKingInCheck, bool isOppositeKingInCheckmate, char encoding[10])
 {
+    assert(changes.size() == 2);
+
     // --- turn check --- //
     if (metadata.turn != Color::BLACK)
     {
@@ -195,7 +115,7 @@ bool _isBlackCapture(char prevBoard[8][8], std::vector<Change> changes, Metadata
             a = changes[i];
             aCount++;
         }
-        else if (changes[i].wasWhite() && changes[i].isBlack())
+        else if (changes[i].wasFree() && changes[i].isBlack())
         {
             b = changes[i];
             bCount++;
@@ -214,10 +134,10 @@ bool _isBlackCapture(char prevBoard[8][8], std::vector<Change> changes, Metadata
     }
 
     // --- special checks --- //
-    // simple capture
+    // simple move
     if (a.prev == b.curr)
     {
-        // check if move affecting castling
+        // check if move affecting castling or en passant
         if (a.wasBlackKing())
         {
             metadata.castle.didBlackKingMove = true;
@@ -233,12 +153,16 @@ bool _isBlackCapture(char prevBoard[8][8], std::vector<Change> changes, Metadata
                 metadata.castle.didBlackKingsideRookMove = true;
             }
         }
+        else if (a.wasBlackPawn() && a.row == 1 && b.row == 3)
+        {
+            metadata.enPassantCol = b.col;
+        }
 
         moveInternalToAlgebraic(
             a.prev,
             a.row, a.col,
             b.row, b.col,
-            true, false, false, isOppositeKingInCheck, isOppositeKingInCheckmate, false, false, 'x', encoding);
+            false, false, false, isOppositeKingInCheck, isOppositeKingInCheckmate, false, false, 'x', encoding);
         return true;
     }
 
@@ -249,7 +173,7 @@ bool _isBlackCapture(char prevBoard[8][8], std::vector<Change> changes, Metadata
             a.prev,
             a.row, a.col,
             b.row, b.col,
-            true, false, false, isOppositeKingInCheck, isOppositeKingInCheckmate, false, true, b.curr, encoding);
+            false, false, false, isOppositeKingInCheck, isOppositeKingInCheckmate, false, true, b.curr, encoding);
         return true;
     }
 
@@ -258,6 +182,8 @@ bool _isBlackCapture(char prevBoard[8][8], std::vector<Change> changes, Metadata
 
 bool _isWhiteCapture(char prevBoard[8][8], std::vector<Change> changes, Metadata metadata, bool isOppositeKingInCheck, bool isOppositeKingInCheckmate, char encoding[10])
 {
+    assert(changes.size() == 2);
+
     // --- turn check --- //
     if (metadata.turn != Color::WHITE)
     {
@@ -336,8 +262,10 @@ bool _isWhiteCapture(char prevBoard[8][8], std::vector<Change> changes, Metadata
     return false;
 }
 
-bool _isBlackEnPassant(char prevBoard[8][8], std::vector<Change> changes, Metadata metadata, bool isOppositeKingInCheck, bool isOppositeKingInCheckmate, char encoding[10])
+bool _isBlackCapture(char prevBoard[8][8], std::vector<Change> changes, Metadata metadata, bool isOppositeKingInCheck, bool isOppositeKingInCheckmate, char encoding[10])
 {
+    assert(changes.size() == 2);
+
     // --- turn check --- //
     if (metadata.turn != Color::BLACK)
     {
@@ -345,28 +273,24 @@ bool _isBlackEnPassant(char prevBoard[8][8], std::vector<Change> changes, Metada
     }
 
     // --- setup --- //
-    Change a, b, c;
-    int aCount = 0, bCount = 0, cCount = 0;
-    for (int i = 0; i < 3; i++)
+    Change a, b;
+    int aCount = 0, bCount = 0;
+
+    for (int i = 0; i < 2; i++)
     {
-        if (changes[i].wasBlackPawn() && changes[i].isFree())
+        if (changes[i].wasBlack() && changes[i].isFree())
         {
             a = changes[i];
             aCount++;
         }
-        if (changes[i].wasWhitePawn() && changes[i].isFree())
+        else if (changes[i].wasWhite() && changes[i].isBlack())
         {
             b = changes[i];
             bCount++;
         }
-        if (changes[i].wasFree() && changes[i].isBlackPawn())  // no possibility of promotion from en passant
-        {
-            c = changes[i];
-            cCount++;
-        }
     }
 
-    if (aCount != 1 || bCount != 1 || cCount != 1)
+    if (aCount != 1 || bCount != 1)
     {
         return false;
     }
@@ -378,18 +302,53 @@ bool _isBlackEnPassant(char prevBoard[8][8], std::vector<Change> changes, Metada
     }
 
     // --- special checks --- //
-    // no need to check rows/ columns, since these checked in canPieceAttackCell
-    moveInternalToAlgebraic(
-        a.prev,
-        a.row, a.col,
-        c.row, c.col,  // the destination square is not the square of the captured pawn!
-        true, false, false, isOppositeKingInCheck, isOppositeKingInCheckmate, true, false, 'x', encoding);
+    // simple capture
+    if (a.prev == b.curr)
+    {
+        // check if move affecting castling
+        if (a.wasBlackKing())
+        {
+            metadata.castle.didBlackKingMove = true;
+        }
+        else if (a.wasBlackRook() && a.row == 0)
+        {
+            if (a.col == 0)
+            {
+                metadata.castle.didBlackQueensideRookMove = true;
+            }
+            else if (a.col == 7)
+            {
+                metadata.castle.didBlackKingsideRookMove = true;
+            }
+        }
 
-    return true;
+        moveInternalToAlgebraic(
+            a.prev,
+            a.row, a.col,
+            b.row, b.col,
+            true, false, false, isOppositeKingInCheck, isOppositeKingInCheckmate, false, false, 'x', encoding);
+        return true;
+    }
+
+    // promotion
+    if (a.wasBlackPawn() && (b.isBlackBishop() || b.isBlackKnight() || b.isBlackRook() || b.isBlackQueen()))
+    {
+        moveInternalToAlgebraic(
+            a.prev,
+            a.row, a.col,
+            b.row, b.col,
+            true, false, false, isOppositeKingInCheck, isOppositeKingInCheckmate, false, true, b.curr, encoding);
+        return true;
+    }
+
+    return false;
 }
+
 
 bool _isWhiteEnPassant(char prevBoard[8][8], std::vector<Change> changes, Metadata metadata, bool isOppositeKingInCheck, bool isOppositeKingInCheckmate, char encoding[10])
 {
+    assert(changes.size() == 3);
+
     // --- turn check --- //
     if (metadata.turn != Color::WHITE)
     {
@@ -440,8 +399,152 @@ bool _isWhiteEnPassant(char prevBoard[8][8], std::vector<Change> changes, Metada
     return true;
 }
 
+
+bool _isBlackEnPassant(char prevBoard[8][8], std::vector<Change> changes, Metadata metadata, bool isOppositeKingInCheck, bool isOppositeKingInCheckmate, char encoding[10])
+{
+    assert(changes.size() == 3);
+
+    // --- turn check --- //
+    if (metadata.turn != Color::BLACK)
+    {
+        return false;
+    }
+
+    // --- setup --- //
+    Change a, b, c;
+    int aCount = 0, bCount = 0, cCount = 0;
+    for (int i = 0; i < 3; i++)
+    {
+        if (changes[i].wasBlackPawn() && changes[i].isFree())
+        {
+            a = changes[i];
+            aCount++;
+        }
+        if (changes[i].wasWhitePawn() && changes[i].isFree())
+        {
+            b = changes[i];
+            bCount++;
+        }
+        if (changes[i].wasFree() && changes[i].isBlackPawn())  // no possibility of promotion from en passant
+        {
+            c = changes[i];
+            cCount++;
+        }
+    }
+
+    if (aCount != 1 || bCount != 1 || cCount != 1)
+    {
+        return false;
+    }
+
+    // --- move check --- //
+    if (!canPieceAttackCell(prevBoard, a.row, a.col, b.row, b.col, metadata.enPassantCol))
+    {
+        return false;
+    }
+
+    // --- special checks --- //
+    // no need to check rows/ columns, since these checked in canPieceAttackCell
+    moveInternalToAlgebraic(
+        a.prev,
+        a.row, a.col,
+        c.row, c.col,  // the destination square is not the square of the captured pawn!
+        true, false, false, isOppositeKingInCheck, isOppositeKingInCheckmate, true, false, 'x', encoding);
+
+    return true;
+}
+
+bool _isWhiteCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata metadata, bool isOppositeKingInCheck, bool isOppositeKingInCheckmate, char encoding[10])
+{
+    assert(changes.size() == 4);
+
+    // --- turn check --- //
+    if (metadata.turn != Color::WHITE)
+    {
+        return false;
+    }
+
+    // --- setup --- //
+    Change a, b, c, d;
+    int aCount = 0, bCount = 0, cCount = 0, dCount = 0;
+    for (int i = 0; i < 4; i++)
+    {
+        if (changes[i].wasWhiteKing() && changes[i].isFree())
+        {
+            a = changes[i];
+            aCount++;
+        }
+        else if (changes[i].wasWhiteRook() && changes[i].isFree())
+        {
+            b = changes[i];
+            bCount++;
+        }
+        else if (changes[i].wasFree() && changes[i].isWhiteKing())
+        {
+            c = changes[i];
+            cCount++;
+        }
+        else if (changes[i].wasFree() && changes[i].isWhiteRook())
+        {
+            d = changes[i];
+            dCount++;
+        }
+    }
+
+    if (aCount != 1 || bCount != 1 || cCount != 1 || dCount != 1)
+    {
+        return false;
+    }
+
+    // --- move check --- //
+    // it is not an attacking movement, so no check
+
+    // --- special checks --- //
+    // kingside castle
+    if (!metadata.castle.didWhiteKingMove && !metadata.castle.didWhiteKingsideRookMove &&
+        a.row == 7 && a.col == 4 &&
+        b.row == 7 && b.col == 7 &&
+        c.row == 7 && c.col == 6 &&
+        d.row == 7 && d.col == 5 &&
+        !isCellInCheck(prevBoard, 7, 5, metadata.enPassantCol),
+        !isCellInCheck(prevBoard, 7, 6, metadata.enPassantCol))
+    {
+        moveInternalToAlgebraic(
+            'x',
+            -1, -1,
+            -1, -1,
+            false, true, false, isOppositeKingInCheck, isOppositeKingInCheckmate, false, false, 'x', encoding);
+        metadata.castle.didWhiteKingMove = true;  // avoid possibility of future castling
+        return true;
+    }
+
+    // queen side castle
+    if (!metadata.castle.didWhiteKingMove && !metadata.castle.didWhiteQueensideRookMove &&
+        a.row == 7 && a.col == 4 &&
+        b.row == 7 && b.col == 0 &&
+        c.row == 7 && c.col == 2 &&
+        d.row == 7 && d.col == 3 &&
+        IS_FREE(prevBoard[7][1]) &&  // no change shall be there since only 4 changes
+        !isCellInCheck(prevBoard, 7, 3, metadata.enPassantCol),
+        !isCellInCheck(prevBoard, 7, 2, metadata.enPassantCol))
+    {
+        moveInternalToAlgebraic(
+            'x',
+            -1, -1,
+            -1, -1,
+            false, false, true, isOppositeKingInCheck, isOppositeKingInCheckmate, false, false, 'x', encoding);
+        metadata.castle.didWhiteKingMove = true;  // avoid possibility of future castling
+        return true;
+    }
+
+    return false;
+}
+
+
 bool _isBlackCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata metadata, bool isOppositeKingInCheck, bool isOppositeKingInCheckmate, char encoding[10])
 {
+    assert(changes.size() == 4);
+
     // --- turn check --- //
     if (metadata.turn != Color::BLACK)
     {
@@ -524,89 +627,6 @@ bool _isBlackCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
     return false;
 }
 
-bool _isWhiteCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata metadata, bool isOppositeKingInCheck, bool isOppositeKingInCheckmate, char encoding[10])
-{
-    // --- turn check --- //
-    if (metadata.turn != Color::WHITE)
-    {
-        return false;
-    }
-
-    // --- setup --- //
-    Change a, b, c, d;
-    int aCount = 0, bCount = 0, cCount = 0, dCount = 0;
-    for (int i = 0; i < 4; i++)
-    {
-        if (changes[i].wasWhiteKing() && changes[i].isFree())
-        {
-            a = changes[i];
-            aCount++;
-        }
-        else if (changes[i].wasWhiteRook() && changes[i].isFree())
-        {
-            b = changes[i];
-            bCount++;
-        }
-        else if (changes[i].wasFree() && changes[i].isWhiteKing())
-        {
-            c = changes[i];
-            cCount++;
-        }
-        else if (changes[i].wasFree() && changes[i].isWhiteRook())
-        {
-            d = changes[i];
-            dCount++;
-        }
-    }
-
-    if (aCount != 1 || bCount != 1 || cCount != 1 || dCount != 1)
-    {
-        return false;
-    }
-
-    // --- move check --- //
-    // it is not an attacking movement, so no check
-
-    // --- special checks --- //
-    // kingside castle
-    if (!metadata.castle.didWhiteKingMove && !metadata.castle.didWhiteKingsideRookMove &&
-        a.row == 7 && a.col == 4 &&
-        b.row == 7 && b.col == 7 &&
-        c.row == 7 && c.col == 6 &&
-        d.row == 7 && d.col == 5 &&
-        !isCellInCheck(prevBoard, 7, 5, metadata.enPassantCol),
-        !isCellInCheck(prevBoard, 7, 6, metadata.enPassantCol))
-    {
-        moveInternalToAlgebraic(
-            'x',
-            -1, -1,
-            -1, -1,
-            false, true, false, isOppositeKingInCheck, isOppositeKingInCheckmate, false, false, 'x', encoding);
-        metadata.castle.didWhiteKingMove = true;  // avoid possibility of future castling
-        return true;
-    }
-
-    // queen side castle
-    if (!metadata.castle.didWhiteKingMove && !metadata.castle.didWhiteQueensideRookMove &&
-        a.row == 7 && a.col == 4 &&
-        b.row == 7 && b.col == 0 &&
-        c.row == 7 && c.col == 2 &&
-        d.row == 7 && d.col == 3 &&
-        IS_FREE(prevBoard[7][1]) &&  // no change shall be there since only 4 changes
-        !isCellInCheck(prevBoard, 7, 3, metadata.enPassantCol),
-        !isCellInCheck(prevBoard, 7, 2, metadata.enPassantCol))
-    {
-        moveInternalToAlgebraic(
-            'x',
-            -1, -1,
-            -1, -1,
-            false, false, true, isOppositeKingInCheck, isOppositeKingInCheckmate, false, false, 'x', encoding);
-        metadata.castle.didWhiteKingMove = true;  // avoid possibility of future castling
-        return true;
-    }
-
-    return false;
-}
 
 // Checks if prevBoard to currBoard transition can happen in one legal move.
 //      If yes, message will contain S_SUCCESS (message.h) and encoding will contain the encoding of the move

@@ -25,17 +25,18 @@ int main(int argc, char *argv[])
     QObject::connect(serverThread, &QThread::finished, serverWorker, &Server::deleteLater);
 
     // cross - thread communication
-    QObject::connect(&w, &UserApplicationModule::requestImageSignal, serverWorker, &Server::requestImageSlot);            // press button, send request to IP
-    QObject::connect(serverWorker, &Server::requestImageReplySignal, &w, &UserApplicationModule::requestImageReplySlot);  // get reply from IP, set preview images and optionally the comboboxes
+    QObject::connect(&w, &UserApplicationModule::requestImageSignalIP, serverWorker, &Server::requestImageSlotIP);            // press button, send request to IP
+    QObject::connect(serverWorker, &Server::requestImageReplySignalIP, &w, &UserApplicationModule::requestImageReplySlot);  // get reply from IP, set preview images and optionally the comboboxes
 
-    QObject::connect(&w, &UserApplicationModule::sendToTrainSignal, serverWorker, &Server::sendToTrainSlot);    // sendToTrainButton clicked
-    QObject::connect(&w, &UserApplicationModule::sendToTestSignal, serverWorker, &Server::sendToTestSlot);      // sendToTrainButton clicked
-    QObject::connect(&w, &UserApplicationModule::runTrainSignal, serverWorker, &Server::runTrainSlot);          // runTrainButton clicked
-    QObject::connect(&w, &UserApplicationModule::runTestSignal, serverWorker, &Server::runTestSlot);            // runTestButton clicked
-    QObject::connect(&w, &UserApplicationModule::resetTrainSignal, serverWorker, &Server::resetTrainSlot);      // resetTrainButton clicked
-    QObject::connect(&w, &UserApplicationModule::resetTestSignal, serverWorker, &Server::resetTestSlot);        // resetTestButton clicked
+    QObject::connect(&w, &UserApplicationModule::sendToTrainSignalIP, serverWorker, &Server::sendToTrainSlotIP);    // sendToTrainButton clicked
+    QObject::connect(&w, &UserApplicationModule::sendToTestSignalIP, serverWorker, &Server::sendToTestSlotIP);      // sendToTrainButton clicked
+    QObject::connect(&w, &UserApplicationModule::runTrainSignalIP, serverWorker, &Server::runTrainSlotIP);          // runTrainButton clicked
+    QObject::connect(&w, &UserApplicationModule::runTestSignalIP, serverWorker, &Server::runTestSlotIP);            // runTestButton clicked
+    QObject::connect(&w, &UserApplicationModule::resetTrainSignalIP, serverWorker, &Server::resetTrainSlotIP);      // resetTrainButton clicked
+    QObject::connect(&w, &UserApplicationModule::resetTestSignalIP, serverWorker, &Server::resetTestSlotIP);        // resetTestButton clicked
 
-    QObject::connect(&w, &UserApplicationModule::exitSignal, serverWorker, &Server::exitSlot);
+    QObject::connect(&w, &UserApplicationModule::exitSignalIP, serverWorker, &Server::exitSlotIP);
+    QObject::connect(&w, &UserApplicationModule::exitSignalVAR, serverWorker, &Server::exitSlotVAR);
 
 
 

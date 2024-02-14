@@ -182,7 +182,7 @@ void UserApplicationModule::sendToTrainButtonClicked()
     messageLabel->setText("sendToTrainButtonClicked");
     QString board = _extractComboBoxes();
     messageLabel->setText(board);
-    emit sendToTrainSignal(board);
+    emit sendToTrainSignalIP(board);
 }
 
 void UserApplicationModule::sendToTestButtonClicked()
@@ -190,37 +190,37 @@ void UserApplicationModule::sendToTestButtonClicked()
     messageLabel->setText("sendToTestButtonClicked");
     QString board = _extractComboBoxes();
     messageLabel->setText(board);
-    emit sendToTestSignal(board);
+    emit sendToTestSignalIP(board);
 }
 
 void UserApplicationModule::runTrainButtonClicked()
 {
     messageLabel->setText("runTrainButtonClicked");
-    emit runTrainSignal();
+    emit runTrainSignalIP();
 }
 
 void UserApplicationModule::runTestButtonClicked()
 {
     messageLabel->setText("runTestButtonClicked");
-    emit runTestSignal();
+    emit runTestSignalIP();
 }
 
 void UserApplicationModule::resetTrainButtonClicked()
 {
     messageLabel->setText("resetTrainButtonClicked");
-    emit resetTrainSignal();
+    emit resetTrainSignalIP();
 }
 
 void UserApplicationModule::resetTestButtonClicked()
 {
     messageLabel->setText("resetTestButtonClicked");
-    emit resetTestSignal();
+    emit resetTestSignalIP();
 }
 
 void UserApplicationModule::getImageButtonClicked()
 {
     messageLabel->setText("getImageButtonClicked");
-    emit requestImageSignal(classifyWhenGettingImageCheckbox->isChecked());
+    emit requestImageSignalIP(classifyWhenGettingImageCheckbox->isChecked());
 }
 
 void UserApplicationModule::sendToVARButtonClicked()
@@ -235,7 +235,8 @@ void UserApplicationModule::helpButtonClicked()
 
 void UserApplicationModule::exitButtonClicked()
 {
-    emit exitSignal();
+    emit exitSignalIP();
+    emit exitSignalVAR();
     QCoreApplication::quit();
 }
 

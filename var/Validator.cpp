@@ -15,7 +15,7 @@ void Validator::validateBoard(char board[8][8], char message[200])
     processMove(prevBoard, currBoard, metadata, message);
     int newEnPassantCol = metadata.enPassantCol;
 
-    if (message[0] != 'i')  // legal move
+    if (message[0] != 'L')  // legal move
     {
         if (metadata.turn == Color::BLACK)
         {

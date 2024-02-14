@@ -64,13 +64,14 @@ public slots:
     void requestImageReplySlot(QString board);
 
 signals:
-    void sendToTrainSignal(QString board);
-    void sendToTestSignal(QString board);
-    void runTrainSignal();
-    void runTestSignal();
-    void resetTrainSignal();
-    void resetTestSignal();
+    void sendToTrainSignalIP(QString board);
+    void sendToTestSignalIP(QString board);
+    void runTrainSignalIP();
+    void runTestSignalIP();
+    void resetTrainSignalIP();
+    void resetTestSignalIP();
 
-    void requestImageSignal(bool classifyWhenGettingImage);
-    void exitSignal();
+    void requestImageSignalIP(bool classifyWhenGettingImage);
+    void exitSignalIP();
+    void exitSignalVAR();
 };
