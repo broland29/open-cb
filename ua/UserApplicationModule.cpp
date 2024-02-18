@@ -51,45 +51,76 @@ UserApplicationModule::UserApplicationModule(QWidget *parent)
     middleRightWidget->setStyleSheet("background-color:darkGreen");
 
     QWidget* resultWidget = new QWidget;
-    QGridLayout* resultLayout = new QGridLayout(resultWidget);
-    resultWidget->setFixedWidth(430);
-    resultWidget->setFixedHeight(300);
     resultWidget->setStyleSheet("background-color:white");
-    middleRightLayout->addWidget(resultWidget, 0, Qt::AlignHCenter);
+    QGridLayout* resultLayout = new QGridLayout(resultWidget);
+    resultWidget->setFixedWidth(300);
+    resultWidget->setFixedHeight(300);
+    resultLayout->setSpacing(0);
 
-    QStringList items = (QStringList() << "FR" << "WP" << "WB" << "WN" << "WR" << "WQ" << "WK" << "BP" << "BB" << "BN" << "BR" << "BQ" << "BK");
     int flat;
     for (int i = 0; i < 8; i++)
     {
         for (int j = 0; j < 8; j++)
         {
-            flat = i * 8 + j;
-            comboBoxes[flat] = new QComboBox;
-            comboBoxes[flat]->addItems(items);
-            resultLayout->addWidget(comboBoxes[flat], i, j);
+            pieceLabels[i][j] = new ClickableLabel();
+            pieceLabels[i][j]->row = i;
+            pieceLabels[i][j]->col = j;
+            pieceLabels[i][j]->setStyleSheet("border: 2px solid black;");
+            connect(pieceLabels[i][j], &ClickableLabel::leftClicked, this, &UserApplicationModule::leftClickedSlot);
+            connect(pieceLabels[i][j], &ClickableLabel::rightClicked, this, &UserApplicationModule::rightClickedSlot);
+            resultLayout->addWidget(pieceLabels[i][j], i, j);
         }
     }
-    comboBoxes[0]->setCurrentText("BR");
-    comboBoxes[1]->setCurrentText("BN");
-    comboBoxes[2]->setCurrentText("BB");
-    comboBoxes[3]->setCurrentText("BQ");
-    comboBoxes[4]->setCurrentText("BK");
-    comboBoxes[5]->setCurrentText("BB");
-    comboBoxes[6]->setCurrentText("BN");
-    comboBoxes[7]->setCurrentText("BR");
+
+    int w = 30;
+    int h = 30;
+    qDebug() << w << h;
+    for (auto pieceName : pieceNames)
+    {
+        char resourcePath[256];
+        sprintf(resourcePath, ":/UserApplicationModule/pieceImages/%s.png", pieceName.c_str());
+        QPixmap piecePixmap;
+        if (!piecePixmap.load(resourcePath))
+        {
+            qDebug() << "Falied to load" << resourcePath;
+        }
+        else
+        {
+            qDebug() << "Succesfully loaded" << resourcePath;
+        }
+        piecePixmap = piecePixmap.scaled(w, h, Qt::KeepAspectRatio);
+        nameToPixmap.insert(std::pair(pieceName, piecePixmap));
+    }
+
     for (int i = 0; i < 8; i++)
     {
-        comboBoxes[8 + i]->setCurrentText("BP");
-        comboBoxes[8 * 6 + i]->setCurrentText("WP");
+        for (int j = 2; j < 6; j++)
+        {
+            pieceLabels[j][i]->setPiece("FR", nameToPixmap["FR"]);
+        }
     }
-    comboBoxes[56]->setCurrentText("WR");
-    comboBoxes[57]->setCurrentText("WN");
-    comboBoxes[58]->setCurrentText("WB");
-    comboBoxes[59]->setCurrentText("WQ");
-    comboBoxes[60]->setCurrentText("WK");
-    comboBoxes[61]->setCurrentText("WB");
-    comboBoxes[62]->setCurrentText("WN");
-    comboBoxes[63]->setCurrentText("WR");
+    pieceLabels[0][0]->setPiece("BR", nameToPixmap["BR"]);
+    pieceLabels[0][1]->setPiece("BN", nameToPixmap["BN"]);
+    pieceLabels[0][2]->setPiece("BB", nameToPixmap["BB"]);
+    pieceLabels[0][3]->setPiece("BQ", nameToPixmap["BQ"]);
+    pieceLabels[0][4]->setPiece("BK", nameToPixmap["BK"]);
+    pieceLabels[0][5]->setPiece("BB", nameToPixmap["BB"]);
+    pieceLabels[0][6]->setPiece("BN", nameToPixmap["BN"]);
+    pieceLabels[0][7]->setPiece("BR", nameToPixmap["BR"]);
+    for (int i = 0; i < 8; i++)
+    {
+        pieceLabels[1][i]->setPiece("BP", nameToPixmap["BP"]);
+        pieceLabels[6][i]->setPiece("WP", nameToPixmap["WP"]);
+    }
+    pieceLabels[7][0]->setPiece("WR", nameToPixmap["WR"]);
+    pieceLabels[7][1]->setPiece("WN", nameToPixmap["WN"]);
+    pieceLabels[7][2]->setPiece("WB", nameToPixmap["WB"]);
+    pieceLabels[7][3]->setPiece("WQ", nameToPixmap["WQ"]);
+    pieceLabels[7][4]->setPiece("WK", nameToPixmap["WK"]);
+    pieceLabels[7][5]->setPiece("WB", nameToPixmap["WB"]);
+    pieceLabels[7][6]->setPiece("WN", nameToPixmap["WN"]);
+    pieceLabels[7][7]->setPiece("WR", nameToPixmap["WR"]);
+    middleRightLayout->addWidget(resultWidget, 0, Qt::AlignHCenter);
 
     QWidget* actionWidget = new QWidget;
     QGridLayout* actionLayout = new QGridLayout(actionWidget);
@@ -173,26 +204,31 @@ QString UserApplicationModule::_extractComboBoxes()
 {
     QString board;
     board.resize(64);
-    for (int i = 0; i < 64; i++)
+    for (int i = 0; i < 8; i++)
     {
-        QString enc = comboBoxes[i]->currentText();  // == overloaded for QString
-
-        if (enc == "FR") { board[i] = '*'; }
-        else if (enc == "WP") { board[i] = 'P'; }
-        else if (enc == "WB") { board[i] = 'B'; }
-        else if (enc == "WN") { board[i] = 'N'; }
-        else if (enc == "WR") { board[i] = 'R'; }
-        else if (enc == "WQ") { board[i] = 'Q'; }
-        else if (enc == "WK") { board[i] = 'K'; }
-        else if (enc == "BP") { board[i] = 'p'; }
-        else if (enc == "BB") { board[i] = 'b'; }
-        else if (enc == "BN") { board[i] = 'n'; }
-        else if (enc == "BR") { board[i] = 'r'; }
-        else if (enc == "BQ") { board[i] = 'q'; }
-        else if (enc == "BK") { board[i] = 'k'; }
-        else
+        for (int j = 0; j < 8; j++)
         {
-            return "Unknown comboBox value " + enc;
+            std::string enc = pieceLabels[i][j]->getPieceName();
+            qDebug() << i << j << enc;
+
+            if (enc == "FR")      { board[i * 8 + j] = '*'; }
+            else if (enc == "WP") { board[i * 8 + j] = 'P'; }
+            else if (enc == "WB") { board[i * 8 + j] = 'B'; }
+            else if (enc == "WN") { board[i * 8 + j] = 'N'; }
+            else if (enc == "WR") { board[i * 8 + j] = 'R'; }
+            else if (enc == "WQ") { board[i * 8 + j] = 'Q'; }
+            else if (enc == "WK") { board[i * 8 + j] = 'K'; }
+            else if (enc == "BP") { board[i * 8 + j] = 'p'; }
+            else if (enc == "BB") { board[i * 8 + j] = 'b'; }
+            else if (enc == "BN") { board[i * 8 + j] = 'n'; }
+            else if (enc == "BR") { board[i * 8 + j] = 'r'; }
+            else if (enc == "BQ") { board[i * 8 + j] = 'q'; }
+            else if (enc == "BK") { board[i * 8 + j] = 'k'; }
+            else
+            {
+                return "Unknown comboBox value " + QString::fromStdString(enc);
+            }
+            qDebug() << i << j << board[i];
         }
     }
     return board;
@@ -288,19 +324,19 @@ void UserApplicationModule::requestImageReplySlotIP(QString board)
 
     for (int i = 0; i < 64; i++)
     {
-        if (board[i] == '*') { comboBoxes[i]->setCurrentText("FR"); }
-        else if (board[i] == 'P') { comboBoxes[i]->setCurrentText("WP"); }
-        else if (board[i] == 'B') { comboBoxes[i]->setCurrentText("WB"); }
-        else if (board[i] == 'N') { comboBoxes[i]->setCurrentText("WN"); }
-        else if (board[i] == 'R') { comboBoxes[i]->setCurrentText("WR"); }
-        else if (board[i] == 'Q') { comboBoxes[i]->setCurrentText("WQ"); }
-        else if (board[i] == 'K') { comboBoxes[i]->setCurrentText("WK"); }
-        else if (board[i] == 'p') { comboBoxes[i]->setCurrentText("BP"); }
-        else if (board[i] == 'b') { comboBoxes[i]->setCurrentText("BB"); }
-        else if (board[i] == 'n') { comboBoxes[i]->setCurrentText("BN"); }
-        else if (board[i] == 'r') { comboBoxes[i]->setCurrentText("BR"); }
-        else if (board[i] == 'q') { comboBoxes[i]->setCurrentText("BQ"); }
-        else if (board[i] == 'k') { comboBoxes[i]->setCurrentText("BK"); }
+        if (board[i] == '*')      { pieceLabels[i / 8][i % 8]->setPiece("FR", nameToPixmap["FR"]); }
+        else if (board[i] == 'P') { pieceLabels[i / 8][i % 8]->setPiece("FR", nameToPixmap["WP"]); }
+        else if (board[i] == 'B') { pieceLabels[i / 8][i % 8]->setPiece("FR", nameToPixmap["WB"]); }
+        else if (board[i] == 'N') { pieceLabels[i / 8][i % 8]->setPiece("FR", nameToPixmap["WN"]); }
+        else if (board[i] == 'R') { pieceLabels[i / 8][i % 8]->setPiece("FR", nameToPixmap["WR"]); }
+        else if (board[i] == 'Q') { pieceLabels[i / 8][i % 8]->setPiece("FR", nameToPixmap["WQ"]); }
+        else if (board[i] == 'K') { pieceLabels[i / 8][i % 8]->setPiece("FR", nameToPixmap["WK"]); }
+        else if (board[i] == 'p') { pieceLabels[i / 8][i % 8]->setPiece("FR", nameToPixmap["BP"]); }
+        else if (board[i] == 'b') { pieceLabels[i / 8][i % 8]->setPiece("FR", nameToPixmap["BB"]); }
+        else if (board[i] == 'n') { pieceLabels[i / 8][i % 8]->setPiece("FR", nameToPixmap["BN"]); }
+        else if (board[i] == 'r') { pieceLabels[i / 8][i % 8]->setPiece("FR", nameToPixmap["BR"]); }
+        else if (board[i] == 'q') { pieceLabels[i / 8][i % 8]->setPiece("FR", nameToPixmap["BQ"]); }
+        else if (board[i] == 'k') { pieceLabels[i / 8][i % 8]->setPiece("FR", nameToPixmap["BK"]); }
         else
         {
             messageLabel->setText(QString("Unknown board value ") + board[i]);
@@ -312,4 +348,51 @@ void UserApplicationModule::requestImageReplySlotIP(QString board)
 void UserApplicationModule::sendToVARReplySlotVAR(QString message)
 {
     messageLabel->setText(message);
+}
+
+void UserApplicationModule::leftClickedSlot(int row, int col, std::string pieceName)
+{
+    qDebug() << "leftClickedSlot" << row << col;
+    if (lastRow == -1 || lastCol == -1)
+    {
+        pieceLabels[row][col]->setStyleSheet("border: 2px solid red;");
+        lastRow = row;
+        lastCol = col;
+        lastPieceName = pieceName;
+        return;
+    }
+
+    pieceLabels[row][col]->setPiece(lastPieceName, nameToPixmap[lastPieceName]);
+    pieceLabels[lastRow][lastCol]->setPiece(pieceName, nameToPixmap[pieceName]);
+
+    // reset selection
+    pieceLabels[lastRow][lastCol]->setStyleSheet("border: 2px solid black;");
+    lastRow = -1;
+    lastCol = -1;
+}
+
+void UserApplicationModule::rightClickedSlot(int row, int col, std::string pieceName)
+{
+    qDebug() << "rightClickedSlot" << row << col << pieceName;
+
+    // reset selection
+    lastRow = -1;
+    lastCol = -1;
+
+    int i;
+    for (i = 0; i < 13; i++)
+    {
+        if (pieceNames[i] == pieceName)
+        {
+            break;
+        }
+    }
+    if (i == 13)
+    {
+        qDebug() << "Piece name not found: " << pieceName;
+        return;
+    }
+    std::string nextPieceName = pieceNames[(i + 1) % 13];
+    qDebug() << "Changing to" << nextPieceName;
+    pieceLabels[row][col]->setPiece(nextPieceName, nameToPixmap[nextPieceName]);
 }

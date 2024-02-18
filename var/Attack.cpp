@@ -449,7 +449,7 @@ bool _getCanAttackerBeBlocked(char board[8][8], int kingRow, int kingCol, int en
     for (const Attacker &attacker : attackers)
     {
         // reconstruct attacker path
-        int di, dj, arow, acol;
+        int rowDifference, colDifference, rowStep, colStep, attackerRow, attackerCol;
         switch (attacker.enc)
         {
             // these have "attack range of 1" (or knight), cannot be blocked
@@ -467,20 +467,75 @@ bool _getCanAttackerBeBlocked(char board[8][8], int kingRow, int kingCol, int en
             case BR:
             case WQ:
             case BQ:
-                di = attacker.row - kingRow;
-                dj = attacker.row - kingCol;
-                if (di == 1 || di == -1 || dj == 1 || di == -1)
+                attackerRow = attacker.row;
+                attackerCol = attacker.col;
+                rowDifference = kingRow - attackerRow;
+                colDifference = kingCol - attackerCol;
+
+                assert(
+                    abs(rowDifference) == abs(colDifference) ||  // diagonal
+                    rowDifference != 0 && colDifference == 0 ||  // horizontal
+                    colDifference != 0 && rowDifference == 0     // vertical
+                );
+
+                // check if attacker near king -> not blockable
+                if (abs(rowDifference) == 1 || abs(colDifference) == 1)
                 {
-                    return false;  // "attack range of 1"
+                    return false;
                 }
-                arow = attacker.row;
-                acol = attacker.col;
-                while (arow != kingRow)
+
+                // calculate steps
+                if (rowDifference < 0)
                 {
-                    attackingPath[arow][acol]++;
-                    arow += di;
-                    acol += dj;
+                    rowStep = -1;
                 }
+                else if (rowDifference > 0)
+                {
+                    rowStep = +1;
+                }
+                else
+                {
+                    rowStep = 0;
+                }
+                if (colDifference < 0)
+                {
+                    colStep = -1;
+                }
+                else if (colDifference > 0)
+                {
+                    colStep = +1;
+                }
+                else
+                {
+                    colStep = 0;
+                }
+
+                // move attacker step by step and add to path
+                // extreme case: king and attacker at 8 step difference
+                // in this case, 6 intermediary cells must be added to the path
+                //   => there shall be no more than 6 steps to reach king
+                int i;
+
+                // step out of original location
+                attackerRow += rowStep;
+                attackerCol += colStep;
+
+                for (i = 0; i < 6; i++)
+                {
+                    assert(attackerRow >= 0 && attackerRow <= 7);
+                    assert(attackerCol >= 0 && attackerCol <= 7);
+
+                    attackingPath[attackerRow][attackerCol]++;
+                    attackerRow += rowStep;
+                    attackerCol += colStep;
+
+                    // king cell shall not be added, break before
+                    if (attackerRow == kingRow && attackerCol == kingCol)
+                    {
+                        break;
+                    }
+                }
+                assert(i != 6);  // we shall always brake out before reaching end condition of for loop
                 break;
         }
     }

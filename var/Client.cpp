@@ -7,7 +7,7 @@
 #define SERVER_IP "127.0.0.1"
 #define SERVER_PORT 55555
 
-void b(Validator validator, char recvBuffer[200], SOCKET clientSocket)
+void b(Validator* validator, char recvBuffer[200], SOCKET clientSocket)
 {
 	char board[8][8];
 	for (int i = 0; i < 8; i++)
@@ -17,18 +17,9 @@ void b(Validator validator, char recvBuffer[200], SOCKET clientSocket)
 			board[i][j] = recvBuffer[i * 8 + j + 1];
 		}
 	}
-	std::cout << "Got board: ";
-	for (int i = 0; i < 8; i++)
-	{
-		for (int j = 0; j < 8; j++)
-		{
-			std::cout << board[i][j] << " ";
-		}
-		std::cout << std::endl;
-	}
 
 	char sendBuffer[200];
-	validator.validateBoard(board, sendBuffer);
+	validator->validateBoard(board, sendBuffer);
 
 	int sendByteCount = send(clientSocket, sendBuffer, 200, 0);
 	if (sendByteCount > 0)
@@ -80,7 +71,7 @@ int client_main()
 	std::cout << "connect() success." << std::endl;
 
 	char cmd = 'x';
-	Validator validator;
+	Validator* validator = new Validator;
 
 	while (true)
 	{

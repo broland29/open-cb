@@ -8,6 +8,8 @@
 
 struct Validator
 {
+    // shall not contain pointer fields since shallow copy used in validateBoard
+
     char prevBoard[8][8];
     char currBoard[8][8];
     Metadata metadata;
@@ -26,4 +28,6 @@ struct Validator
     Validator();
 
     void validateBoard(char board[8][8], char message[200]);
+
+    friend std::ostream& operator<<(std::ostream& os, const Validator& validator);
 };

@@ -19,7 +19,6 @@
 int main()
 {
     initLogger();
-    SPDLOG_TRACE("Incorrect setup");
 
     return client_main();
     /*

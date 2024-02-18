@@ -163,10 +163,9 @@ int main()
 {
 	//testCameras();
 	//testExtractCell();
-	
+
 	return client_main();
-	
-	
+
 	/*
 	std::thread videoThread(videoThreadFunction);
 	videoThread.join();

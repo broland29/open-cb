@@ -14,6 +14,8 @@
 #include <QRadioButton>
 #include <QCheckBox>
 
+#include "ClickableLabel.h"
+
 
 class UserApplicationModule : public QMainWindow
 {
@@ -28,7 +30,7 @@ private:
     // -- middle -- //
     QLabel* cameraOneImageLabel;
     QLabel* cameraTwoImageLabel;
-    std::array<QComboBox*, 64> comboBoxes;
+    std::array<std::array<ClickableLabel*, 8>, 8> pieceLabels;
     QPushButton* sendToTrainButton;
     QPushButton* sendToTestButton;
     QPushButton* runTrainButton;
@@ -48,6 +50,13 @@ private:
 
     Ui::UserApplicationModuleClass ui;
 
+    // clicking logic
+    std::array<std::string, 13> pieceNames = { "FR", "WP", "WB", "WN", "WR", "WQ", "WK", "BP", "BB", "BN", "BR", "BQ", "BK" };
+    std::map<std::string, QPixmap> nameToPixmap;
+    int lastRow = -1;
+    int lastCol = -1;
+    std::string lastPieceName;
+
 public slots:
     void sendToTrainButtonClicked();
     void sendToTestButtonClicked();
@@ -63,6 +72,10 @@ public slots:
 
     void requestImageReplySlotIP(QString board);
     void sendToVARReplySlotVAR(QString message);
+
+    void leftClickedSlot(int row, int col, std::string pieceName);
+    void rightClickedSlot(int row, int col, std::string pieceName);
+
 
 signals:
     void sendToTrainSignalIP(QString board);
