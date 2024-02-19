@@ -45,6 +45,7 @@ private:
     // -- bottom -- //
     QPushButton* getImageButton;
     QPushButton* sendToVARButton;
+    QPushButton* getFromVARButton;
     QPushButton* helpButton;
     QPushButton* exitButton;
 
@@ -67,11 +68,13 @@ public slots:
 
     void getImageButtonClicked();
     void sendToVARButtonClicked();
+    void getFromVARButtonClicked();
     void helpButtonClicked();
     void exitButtonClicked();
 
     void requestImageReplySlotIP(QString board);
     void sendToVARReplySlotVAR(QString message);
+    void getFromVARReplySlotVAR(QString board);
 
     void leftClickedSlot(int row, int col, std::string pieceName);
     void rightClickedSlot(int row, int col, std::string pieceName);
@@ -87,6 +90,7 @@ signals:
 
     void requestImageSignalIP(bool classifyWhenGettingImage);
     void sendToVARSignalVAR(QString board);
+    void getFromVARSignalVAR();
     void exitSignalIP();
     void exitSignalVAR();
 };

@@ -36,6 +36,7 @@ public slots:
 
     void requestImageSlotIP(bool classifyWhenGettingImage);
     void sendToVARSlotVAR(QString board);
+    void getFromVARSlotVAR();
     void exitSlotIP();
     void exitSlotVAR();
 
@@ -43,6 +44,7 @@ signals:
     void workDone();
     void requestImageReplySignalIP(QString board);
     void sendToVARReplySignalVAR(QString message);
+    void getFromVARReplySignalVAR(QString board);
 
 private:
     SOCKET serverSocket;

@@ -245,6 +245,17 @@ void Server::sendToVARSlotVAR(QString board)
     emit sendToVARReplySignalVAR(QString::fromLatin1(recvBuffer));
 }
 
+void Server::getFromVARSlotVAR()
+{
+    char msg[2] = "g";
+    _sendMessage(VARSocket, msg);
+
+    char recvBuffer[RECV_BUFFER_SIZE];
+    _receiveMessage(VARSocket, recvBuffer);
+    qDebug() << "Got board:" << recvBuffer;
+    emit getFromVARReplySignalVAR(QString::fromLatin1(recvBuffer));
+}
+
 void Server::exitSlotIP()
 {
     char msg[2] = "e";

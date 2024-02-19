@@ -1,4 +1,5 @@
 #include "UserApplicationModule.h"
+#include "EncodingMapper.h"
 
 UserApplicationModule::UserApplicationModule(QWidget *parent)
     : QMainWindow(parent)
@@ -166,10 +167,12 @@ UserApplicationModule::UserApplicationModule(QWidget *parent)
     QHBoxLayout* bottomLayout = new QHBoxLayout(bottomWidget);
     getImageButton = new QPushButton("Get image");
     sendToVARButton = new QPushButton("Send to VAR");
+    getFromVARButton = new QPushButton("Get from VAR");
     helpButton = new QPushButton("Help");
     exitButton = new QPushButton("Exit");
     bottomLayout->addWidget(getImageButton);
     bottomLayout->addWidget(sendToVARButton);
+    bottomLayout->addWidget(getFromVARButton);
     bottomLayout->addWidget(helpButton);
     bottomLayout->addWidget(exitButton);
     bottomWidget->setStyleSheet("background-color:gray");
@@ -192,6 +195,7 @@ UserApplicationModule::UserApplicationModule(QWidget *parent)
 
     connect(getImageButton, SIGNAL(clicked()), this, SLOT(getImageButtonClicked()));
     connect(sendToVARButton, SIGNAL(clicked()), this, SLOT(sendToVARButtonClicked()));
+    connect(getFromVARButton, SIGNAL(clicked()), this, SLOT(getFromVARButtonClicked()));
     connect(helpButton, SIGNAL(clicked()), this, SLOT(helpButtonClicked()));
     connect(exitButton, SIGNAL(clicked()), this, SLOT(exitButtonClicked()));
     //ui.setupUi(this);
@@ -211,24 +215,9 @@ QString UserApplicationModule::_extractComboBoxes()
             std::string enc = pieceLabels[i][j]->getPieceName();
             qDebug() << i << j << enc;
 
-            if (enc == "FR")      { board[i * 8 + j] = '*'; }
-            else if (enc == "WP") { board[i * 8 + j] = 'P'; }
-            else if (enc == "WB") { board[i * 8 + j] = 'B'; }
-            else if (enc == "WN") { board[i * 8 + j] = 'N'; }
-            else if (enc == "WR") { board[i * 8 + j] = 'R'; }
-            else if (enc == "WQ") { board[i * 8 + j] = 'Q'; }
-            else if (enc == "WK") { board[i * 8 + j] = 'K'; }
-            else if (enc == "BP") { board[i * 8 + j] = 'p'; }
-            else if (enc == "BB") { board[i * 8 + j] = 'b'; }
-            else if (enc == "BN") { board[i * 8 + j] = 'n'; }
-            else if (enc == "BR") { board[i * 8 + j] = 'r'; }
-            else if (enc == "BQ") { board[i * 8 + j] = 'q'; }
-            else if (enc == "BK") { board[i * 8 + j] = 'k'; }
-            else
-            {
-                return "Unknown comboBox value " + QString::fromStdString(enc);
-            }
-            qDebug() << i << j << board[i];
+            char c;
+            EncodingMapper::map(enc, c);
+            board[i * 8 + j] = c;
         }
     }
     return board;
@@ -285,6 +274,12 @@ void UserApplicationModule::sendToVARButtonClicked()
     emit sendToVARSignalVAR(board);
 }
 
+void UserApplicationModule::getFromVARButtonClicked()
+{
+    messageLabel->setText("getFromVARButtonClicked");
+    emit getFromVARSignalVAR();
+}
+
 void UserApplicationModule::helpButtonClicked()
 {
     messageLabel->setText("Help not implemented");
@@ -323,31 +318,29 @@ void UserApplicationModule::requestImageReplySlotIP(QString board)
     cameraTwoImageLabel->setPixmap(cameraTwoPixmap.scaled(cameraTwoImageLabel->width(), cameraTwoImageLabel->height(), Qt::KeepAspectRatio));
 
     for (int i = 0; i < 64; i++)
-    {
-        if (board[i] == '*')      { pieceLabels[i / 8][i % 8]->setPiece("FR", nameToPixmap["FR"]); }
-        else if (board[i] == 'P') { pieceLabels[i / 8][i % 8]->setPiece("FR", nameToPixmap["WP"]); }
-        else if (board[i] == 'B') { pieceLabels[i / 8][i % 8]->setPiece("FR", nameToPixmap["WB"]); }
-        else if (board[i] == 'N') { pieceLabels[i / 8][i % 8]->setPiece("FR", nameToPixmap["WN"]); }
-        else if (board[i] == 'R') { pieceLabels[i / 8][i % 8]->setPiece("FR", nameToPixmap["WR"]); }
-        else if (board[i] == 'Q') { pieceLabels[i / 8][i % 8]->setPiece("FR", nameToPixmap["WQ"]); }
-        else if (board[i] == 'K') { pieceLabels[i / 8][i % 8]->setPiece("FR", nameToPixmap["WK"]); }
-        else if (board[i] == 'p') { pieceLabels[i / 8][i % 8]->setPiece("FR", nameToPixmap["BP"]); }
-        else if (board[i] == 'b') { pieceLabels[i / 8][i % 8]->setPiece("FR", nameToPixmap["BB"]); }
-        else if (board[i] == 'n') { pieceLabels[i / 8][i % 8]->setPiece("FR", nameToPixmap["BN"]); }
-        else if (board[i] == 'r') { pieceLabels[i / 8][i % 8]->setPiece("FR", nameToPixmap["BR"]); }
-        else if (board[i] == 'q') { pieceLabels[i / 8][i % 8]->setPiece("FR", nameToPixmap["BQ"]); }
-        else if (board[i] == 'k') { pieceLabels[i / 8][i % 8]->setPiece("FR", nameToPixmap["BK"]); }
-        else
-        {
-            messageLabel->setText(QString("Unknown board value ") + board[i]);
-            return;
-        }
+    {   
+        std::string encoding;
+        EncodingMapper::map(board[i], encoding);
+        pieceLabels[i / 8][i % 8]->setPiece(encoding, nameToPixmap[encoding]);
     }
 }
 
 void UserApplicationModule::sendToVARReplySlotVAR(QString message)
 {
     messageLabel->setText(message);
+}
+
+void UserApplicationModule::getFromVARReplySlotVAR(QString board)
+{
+    for (int i = 0; i < 8; i++)
+    {
+        for (int j = 0; j < 8; j++)
+        {
+            std::string encoding;
+            EncodingMapper::map(board[i * 8 + j], encoding);
+            pieceLabels[i][j]->setPiece(encoding, nameToPixmap[encoding]);
+        }
+    }
 }
 
 void UserApplicationModule::leftClickedSlot(int row, int col, std::string pieceName)
@@ -363,7 +356,7 @@ void UserApplicationModule::leftClickedSlot(int row, int col, std::string pieceN
     }
 
     pieceLabels[row][col]->setPiece(lastPieceName, nameToPixmap[lastPieceName]);
-    pieceLabels[lastRow][lastCol]->setPiece(pieceName, nameToPixmap[pieceName]);
+    pieceLabels[lastRow][lastCol]->setPiece("FR", nameToPixmap["FR"]);
 
     // reset selection
     pieceLabels[lastRow][lastCol]->setStyleSheet("border: 2px solid black;");

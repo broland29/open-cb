@@ -33,6 +33,31 @@ void b(Validator* validator, char recvBuffer[200], SOCKET clientSocket)
 	}
 }
 
+void g(Validator* validator, SOCKET clientSocket)
+{
+	std::cout << "Got request to send internal board" << std::endl;
+	char sendBuffer[200];
+	for (int i = 0; i < 8; i++)
+	{
+		for (int j = 0; j < 8; j++)
+		{
+			sendBuffer[i * 8 + j] = validator->currBoard[i][j];
+		}
+	}
+	sendBuffer[64] = '\0';
+
+	int sendByteCount = send(clientSocket, sendBuffer, 200, 0);
+	if (sendByteCount > 0)
+	{
+		std::cout << "send() success." << std::endl;
+	}
+	else
+	{
+		std::cout << "send() error: " << WSAGetLastError();
+		WSACleanup();
+	}
+}
+
 int client_main()
 {
 	// initialize WSA
@@ -95,6 +120,9 @@ int client_main()
 			break;
 		case 'b':
 			b(validator, recvBuffer, clientSocket);
+			continue;
+		case 'g':
+			g(validator, clientSocket);
 			continue;
 		default:
 			std::cout << "unknown command" << std::endl;

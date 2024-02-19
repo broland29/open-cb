@@ -38,6 +38,9 @@ int main(int argc, char *argv[])
     QObject::connect(&w, &UserApplicationModule::sendToVARSignalVAR, serverWorker, &Server::sendToVARSlotVAR);              // sendToVARButton pressed
     QObject::connect(serverWorker, &Server::sendToVARReplySignalVAR, &w, &UserApplicationModule::sendToVARReplySlotVAR);    // reply message from VAR
 
+    QObject::connect(&w, &UserApplicationModule::getFromVARSignalVAR, serverWorker, &Server::getFromVARSlotVAR);
+    QObject::connect(serverWorker, &Server::getFromVARReplySignalVAR, &w, &UserApplicationModule::getFromVARReplySlotVAR);
+
     QObject::connect(&w, &UserApplicationModule::exitSignalIP, serverWorker, &Server::exitSlotIP);
     QObject::connect(&w, &UserApplicationModule::exitSignalVAR, serverWorker, &Server::exitSlotVAR);
 
