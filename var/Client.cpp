@@ -53,6 +53,24 @@ void Client::getCurrentBoard()
 }
 
 
+void Client::startNewGame()
+{
+	validator = new Validator;
+	char sendBuffer[] = "s";
+
+	int sendByteCount = send(clientSocket, sendBuffer, 200, 0);
+	if (sendByteCount > 0)
+	{
+		SPDLOG_INFO("Sending response succeeded.");
+	}
+	else
+	{
+		SPDLOG_INFO("Sending response failed! Error {0:d}.", WSAGetLastError());
+		WSACleanup();
+	}
+}
+
+
 Client::Client()
 {
 	// initialize WSA
@@ -127,6 +145,10 @@ int Client::runLoop()
 		case 'g':
 			SPDLOG_INFO("Got command g, will get current board.");
 			getCurrentBoard();
+			continue;
+		case 'n':
+			SPDLOG_INFO("Got command n, will start new game.");
+			startNewGame();
 			continue;
 		default:
 			SPDLOG_INFO("Unknown command {}.", recvBuffer[0]);

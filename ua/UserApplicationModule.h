@@ -46,6 +46,7 @@ private:
     QPushButton* getImageButton;
     QPushButton* sendToVARButton;
     QPushButton* getFromVARButton;
+    QPushButton* newGameButton;
     QPushButton* helpButton;
     QPushButton* exitButton;
 
@@ -58,6 +59,8 @@ private:
     int lastCol = -1;
     std::string lastPieceName;
 
+    void _setInitialSetup();
+
 public slots:
     void sendToTrainButtonClicked();
     void sendToTestButtonClicked();
@@ -69,12 +72,14 @@ public slots:
     void getImageButtonClicked();
     void sendToVARButtonClicked();
     void getFromVARButtonClicked();
+    void newGameButtonClicked();
     void helpButtonClicked();
     void exitButtonClicked();
 
     void requestImageReplySlotIP(QString board);
     void sendToVARReplySlotVAR(QString message);
     void getFromVARReplySlotVAR(QString board);
+    void newGameReplySlotVAR();
 
     void leftClickedSlot(int row, int col, std::string pieceName);
     void rightClickedSlot(int row, int col, std::string pieceName);
@@ -91,6 +96,7 @@ signals:
     void requestImageSignalIP(bool classifyWhenGettingImage);
     void sendToVARSignalVAR(QString board);
     void getFromVARSignalVAR();
+    void newGameSignalVAR();
     void exitSignalIP();
     void exitSignalVAR();
 };

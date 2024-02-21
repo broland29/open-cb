@@ -41,6 +41,9 @@ int main(int argc, char *argv[])
     QObject::connect(&w, &UserApplicationModule::getFromVARSignalVAR, serverWorker, &Server::getFromVARSlotVAR);
     QObject::connect(serverWorker, &Server::getFromVARReplySignalVAR, &w, &UserApplicationModule::getFromVARReplySlotVAR);
 
+    QObject::connect(&w, &UserApplicationModule::newGameSignalVAR, serverWorker, &Server::newGameSlotVAR);
+    QObject::connect(serverWorker, &Server::newGameReplySignalVAR, &w, &UserApplicationModule::newGameReplySlotVAR);
+
     QObject::connect(&w, &UserApplicationModule::exitSignalIP, serverWorker, &Server::exitSlotIP);
     QObject::connect(&w, &UserApplicationModule::exitSignalVAR, serverWorker, &Server::exitSlotVAR);
 

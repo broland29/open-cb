@@ -18,6 +18,7 @@ public:
 private:
     void validateNewBoard(char recvBuffer[200]);
     void getCurrentBoard();
+    void startNewGame();
 
 public:
 

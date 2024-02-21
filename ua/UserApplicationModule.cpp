@@ -1,6 +1,7 @@
 #include "UserApplicationModule.h"
 #include "EncodingMapper.h"
 
+
 UserApplicationModule::UserApplicationModule(QWidget *parent)
     : QMainWindow(parent)
 {
@@ -93,34 +94,7 @@ UserApplicationModule::UserApplicationModule(QWidget *parent)
         nameToPixmap.insert(std::pair(pieceName, piecePixmap));
     }
 
-    for (int i = 0; i < 8; i++)
-    {
-        for (int j = 2; j < 6; j++)
-        {
-            pieceLabels[j][i]->setPiece("FR", nameToPixmap["FR"]);
-        }
-    }
-    pieceLabels[0][0]->setPiece("BR", nameToPixmap["BR"]);
-    pieceLabels[0][1]->setPiece("BN", nameToPixmap["BN"]);
-    pieceLabels[0][2]->setPiece("BB", nameToPixmap["BB"]);
-    pieceLabels[0][3]->setPiece("BQ", nameToPixmap["BQ"]);
-    pieceLabels[0][4]->setPiece("BK", nameToPixmap["BK"]);
-    pieceLabels[0][5]->setPiece("BB", nameToPixmap["BB"]);
-    pieceLabels[0][6]->setPiece("BN", nameToPixmap["BN"]);
-    pieceLabels[0][7]->setPiece("BR", nameToPixmap["BR"]);
-    for (int i = 0; i < 8; i++)
-    {
-        pieceLabels[1][i]->setPiece("BP", nameToPixmap["BP"]);
-        pieceLabels[6][i]->setPiece("WP", nameToPixmap["WP"]);
-    }
-    pieceLabels[7][0]->setPiece("WR", nameToPixmap["WR"]);
-    pieceLabels[7][1]->setPiece("WN", nameToPixmap["WN"]);
-    pieceLabels[7][2]->setPiece("WB", nameToPixmap["WB"]);
-    pieceLabels[7][3]->setPiece("WQ", nameToPixmap["WQ"]);
-    pieceLabels[7][4]->setPiece("WK", nameToPixmap["WK"]);
-    pieceLabels[7][5]->setPiece("WB", nameToPixmap["WB"]);
-    pieceLabels[7][6]->setPiece("WN", nameToPixmap["WN"]);
-    pieceLabels[7][7]->setPiece("WR", nameToPixmap["WR"]);
+    _setInitialSetup();
     middleRightLayout->addWidget(resultWidget, 0, Qt::AlignHCenter);
 
     QWidget* actionWidget = new QWidget;
@@ -168,11 +142,13 @@ UserApplicationModule::UserApplicationModule(QWidget *parent)
     getImageButton = new QPushButton("Get image");
     sendToVARButton = new QPushButton("Send to VAR");
     getFromVARButton = new QPushButton("Get from VAR");
+    newGameButton = new QPushButton("New game");
     helpButton = new QPushButton("Help");
     exitButton = new QPushButton("Exit");
     bottomLayout->addWidget(getImageButton);
     bottomLayout->addWidget(sendToVARButton);
     bottomLayout->addWidget(getFromVARButton);
+    bottomLayout->addWidget(newGameButton);
     bottomLayout->addWidget(helpButton);
     bottomLayout->addWidget(exitButton);
     bottomWidget->setStyleSheet("background-color:gray");
@@ -196,6 +172,7 @@ UserApplicationModule::UserApplicationModule(QWidget *parent)
     connect(getImageButton, SIGNAL(clicked()), this, SLOT(getImageButtonClicked()));
     connect(sendToVARButton, SIGNAL(clicked()), this, SLOT(sendToVARButtonClicked()));
     connect(getFromVARButton, SIGNAL(clicked()), this, SLOT(getFromVARButtonClicked()));
+    connect(newGameButton, SIGNAL(clicked()), this, SLOT(newGameButtonClicked()));
     connect(helpButton, SIGNAL(clicked()), this, SLOT(helpButtonClicked()));
     connect(exitButton, SIGNAL(clicked()), this, SLOT(exitButtonClicked()));
     //ui.setupUi(this);
@@ -203,6 +180,38 @@ UserApplicationModule::UserApplicationModule(QWidget *parent)
 
 UserApplicationModule::~UserApplicationModule()
 {}
+
+void UserApplicationModule::_setInitialSetup()
+{
+    for (int i = 0; i < 8; i++)
+    {
+        for (int j = 2; j < 6; j++)
+        {
+            pieceLabels[j][i]->setPiece("FR", nameToPixmap["FR"]);
+        }
+    }
+    pieceLabels[0][0]->setPiece("BR", nameToPixmap["BR"]);
+    pieceLabels[0][1]->setPiece("BN", nameToPixmap["BN"]);
+    pieceLabels[0][2]->setPiece("BB", nameToPixmap["BB"]);
+    pieceLabels[0][3]->setPiece("BQ", nameToPixmap["BQ"]);
+    pieceLabels[0][4]->setPiece("BK", nameToPixmap["BK"]);
+    pieceLabels[0][5]->setPiece("BB", nameToPixmap["BB"]);
+    pieceLabels[0][6]->setPiece("BN", nameToPixmap["BN"]);
+    pieceLabels[0][7]->setPiece("BR", nameToPixmap["BR"]);
+    for (int i = 0; i < 8; i++)
+    {
+        pieceLabels[1][i]->setPiece("BP", nameToPixmap["BP"]);
+        pieceLabels[6][i]->setPiece("WP", nameToPixmap["WP"]);
+    }
+    pieceLabels[7][0]->setPiece("WR", nameToPixmap["WR"]);
+    pieceLabels[7][1]->setPiece("WN", nameToPixmap["WN"]);
+    pieceLabels[7][2]->setPiece("WB", nameToPixmap["WB"]);
+    pieceLabels[7][3]->setPiece("WQ", nameToPixmap["WQ"]);
+    pieceLabels[7][4]->setPiece("WK", nameToPixmap["WK"]);
+    pieceLabels[7][5]->setPiece("WB", nameToPixmap["WB"]);
+    pieceLabels[7][6]->setPiece("WN", nameToPixmap["WN"]);
+    pieceLabels[7][7]->setPiece("WR", nameToPixmap["WR"]);
+}
 
 QString UserApplicationModule::_extractComboBoxes()
 {
@@ -280,6 +289,12 @@ void UserApplicationModule::getFromVARButtonClicked()
     emit getFromVARSignalVAR();
 }
 
+void UserApplicationModule::newGameButtonClicked()
+{
+    messageLabel->setText("newGameButtonClicked");
+    emit newGameSignalVAR();
+}
+
 void UserApplicationModule::helpButtonClicked()
 {
     messageLabel->setText("Help not implemented");
@@ -341,6 +356,12 @@ void UserApplicationModule::getFromVARReplySlotVAR(QString board)
             pieceLabels[i][j]->setPiece(encoding, nameToPixmap[encoding]);
         }
     }
+}
+
+void UserApplicationModule::newGameReplySlotVAR()
+{
+    qDebug() << "newGameReplySlotVAR";
+    _setInitialSetup();
 }
 
 void UserApplicationModule::leftClickedSlot(int row, int col, std::string pieceName)
