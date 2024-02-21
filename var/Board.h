@@ -1,14 +1,9 @@
 #pragma once
+
+#include <iostream>
+
 #include "Notation.h"
 
-#define INITIAL_SETUP  {BR, BN, BB, BQ, BK, BB, BN, BR, \
-                        BP, BP, BP, BP, BP, BP, BP, BP, \
-                        FR, FR, FR, FR, FR, FR, FR, FR, \
-                        FR, FR, FR, FR, FR, FR, FR, FR, \
-                        FR, FR, FR, FR, FR, FR, FR, FR, \
-                        FR, FR, FR, FR, FR, FR, FR, FR, \
-                        WP, WP, WP, WP, WP, WP, WP, WP, \
-                        WR, WN, WB, WQ, WK, WB, WN, WR}
 
 enum class Color
 {
@@ -16,7 +11,7 @@ enum class Color
     BLACK
 };
 
-// everything related to castling
+// Everything related to castling
 struct Castle
 {
     bool didBlackKingMove = false;
@@ -25,29 +20,23 @@ struct Castle
     bool didBlackQueensideRookMove = false;
     bool didWhiteKingsideRookMove = false;
     bool didWhiteQueensideRookMove = false;
+
+    friend std::ostream& operator<<(std::ostream& os, const Castle& castle);
 };
+
 
 // Information that propagates from one turn to another
 struct Metadata
 {
     Color turn = Color::WHITE;
     int moveCount = 1;
-
-    int enPassantCol = -1;  // -1 if en passant not possible, 0-7 if en passant possible on given column
+    int enPassantCol = -1;          // -1 if en passant not possible, 0-7 if en passant possible on given column
     Castle castle;
 
-    void changeTurn()
-    {
-        if (turn == Color::WHITE)
-        {
-            turn = Color::BLACK;
-        }
-        else
-        {
-            turn = Color::WHITE;
-        }
-    }
+    friend std::ostream& operator<<(std::ostream& os, const Metadata& metadata);
+    void changeTurn();
 };
+
 
 // Change happening in a cell - row and column stays the same since we talk about one cell
 struct Change
@@ -94,26 +83,4 @@ struct Change
 void copyBoard(
     char boardTo[8][8],
     char boardFrom[8][8]
-);
-
-
-bool isBoardInitialSetup(
-    char board[8][8]
-);
-
-
-void printBoard(
-    char board[8][8],
-    std::ofstream& ofstream
-);
-
-
-void readBoard(
-    char board[8][8],
-    std::ifstream& ifstream
-);
-
-
-bool isBoardInitialSetup(
-    char board[8][8]
 );

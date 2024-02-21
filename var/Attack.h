@@ -1,5 +1,8 @@
 #pragma once
 
+#include <vector>
+#include <assert.h>
+
 #include "Board.h"
 
 enum class KingSituation
@@ -9,6 +12,15 @@ enum class KingSituation
     CHECKMATE,
     STALEMATE
 };
+
+
+struct Attacker
+{
+    int row;
+    int col;
+    char enc;
+};
+
 
 /* Functions in Attack.cpp check if piece can go from one cell to another
  * considering their moving logic and current board metadata. It does not
@@ -43,13 +55,23 @@ int _checkPath(
 */
 
 // Checks path considering pawn movement
-bool _canPawnAttackCell(
+bool _canWhitePawnAttackCell(
     char board[8][8],
     int currRow,
     int currCol,
     int destRow,
     int destCol,
-    int enPassantRow
+    int enPassantCol
+);
+
+
+bool _canBlackPawnAttackCell(
+    char board[8][8],
+    int currRow,
+    int currCol,
+    int destRow,
+    int destCol,
+    int enPassantCol
 );
 
 
@@ -116,6 +138,35 @@ bool isCellInCheck(
     int col,
     int enPassantCol
 );
+
+
+// Return true if king has the possibility to move to a (nearby) cell without putting himself in check
+bool _getCanKingMove(
+    char board[8][8],
+    int kingRow,
+    int kingCol,
+    int enPassantCol
+);
+
+
+// Return true if any piece other than the king, having same color as the king, has the possibility to move to any cell
+bool _getCanOtherMove(
+    char board[8][8],
+    int kingRow,
+    int kingCol,
+    int enPassantCol
+);
+
+
+// Return true if every attacker of the king can be blocked by a single move
+bool _getCanAttackerBeBlocked(
+    char board[8][8],
+    int kingRow,
+    int kingCol,
+    int enPassantCol,
+    std::vector<Attacker> attackers
+);
+
 
 
 KingSituation getKingSituation(

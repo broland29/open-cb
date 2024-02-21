@@ -18,6 +18,7 @@ public:
     int col;
     void setPiece(std::string pieceName, QPixmap piecePixmap);
     std::string getPieceName();
+    void modifyStyleSheet(QString string);
 
 signals:
     void leftClicked(int row, int col, std::string pieceName);

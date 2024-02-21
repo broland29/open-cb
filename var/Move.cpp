@@ -1,5 +1,4 @@
 #include "Move.h"
-#include "Logger.h"
 
 
 bool _isWhiteMove(char prevBoard[8][8], std::vector<Change> changes, Metadata metadata, bool isOppositeKingInCheck, bool isOppositeKingInCheckmate, char encoding[10])
@@ -9,7 +8,7 @@ bool _isWhiteMove(char prevBoard[8][8], std::vector<Change> changes, Metadata me
     // --- turn check --- //
     if (metadata.turn != Color::WHITE)
     {
-        SPDLOG_TRACE("Not white turn");
+        SPDLOG_TRACE("Not white turn.");
         return false;
     }
 
@@ -33,14 +32,14 @@ bool _isWhiteMove(char prevBoard[8][8], std::vector<Change> changes, Metadata me
 
     if (aCount != 1 || bCount != 1)
     {
-        SPDLOG_TRACE("Incorrect setup");
+        SPDLOG_TRACE("Incorrect setup.");
         return false;
     }
 
     // --- move check --- //
     if (!canPieceAttackCell(prevBoard, a.row, a.col, b.row, b.col, metadata.enPassantCol))
     {
-        SPDLOG_TRACE("Incorrect move");
+        SPDLOG_TRACE("Incorrect move.");
         return false;
     }
 
@@ -57,7 +56,7 @@ bool _isWhiteMove(char prevBoard[8][8], std::vector<Change> changes, Metadata me
         {
             if (a.col == 0)
             {
-                metadata.castle.didWhiteQueensideRookMove = true;
+                metadata.castle.didWhiteQueensideRookMove = true;  // does not matter if already true
             }
             else if (a.col == 7)
             {
@@ -69,7 +68,7 @@ bool _isWhiteMove(char prevBoard[8][8], std::vector<Change> changes, Metadata me
             metadata.enPassantCol = b.col;
         }
 
-        SPDLOG_TRACE("Simple move");
+        SPDLOG_TRACE("Simple move.");
         moveInternalToAlgebraic(
             a.prev,
             a.row, a.col,
@@ -81,7 +80,7 @@ bool _isWhiteMove(char prevBoard[8][8], std::vector<Change> changes, Metadata me
     // promotion
     if (a.wasWhitePawn() && (b.isWhiteBishop() || b.isWhiteKnight() || b.isWhiteRook() || b.isWhiteQueen()))
     {
-        SPDLOG_TRACE("Promotion");
+        SPDLOG_TRACE("Promotion move.");
         moveInternalToAlgebraic(
             a.prev,
             a.row, a.col,
@@ -90,7 +89,7 @@ bool _isWhiteMove(char prevBoard[8][8], std::vector<Change> changes, Metadata me
         return true;
     }
 
-    SPDLOG_TRACE("Unrecognized move");
+    SPDLOG_TRACE("Unrecognized move.");
     return false;
 }
 
@@ -101,6 +100,7 @@ bool _isBlackMove(char prevBoard[8][8], std::vector<Change> changes, Metadata me
     // --- turn check --- //
     if (metadata.turn != Color::BLACK)
     {
+        SPDLOG_TRACE("Not black turn.");
         return false;
     }
 
@@ -124,12 +124,14 @@ bool _isBlackMove(char prevBoard[8][8], std::vector<Change> changes, Metadata me
 
     if (aCount != 1 || bCount != 1)
     {
+        SPDLOG_TRACE("Incorrect setup.");
         return false;
     }
 
     // --- move check --- //
     if (!canPieceAttackCell(prevBoard, a.row, a.col, b.row, b.col, metadata.enPassantCol))
     {
+        SPDLOG_TRACE("Incorrect move.");
         return false;
     }
 
@@ -158,6 +160,7 @@ bool _isBlackMove(char prevBoard[8][8], std::vector<Change> changes, Metadata me
             metadata.enPassantCol = b.col;
         }
 
+        SPDLOG_TRACE("Simple move.");
         moveInternalToAlgebraic(
             a.prev,
             a.row, a.col,
@@ -169,6 +172,7 @@ bool _isBlackMove(char prevBoard[8][8], std::vector<Change> changes, Metadata me
     // promotion
     if (a.wasBlackPawn() && (b.isBlackBishop() || b.isBlackKnight() || b.isBlackRook() || b.isBlackQueen()))
     {
+        SPDLOG_TRACE("Promotion move.");
         moveInternalToAlgebraic(
             a.prev,
             a.row, a.col,
@@ -187,6 +191,7 @@ bool _isWhiteCapture(char prevBoard[8][8], std::vector<Change> changes, Metadata
     // --- turn check --- //
     if (metadata.turn != Color::WHITE)
     {
+        SPDLOG_TRACE("Not white turn.");
         return false;
     }
 
@@ -210,12 +215,14 @@ bool _isWhiteCapture(char prevBoard[8][8], std::vector<Change> changes, Metadata
 
     if (aCount != 1 || bCount != 1)
     {
+        SPDLOG_TRACE("Incorrect setup.");
         return false;
     }
 
     // --- move check --- //
     if (!canPieceAttackCell(prevBoard, a.row, a.col, b.row, b.col, metadata.enPassantCol))
     {
+        SPDLOG_TRACE("Incorrect move");
         return false;
     }
 
@@ -240,6 +247,7 @@ bool _isWhiteCapture(char prevBoard[8][8], std::vector<Change> changes, Metadata
             }
         }
 
+        SPDLOG_TRACE("Simple capture.");
         moveInternalToAlgebraic(
             a.prev,
             a.row, a.col,
@@ -251,6 +259,7 @@ bool _isWhiteCapture(char prevBoard[8][8], std::vector<Change> changes, Metadata
     // promotion
     if (a.wasWhitePawn() && (b.isWhiteBishop() || b.isWhiteKnight() || b.isWhiteRook() || b.isWhiteQueen()))
     {
+        SPDLOG_TRACE("Promotion capture.");
         moveInternalToAlgebraic(
             a.prev,
             a.row, a.col,
@@ -259,6 +268,7 @@ bool _isWhiteCapture(char prevBoard[8][8], std::vector<Change> changes, Metadata
         return true;
     }
 
+    SPDLOG_TRACE("Unrecognized move.");
     return false;
 }
 
@@ -269,6 +279,7 @@ bool _isBlackCapture(char prevBoard[8][8], std::vector<Change> changes, Metadata
     // --- turn check --- //
     if (metadata.turn != Color::BLACK)
     {
+        SPDLOG_TRACE("Not black turn.");
         return false;
     }
 
@@ -292,12 +303,14 @@ bool _isBlackCapture(char prevBoard[8][8], std::vector<Change> changes, Metadata
 
     if (aCount != 1 || bCount != 1)
     {
+        SPDLOG_TRACE("Incorrect setup.");
         return false;
     }
 
     // --- move check --- //
     if (!canPieceAttackCell(prevBoard, a.row, a.col, b.row, b.col, metadata.enPassantCol))
     {
+        SPDLOG_TRACE("Incorrect move");
         return false;
     }
 
@@ -322,6 +335,7 @@ bool _isBlackCapture(char prevBoard[8][8], std::vector<Change> changes, Metadata
             }
         }
 
+        SPDLOG_TRACE("Simple capture.");
         moveInternalToAlgebraic(
             a.prev,
             a.row, a.col,
@@ -333,6 +347,7 @@ bool _isBlackCapture(char prevBoard[8][8], std::vector<Change> changes, Metadata
     // promotion
     if (a.wasBlackPawn() && (b.isBlackBishop() || b.isBlackKnight() || b.isBlackRook() || b.isBlackQueen()))
     {
+        SPDLOG_TRACE("Promotion capture.");
         moveInternalToAlgebraic(
             a.prev,
             a.row, a.col,
@@ -341,6 +356,7 @@ bool _isBlackCapture(char prevBoard[8][8], std::vector<Change> changes, Metadata
         return true;
     }
 
+    SPDLOG_TRACE("Unrecognized move.");
     return false;
 }
 
@@ -352,6 +368,7 @@ bool _isWhiteEnPassant(char prevBoard[8][8], std::vector<Change> changes, Metada
     // --- turn check --- //
     if (metadata.turn != Color::WHITE)
     {
+        SPDLOG_TRACE("Not white turn.");
         return false;
     }
 
@@ -379,17 +396,20 @@ bool _isWhiteEnPassant(char prevBoard[8][8], std::vector<Change> changes, Metada
 
     if (aCount != 1 || bCount != 1 || cCount != 1)
     {
+        SPDLOG_TRACE("Incorrect setup.");
         return false;
     }
 
     // --- move check --- //
     if (!canPieceAttackCell(prevBoard, a.row, a.col, b.row, b.col, metadata.enPassantCol))
     {
+        SPDLOG_TRACE("Incorrect move.");
         return false;
     }
 
     // --- special checks --- //
     // no need to check rows/ columns, since these checked in canPieceAttackCell
+    SPDLOG_TRACE("En passant.");
     moveInternalToAlgebraic(
         a.prev,
         a.row, a.col,
@@ -407,6 +427,7 @@ bool _isBlackEnPassant(char prevBoard[8][8], std::vector<Change> changes, Metada
     // --- turn check --- //
     if (metadata.turn != Color::BLACK)
     {
+        SPDLOG_TRACE("Not black turn");
         return false;
     }
 
@@ -434,17 +455,20 @@ bool _isBlackEnPassant(char prevBoard[8][8], std::vector<Change> changes, Metada
 
     if (aCount != 1 || bCount != 1 || cCount != 1)
     {
+        SPDLOG_TRACE("Incorrect setup.");
         return false;
     }
 
     // --- move check --- //
     if (!canPieceAttackCell(prevBoard, a.row, a.col, b.row, b.col, metadata.enPassantCol))
     {
+        SPDLOG_TRACE("Incorrect move.");
         return false;
     }
 
     // --- special checks --- //
     // no need to check rows/ columns, since these checked in canPieceAttackCell
+    SPDLOG_TRACE("En passant.");
     moveInternalToAlgebraic(
         a.prev,
         a.row, a.col,
@@ -461,6 +485,7 @@ bool _isWhiteCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
     // --- turn check --- //
     if (metadata.turn != Color::WHITE)
     {
+        SPDLOG_TRACE("Not white turn.");
         return false;
     }
 
@@ -493,6 +518,7 @@ bool _isWhiteCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
 
     if (aCount != 1 || bCount != 1 || cCount != 1 || dCount != 1)
     {
+        SPDLOG_TRACE("Incorrect setup.");
         return false;
     }
 
@@ -509,6 +535,7 @@ bool _isWhiteCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
         !isCellInCheck(prevBoard, 7, 5, metadata.enPassantCol),
         !isCellInCheck(prevBoard, 7, 6, metadata.enPassantCol))
     {
+        SPDLOG_TRACE("Kingside castle.");
         moveInternalToAlgebraic(
             'x',
             -1, -1,
@@ -528,6 +555,7 @@ bool _isWhiteCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
         !isCellInCheck(prevBoard, 7, 3, metadata.enPassantCol),
         !isCellInCheck(prevBoard, 7, 2, metadata.enPassantCol))
     {
+        SPDLOG_TRACE("Queenside castle");
         moveInternalToAlgebraic(
             'x',
             -1, -1,
@@ -537,6 +565,7 @@ bool _isWhiteCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
         return true;
     }
 
+    SPDLOG_TRACE("Unrecognized move.");
     return false;
 }
 
@@ -548,6 +577,7 @@ bool _isBlackCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
     // --- turn check --- //
     if (metadata.turn != Color::BLACK)
     {
+        SPDLOG_TRACE("Not black turn.");
         return false;
     }
 
@@ -580,6 +610,7 @@ bool _isBlackCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
 
     if (aCount != 1 || bCount != 1 || cCount != 1 || dCount != 1)
     {
+        SPDLOG_TRACE("Incorrect setup.");
         return false;
     }
 
@@ -596,6 +627,7 @@ bool _isBlackCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
         !isCellInCheck(prevBoard, 0, 5, metadata.enPassantCol),
         !isCellInCheck(prevBoard, 0, 6, metadata.enPassantCol))
     {
+        SPDLOG_TRACE("Kingside castle.");
         moveInternalToAlgebraic(
             'x',
             -1, -1,
@@ -615,6 +647,7 @@ bool _isBlackCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
         !isCellInCheck(prevBoard, 0, 3, metadata.enPassantCol),
         !isCellInCheck(prevBoard, 0, 2, metadata.enPassantCol))
     {
+        SPDLOG_TRACE("Queenside castle.");
         moveInternalToAlgebraic(
             'x',
             -1, -1,
@@ -624,6 +657,7 @@ bool _isBlackCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
         return true;
     }
 
+    SPDLOG_TRACE("Unrecognized move.");
     return false;
 }
 
@@ -631,8 +665,9 @@ bool _isBlackCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
 // Checks if prevBoard to currBoard transition can happen in one legal move.
 //      If yes, message will contain S_SUCCESS (message.h) and encoding will contain the encoding of the move
 //      If not, message will contain the corresponding error message (message.h) and encoding must be discarded
-void processMove(char prevBoard[][8], char currBoard[][8], Metadata metadata, char message[200])
+void processMove(char prevBoard[8][8], char currBoard[8][8], Metadata metadata, char message[200])
 {
+    SPDLOG_TRACE("Entered processMove");
     // gather changed cells and needed info
     std::vector<Change> changes;
     for (int i = 0; i < 8; i++)
@@ -648,7 +683,7 @@ void processMove(char prevBoard[][8], char currBoard[][8], Metadata metadata, ch
 
     if (changes.size() == 0)
     {
-        strcpy(message, "LNo movement");
+        strcpy(message, "INo movement");  // considered illegal, so that it does not affect the turns
         return;
     }
 
@@ -683,19 +718,14 @@ void processMove(char prevBoard[][8], char currBoard[][8], Metadata metadata, ch
 
     if (changes.size() == 2)
     {
-        if (_isBlackMove(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, encoding))
-        {
-            sprintf(message, "L%-39s%s", "Black move", encoding);
-            return;
-        }
         if (_isWhiteMove(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, encoding))
         {
             sprintf(message, "L%-39s%s", "White move", encoding);
             return;
         }
-        if (_isBlackCapture(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, encoding))
+        if (_isBlackMove(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, encoding))
         {
-            sprintf(message, "L%-39s%s", "Black capture", encoding);
+            sprintf(message, "L%-39s%s", "Black move", encoding);
             return;
         }
         if (_isWhiteCapture(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, encoding))
@@ -703,40 +733,49 @@ void processMove(char prevBoard[][8], char currBoard[][8], Metadata metadata, ch
             sprintf(message, "L%-39s%s", "White capture", encoding);
             return;
         }
+        if (_isBlackCapture(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, encoding))
+        {
+            sprintf(message, "L%-39s%s", "Black capture", encoding);
+            return;
+        }
+
         strcpy(message, "I2-change move not recognized");
         return;
     }
 
     if (changes.size() == 3)
     {
-        if (_isBlackEnPassant(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, encoding))
-        {
-            sprintf(message, "L%-39s%s", "Black en passant", encoding);
-            return;
-        }
         if (_isWhiteEnPassant(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, encoding))
         {
             sprintf(message, "L%-39s%s", "White en passant", encoding);
             return;
         }
+        if (_isBlackEnPassant(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, encoding))
+        {
+            sprintf(message, "L%-39s%s", "Black en passant", encoding);
+            return;
+        }
+
         strcpy(message, "I3-change move not recognized");
         return;
     }
 
     if (changes.size() == 4)
     {
-        if (_isBlackCastle(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, encoding))
-        {
-            sprintf(message, "L%-39s%s", "Black castle", encoding);
-            return;
-        }
         if (_isWhiteCastle(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, encoding))
         {
             sprintf(message, "L%-39s%s", "White castle", encoding);
             return;
         }
+        if (_isBlackCastle(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, encoding))
+        {
+            sprintf(message, "L%-39s%s", "Black castle", encoding);
+            return;
+        }
+
         strcpy(message, "I4-change move not recognized");
         return;
+
     }
 
     strcpy(message, "IMove not recognized");

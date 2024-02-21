@@ -1,11 +1,6 @@
-#include <string>
-#include <iostream>
-
 #include "Notation.h"
 
-#pragma warning(disable : 4996)
 
-// Convertion from internal notation to algebraic. Example: 34 -> e5
 void _cellInternalToAlgebraic(int row, int col, char enc[3])
 {
     enc[0] = 'a' + col;
@@ -13,14 +8,14 @@ void _cellInternalToAlgebraic(int row, int col, char enc[3])
     enc[2] = '\0';
 }
 
-// Convertion from algebraic notation to internal. Example: e5 -> 34
+
 void _cellAlgebraicToInternal(char enc[3], int& row, int& col)
 {
     col = enc[0] - 'a';
     row = '0' + 8 - enc[1];
 }
 
-// Convertion from internal piece encoding to algebraic. Always uppercase
+
 char _pieceInternalToAlgebraic(char enc)
 {
     if (islower(enc))
@@ -30,7 +25,7 @@ char _pieceInternalToAlgebraic(char enc)
     return enc;
 }
 
-// Convertion from algebraic piece encoding to internal. Uppercase for white, lowercase for black
+
 char _pieceAlgebraicToInternal(char enc, bool isBlack)
 {
     if (isBlack)
@@ -40,9 +35,8 @@ char _pieceAlgebraicToInternal(char enc, bool isBlack)
     return enc;
 }
 
-// Convertion from internal move encoding to algebraic
-// todo - nicer solution for passing arguments
-// todo - draw offer, end of game
+
+// todo: draw offer, end of game
 void moveInternalToAlgebraic(
     char piece,
     int prevRow,
@@ -71,11 +65,12 @@ void moveInternalToAlgebraic(
         return;
     }
 
-    // encoding of piece
+    // encoding of piece - pawns not noted
     char pieceEnc[2] = "";
     if (!(IS_WHITE_PAWN(piece) || IS_BLACK_PAWN(piece)))
     {
         pieceEnc[0] = _pieceInternalToAlgebraic(piece);
+        pieceEnc[1] = '\0';
     }
 
     // encoding of previous cell
@@ -86,7 +81,8 @@ void moveInternalToAlgebraic(
     char captEnc[2] = "";
     if (isCapture)
     {
-        strcpy(captEnc, "x");
+        captEnc[0] = 'x';
+        captEnc[1] = '\0';
     }
 
     // encoding of current cell
@@ -97,11 +93,13 @@ void moveInternalToAlgebraic(
     char checkEnc[2] = "";
     if (isCheckmate)  // checkmate involves check but is stronger
     {
-        strcpy(checkEnc, "#");
+        checkEnc[0] = '#';
+        checkEnc[1] = '\0';
     }
     else if (isCheck)
     {
-        strcpy(checkEnc, "+");
+        checkEnc[0] = '+';
+        checkEnc[1] = '\0';
     }
 
     // encoding of promotion
@@ -116,16 +114,18 @@ void moveInternalToAlgebraic(
     char epEnc[3] = "";
     if (isEnPassant)
     {
-        strcpy(epEnc, "ep");
+        epEnc[0] = 'e';
+        epEnc[1] = 'p';
+        epEnc[2] = '\0';
     }
 
     // putting it together
     // max size hardcoded 10!
     sprintf(output, "%s%s%s%s%s%s%s", pieceEnc, prevEnc, captEnc, currEnc, checkEnc, promEnc, epEnc);
-    // std::cout << "In moveInternalToAlgebraic: " << output << std::endl;
 }
+
 
 void moveAlgebraicToInternal(char encoding, int& row, int& col)
 {
-
+    // todo: implement if will be needed (example: user gives a command in algebraic notation)
 }

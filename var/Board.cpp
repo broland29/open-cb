@@ -1,30 +1,53 @@
-#include <iostream>
-#include <fstream>
-
-#include "board.h"
+#include "Board.h"
 
 
-void printBoard(char board[8][8], std::ofstream& ofstream)
+std::ostream& operator<<(std::ostream& os, const Color& color)
 {
-    for (int i = 0; i < 8; i++)
+    if (color == Color::WHITE)
     {
-        for (int j = 0; j < 8; j++)
-        {
-            ofstream << board[i][j] << " ";
-        }
-        ofstream << std::endl;
+        os << "WHITE";
     }
+    else if (color == Color::BLACK)
+    {
+        os << "BLACK";
+    }
+    return os;
 }
 
 
-void readBoard(char board[8][8], std::ifstream& ifstream)
+std::ostream& operator<<(std::ostream& os, const Castle& castle)
 {
-    for (int i = 0; i < 8; i++)
+    os << std::endl;
+    os << "      didBlackKingMove: " << castle.didBlackKingMove << std::endl;
+    os << "      didWhiteKingMove: " << castle.didWhiteKingMove << std::endl;
+    os << "      didBlackKingsideRookMove: " << castle.didBlackKingsideRookMove << std::endl;
+    os << "      didBlackQueensideRookMove: " << castle.didBlackQueensideRookMove << std::endl;
+    os << "      didWhiteKingsideRookMove: " << castle.didWhiteKingsideRookMove << std::endl;
+    os << "      didWhiteQueensideRookMove: " << castle.didWhiteQueensideRookMove << std::endl;
+    return os;
+}
+
+
+std::ostream& operator<<(std::ostream& os, const Metadata& metadata)
+{
+    os << std::endl;
+    os << "    caste: " << metadata.castle;
+    os << "    enPassantCol: " << metadata.enPassantCol << std::endl;
+    os << "    moveCount: " << metadata.moveCount << std::endl;
+    os << "    turn: " << metadata.turn << std::endl;
+    return os;
+}
+
+
+void Metadata::changeTurn()
+{
+    if (turn == Color::WHITE)
     {
-        for (int j = 0; j < 8; j++)
-        {
-            ifstream >> board[i][j];
-        }
+        turn = Color::BLACK;
+    }
+    else
+    {
+        turn = Color::WHITE;
     }
 }
 
@@ -38,21 +61,4 @@ void copyBoard(char boardTo[8][8], char boardFrom[8][8])
             boardTo[i][j] = boardFrom[i][j];
         }
     }
-}
-
-
-bool isBoardInitialSetup(char board[8][8])
-{
-    char initialSetup[8][8] = INITIAL_SETUP;
-    for (int i = 0; i < 8; i++)
-    {
-        for (int j = 0; j < 8; j++)
-        {
-            if (board[i][j] != initialSetup[i][j])
-            {
-                return false;
-            }
-        }
-    }
-    return true;
 }

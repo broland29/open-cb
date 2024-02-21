@@ -1,10 +1,14 @@
 #include "Validator.h"
 
+
 Validator::Validator()
 {
     copyBoard(prevBoard, initialSetup);
     copyBoard(currBoard, initialSetup);
+    SPDLOG_TRACE("After construction, validator state:");
+    SPDLOG_TRACE(*this);
 }
+
 
 void Validator::validateBoard(char board[8][8], char message[200])
 {
@@ -34,20 +38,17 @@ void Validator::validateBoard(char board[8][8], char message[200])
     Validator oldValidator = *this;
 
     // update boards
-    std::cout << "\n\n1:\n" << *this;
     copyBoard(prevBoard, currBoard);
-    std::cout << "\n\n2:\n" << *this;
     copyBoard(currBoard, board);
-    std::cout << "\n\n3:\n" << *this <<"\n\n";
-    std::cout << "In validateBoard(), before processMove:" << std::endl << *this;
 
+    // delegate to Move.cpp
     processMove(prevBoard, currBoard, metadata, message);
 
-    // if illegal, redo
+    // if illegal, undo change
     if (message[0] != 'L')
     {
         *this = oldValidator;
-        std::cout << "Invalid move undo" << std::endl;
+        SPDLOG_INFO("Move is discarded since illegal.");
         return;
     }
 
@@ -63,28 +64,30 @@ void Validator::validateBoard(char board[8][8], char message[200])
         metadata.enPassantCol = -1;
     }
 
-    std::cout << "In validateBoard(), at end:" << std::endl << *this;
+    SPDLOG_TRACE("After update, validator state:");
+    SPDLOG_TRACE(*this);
 }
+
 
 std::ostream& operator<<(std::ostream& os, const Validator& validator)
 {
-    os << "currBoard:" << std::endl;
+    os << std::endl;
+    os << "  currBoard         prevBoard" << std::endl;
     for (int i = 0; i < 8; i++)
     {
+        os << "  ";
         for (int j = 0; j < 8; j++)
         {
             os << validator.currBoard[i][j] << " ";
         }
-        os << std::endl;
-    }
-    os << "prevBoard:" << std::endl;
-    for (int i = 0; i < 8; i++)
-    {
+        os << "  ";
         for (int j = 0; j < 8; j++)
         {
             os << validator.prevBoard[i][j] << " ";
         }
         os << std::endl;
     }
+
+    os << std::endl << "  metadata: " << validator.metadata;
     return os;
 }

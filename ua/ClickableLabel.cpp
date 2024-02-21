@@ -36,3 +36,15 @@ std::string ClickableLabel::getPieceName()
 {
     return pieceName;
 }
+
+void ClickableLabel::modifyStyleSheet(QString string)
+{
+    if ((row + col) % 2 == 0)
+    {
+        setStyleSheet("background-color:mistyrose; " + string);
+    }
+    else
+    {
+        setStyleSheet("background-color:brown; " + string);
+    }
+}

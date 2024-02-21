@@ -1,4 +1,8 @@
 #pragma once
+#pragma warning(disable : 4996)  // strcpy, sprintf: This function or variable may be unsafe
+
+#include <iostream>
+
 
 namespace
 {
@@ -16,6 +20,8 @@ namespace
 #define BQ  'q'
 #define BK  'k'
 }
+
+// important to put macros in paranthesis to avoid accidental bugs
 
 #define IS_FREE(enc)            (enc == FR)
 #define IS_WHITE_PAWN(enc)      (enc == WP)
@@ -39,6 +45,7 @@ namespace
 #define IS_NOT_FREE(enc)                    (IS_WHITE(enc) || IS_BLACK(enc))
 
 
+// Example: 34 -> e5
 void _cellInternalToAlgebraic(
     int row,
     int col,
@@ -46,24 +53,28 @@ void _cellInternalToAlgebraic(
 );
 
 
+// Example: e5 -> 34
 void _cellAlgebraicToInternal(
     char enc[3],
-    int& row, int&
-    col
+    int& row,
+    int& col
 );
 
 
+// In algebraic piece always uppercase
 char _pieceInternalToAlgebraic(
     char enc
 );
 
 
+// In internal, uppercase for white, lowercase for black
 char _pieceAlgebraicToInternal(
     char enc,
     bool isBlack
 );
 
 
+// Example: see tests
 void moveInternalToAlgebraic(
     char piece,
     int prevRow,
@@ -82,6 +93,7 @@ void moveInternalToAlgebraic(
 );
 
 
+// Not yet implemented
 void moveAlgebraicToInternal(
     char encoding,
     int& row,

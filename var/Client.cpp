@@ -1,13 +1,7 @@
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <iostream>
+#include "Client.h"
 
-#include "Validator.h"
 
-#define SERVER_IP "127.0.0.1"
-#define SERVER_PORT 55555
-
-void b(Validator* validator, char recvBuffer[200], SOCKET clientSocket)
+void Client::validateNewBoard(char recvBuffer[200])
 {
 	char board[8][8];
 	for (int i = 0; i < 8; i++)
@@ -24,18 +18,18 @@ void b(Validator* validator, char recvBuffer[200], SOCKET clientSocket)
 	int sendByteCount = send(clientSocket, sendBuffer, 200, 0);
 	if (sendByteCount > 0)
 	{
-		std::cout << "send() success." << std::endl;
+		SPDLOG_INFO("Sending validator response succeeded.");
 	}
 	else
 	{
-		std::cout << "send() error: " << WSAGetLastError();
+		SPDLOG_INFO("Sending validator response failed! Error {0:d}.", WSAGetLastError());
 		WSACleanup();
 	}
 }
 
-void g(Validator* validator, SOCKET clientSocket)
+
+void Client::getCurrentBoard()
 {
-	std::cout << "Got request to send internal board" << std::endl;
 	char sendBuffer[200];
 	for (int i = 0; i < 8; i++)
 	{
@@ -49,16 +43,17 @@ void g(Validator* validator, SOCKET clientSocket)
 	int sendByteCount = send(clientSocket, sendBuffer, 200, 0);
 	if (sendByteCount > 0)
 	{
-		std::cout << "send() success." << std::endl;
+		SPDLOG_INFO("Sending current board succeeded.");
 	}
 	else
 	{
-		std::cout << "send() error: " << WSAGetLastError();
+		SPDLOG_INFO("Sending current board failed! Error {0:d}.", WSAGetLastError());
 		WSACleanup();
 	}
 }
 
-int client_main()
+
+Client::Client()
 {
 	// initialize WSA
 	WSADATA wsaData;  // structure which will be populated by WSAStartup()
@@ -66,21 +61,23 @@ int client_main()
 	int wsaErr = WSAStartup(wVersionRequested, &wsaData);
 	if (wsaErr != 0)
 	{
-		std::cout << "WSAStartup() error, code: " << wsaErr << std::endl;
-		return 1;
+		SPDLOG_ERROR("Initializing WSA failed! Error {0:d}.", wsaErr);
+		throw 1;
 	}
-	std::cout << "WSAStartup() success, status: " << wsaData.szSystemStatus << std::endl;
+	SPDLOG_INFO("Initializing WSA succeeded. Status {}.", wsaData.szSystemStatus);
+
 
 	// create socket
-	SOCKET clientSocket = INVALID_SOCKET;
+	clientSocket = INVALID_SOCKET;
 	clientSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (clientSocket == INVALID_SOCKET)
 	{
-		std::cout << "socket() error: " << WSAGetLastError() << std::endl;
+		SPDLOG_ERROR("Socket creation failed! Error {0:d}.", WSAGetLastError());
 		WSACleanup();
-		return 1;
+		throw 1;
 	}
-	std::cout << "socket() success." << std::endl;
+	SPDLOG_INFO("Socket creation successful.");
+
 
 	// connect to server
 	sockaddr_in clientService;
@@ -89,15 +86,19 @@ int client_main()
 	clientService.sin_port = htons(SERVER_PORT);  // server port
 	if (connect(clientSocket, (SOCKADDR*)&clientService, sizeof(clientService)) == SOCKET_ERROR)
 	{
-		std::cout << "connect() error: " << WSAGetLastError();
+		SPDLOG_ERROR("Connection to server failed! Error {0:d}.", WSAGetLastError());
 		WSACleanup();
-		return 1;
+		throw 1;
 	}
-	std::cout << "connect() success." << std::endl;
+	SPDLOG_INFO("Connection to server successful.");
 
-	char cmd = 'x';
-	Validator* validator = new Validator;
 
+	// initialize validator
+	validator = new Validator;
+}
+
+int Client::runLoop()
+{
 	while (true)
 	{
 		// recieve message
@@ -105,27 +106,30 @@ int client_main()
 		int recvByteCount = recv(clientSocket, recvBuffer, 200, 0);
 		if (recvByteCount > 0)
 		{
-			std::cout << "recv() recieved: " << recvBuffer << std::endl;
+			SPDLOG_INFO("Recieve from server successful. Received {}.", recvBuffer);
 		}
 		else
 		{
-			std::cout << "recv() error: " << WSAGetLastError();
+			SPDLOG_INFO("Recieve from server unsuccessful! Error {}.", WSAGetLastError());
 			WSACleanup();
+			continue;
 		}
 
 		switch (recvBuffer[0])
 		{
 		case 'e':
-			std::cout << "got cmd = exit" << std::endl;
+			SPDLOG_INFO("Got command e, will exit.");
 			break;
 		case 'b':
-			b(validator, recvBuffer, clientSocket);
+			SPDLOG_INFO("Got command b, will validate new board.");
+			validateNewBoard(recvBuffer);
 			continue;
 		case 'g':
-			g(validator, clientSocket);
+			SPDLOG_INFO("Got command g, will get current board.");
+			getCurrentBoard();
 			continue;
 		default:
-			std::cout << "unknown command" << std::endl;
+			SPDLOG_INFO("Unknown command {}.", recvBuffer[0]);
 			continue;
 		}
 		break;
@@ -137,7 +141,7 @@ int client_main()
 	}
 
 	// close socket
-	std::cout << "Calling closesocket" << std::endl;
+	SPDLOG_INFO("Ending loop, closing socket.");
 	closesocket(clientSocket);
 	return 0;
 }

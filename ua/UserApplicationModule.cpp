@@ -66,7 +66,7 @@ UserApplicationModule::UserApplicationModule(QWidget *parent)
             pieceLabels[i][j] = new ClickableLabel();
             pieceLabels[i][j]->row = i;
             pieceLabels[i][j]->col = j;
-            pieceLabels[i][j]->setStyleSheet("border: 2px solid black;");
+            pieceLabels[i][j]->modifyStyleSheet("border: 2px solid black;");
             connect(pieceLabels[i][j], &ClickableLabel::leftClicked, this, &UserApplicationModule::leftClickedSlot);
             connect(pieceLabels[i][j], &ClickableLabel::rightClicked, this, &UserApplicationModule::rightClickedSlot);
             resultLayout->addWidget(pieceLabels[i][j], i, j);
@@ -348,7 +348,7 @@ void UserApplicationModule::leftClickedSlot(int row, int col, std::string pieceN
     qDebug() << "leftClickedSlot" << row << col;
     if (lastRow == -1 || lastCol == -1)
     {
-        pieceLabels[row][col]->setStyleSheet("border: 2px solid red;");
+        pieceLabels[row][col]->modifyStyleSheet("border: 2px solid red;");
         lastRow = row;
         lastCol = col;
         lastPieceName = pieceName;
@@ -359,7 +359,7 @@ void UserApplicationModule::leftClickedSlot(int row, int col, std::string pieceN
     pieceLabels[lastRow][lastCol]->setPiece("FR", nameToPixmap["FR"]);
 
     // reset selection
-    pieceLabels[lastRow][lastCol]->setStyleSheet("border: 2px solid black;");
+    pieceLabels[lastRow][lastCol]->modifyStyleSheet("border: 2px solid black;");
     lastRow = -1;
     lastCol = -1;
 }

@@ -1,6 +1,7 @@
 #include "Logger.h"
 
-void initLogger(spdlog::level::level_enum masterLogLevel)
+
+void Logger::initialize(spdlog::level::level_enum masterLogLevel)
 {
     // create sinks: multiple loggers may use this as output channel (since multithreaded)
     auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
@@ -32,5 +33,5 @@ void initLogger(spdlog::level::level_enum masterLogLevel)
     // but since only one logger, set as default
     spdlog::set_default_logger(myLogger);
 
-    SPDLOG_INFO("Logger initialized");
+    SPDLOG_INFO("Logger initialized.");
 }
