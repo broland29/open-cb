@@ -12,7 +12,7 @@
 bool _isWhiteMove(
     char prevBoard[8][8],
     std::vector<Change> changes,
-    Metadata metadata,
+    Metadata &metadata,
     bool isOppositeKingInCheck,
     bool isOppositeKingInCheckmate,
     char encoding[10]
@@ -22,7 +22,7 @@ bool _isWhiteMove(
 bool _isBlackMove(
     char prevBoard[8][8],
     std::vector<Change> changes,
-    Metadata metadata,
+    Metadata &metadata,
     bool isOppositeKingInCheck,
     bool isOppositeKingInCheckmate,
     char encoding[10]
@@ -32,7 +32,7 @@ bool _isBlackMove(
 bool _isWhiteCapture(
     char prevBoard[8][8],
     std::vector<Change> changes,
-    Metadata metadata,
+    Metadata &metadata,
     bool isOppositeKingInCheck,
     bool isOppositeKingInCheckmate,
     char encoding[10]
@@ -42,7 +42,7 @@ bool _isWhiteCapture(
 bool _isBlackCapture(
     char prevBoard[8][8],
     std::vector<Change> changes,
-    Metadata metadata,
+    Metadata &metadata,
     bool isOppositeKingInCheck,
     bool isOppositeKingInCheckmate,
     char encoding[10]
@@ -52,7 +52,7 @@ bool _isBlackCapture(
 bool _isWhiteEnPassant(
     char prevBoard[8][8],
     std::vector<Change> changes,
-    Metadata metadata,
+    Metadata &metadata,
     bool isOppositeKingInCheck,
     bool isOppositeKingInCheckmate,
     char encoding[10]
@@ -62,7 +62,7 @@ bool _isWhiteEnPassant(
 bool _isBlackEnPassant(
     char prevBoard[8][8],
     std::vector<Change> changes,
-    Metadata metadata,
+    Metadata &metadata,
     bool isOppositeKingInCheck,
     bool isOppositeKingInCheckmate,
     char encoding[10]
@@ -72,7 +72,7 @@ bool _isBlackEnPassant(
 bool _isWhiteCastle(
     char prevBoard[8][8],
     std::vector<Change> changes,
-    Metadata metadata,
+    Metadata &metadata,
     bool isOppositeKingInCheck,
     bool isOppositeKingInCheckmate,
     char encoding[10]
@@ -82,7 +82,7 @@ bool _isWhiteCastle(
 bool _isBlackCastle(
     char prevBoard[8][8],
     std::vector<Change> changes,
-    Metadata metadata,
+    Metadata &metadata,
     bool isOppositeKingInCheck,
     bool isOppositeKingInCheckmate,
     char encoding[10]
@@ -96,6 +96,6 @@ bool _isBlackCastle(
 void processMove(
     char prevBoard[8][8],
     char currBoard[8][8],
-    Metadata metadata,
+    Metadata &metadata,
     char message[200]
 );

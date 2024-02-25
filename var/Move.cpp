@@ -1,7 +1,7 @@
 #include "Move.h"
 
 
-bool _isWhiteMove(char prevBoard[8][8], std::vector<Change> changes, Metadata metadata, bool isOppositeKingInCheck, bool isOppositeKingInCheckmate, char encoding[10])
+bool _isWhiteMove(char prevBoard[8][8], std::vector<Change> changes, Metadata &metadata, bool isOppositeKingInCheck, bool isOppositeKingInCheckmate, char encoding[10])
 {
     assert(changes.size() == 2);
 
@@ -93,7 +93,7 @@ bool _isWhiteMove(char prevBoard[8][8], std::vector<Change> changes, Metadata me
     return false;
 }
 
-bool _isBlackMove(char prevBoard[8][8], std::vector<Change> changes, Metadata metadata, bool isOppositeKingInCheck, bool isOppositeKingInCheckmate, char encoding[10])
+bool _isBlackMove(char prevBoard[8][8], std::vector<Change> changes, Metadata &metadata, bool isOppositeKingInCheck, bool isOppositeKingInCheckmate, char encoding[10])
 {
     assert(changes.size() == 2);
 
@@ -184,7 +184,7 @@ bool _isBlackMove(char prevBoard[8][8], std::vector<Change> changes, Metadata me
     return false;
 }
 
-bool _isWhiteCapture(char prevBoard[8][8], std::vector<Change> changes, Metadata metadata, bool isOppositeKingInCheck, bool isOppositeKingInCheckmate, char encoding[10])
+bool _isWhiteCapture(char prevBoard[8][8], std::vector<Change> changes, Metadata &metadata, bool isOppositeKingInCheck, bool isOppositeKingInCheckmate, char encoding[10])
 {
     assert(changes.size() == 2);
 
@@ -272,7 +272,7 @@ bool _isWhiteCapture(char prevBoard[8][8], std::vector<Change> changes, Metadata
     return false;
 }
 
-bool _isBlackCapture(char prevBoard[8][8], std::vector<Change> changes, Metadata metadata, bool isOppositeKingInCheck, bool isOppositeKingInCheckmate, char encoding[10])
+bool _isBlackCapture(char prevBoard[8][8], std::vector<Change> changes, Metadata &metadata, bool isOppositeKingInCheck, bool isOppositeKingInCheckmate, char encoding[10])
 {
     assert(changes.size() == 2);
 
@@ -361,7 +361,7 @@ bool _isBlackCapture(char prevBoard[8][8], std::vector<Change> changes, Metadata
 }
 
 
-bool _isWhiteEnPassant(char prevBoard[8][8], std::vector<Change> changes, Metadata metadata, bool isOppositeKingInCheck, bool isOppositeKingInCheckmate, char encoding[10])
+bool _isWhiteEnPassant(char prevBoard[8][8], std::vector<Change> changes, Metadata &metadata, bool isOppositeKingInCheck, bool isOppositeKingInCheckmate, char encoding[10])
 {
     assert(changes.size() == 3);
 
@@ -420,7 +420,7 @@ bool _isWhiteEnPassant(char prevBoard[8][8], std::vector<Change> changes, Metada
 }
 
 
-bool _isBlackEnPassant(char prevBoard[8][8], std::vector<Change> changes, Metadata metadata, bool isOppositeKingInCheck, bool isOppositeKingInCheckmate, char encoding[10])
+bool _isBlackEnPassant(char prevBoard[8][8], std::vector<Change> changes, Metadata &metadata, bool isOppositeKingInCheck, bool isOppositeKingInCheckmate, char encoding[10])
 {
     assert(changes.size() == 3);
 
@@ -478,7 +478,7 @@ bool _isBlackEnPassant(char prevBoard[8][8], std::vector<Change> changes, Metada
     return true;
 }
 
-bool _isWhiteCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata metadata, bool isOppositeKingInCheck, bool isOppositeKingInCheckmate, char encoding[10])
+bool _isWhiteCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata &metadata, bool isOppositeKingInCheck, bool isOppositeKingInCheckmate, char encoding[10])
 {
     assert(changes.size() == 4);
 
@@ -490,33 +490,33 @@ bool _isWhiteCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
     }
 
     // --- setup --- //
-    Change a, b, c, d;
-    int aCount = 0, bCount = 0, cCount = 0, dCount = 0;
+    Change cWKFR, cFRWK, cWRFR, cFRWR;
+    int cWKFRCount = 0, cFRWKCount = 0, cWRFRCount = 0, cFRWRCount = 0;
     for (int i = 0; i < 4; i++)
     {
         if (changes[i].wasWhiteKing() && changes[i].isFree())
         {
-            a = changes[i];
-            aCount++;
-        }
-        else if (changes[i].wasWhiteRook() && changes[i].isFree())
-        {
-            b = changes[i];
-            bCount++;
+            cWKFR = changes[i];
+            cWKFRCount++;
         }
         else if (changes[i].wasFree() && changes[i].isWhiteKing())
         {
-            c = changes[i];
-            cCount++;
+            cFRWK = changes[i];
+            cFRWKCount++;
+        }
+        else if (changes[i].wasWhiteRook() && changes[i].isFree())
+        {
+            cWRFR = changes[i];
+            cWRFRCount++;
         }
         else if (changes[i].wasFree() && changes[i].isWhiteRook())
         {
-            d = changes[i];
-            dCount++;
+            cFRWR = changes[i];
+            cFRWRCount++;
         }
     }
 
-    if (aCount != 1 || bCount != 1 || cCount != 1 || dCount != 1)
+    if (cWKFRCount != 1 || cFRWKCount != 1 || cWRFRCount != 1 || cFRWRCount != 1)
     {
         SPDLOG_TRACE("Incorrect setup.");
         return false;
@@ -528,12 +528,12 @@ bool _isWhiteCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
     // --- special checks --- //
     // kingside castle
     if (!metadata.castle.didWhiteKingMove && !metadata.castle.didWhiteKingsideRookMove &&
-        a.row == 7 && a.col == 4 &&
-        b.row == 7 && b.col == 7 &&
-        c.row == 7 && c.col == 6 &&
-        d.row == 7 && d.col == 5 &&
-        !isCellInCheck(prevBoard, 7, 5, metadata.enPassantCol),
-        !isCellInCheck(prevBoard, 7, 6, metadata.enPassantCol))
+        cWKFR.row == 7 && cWKFR.col == 4 &&
+        cFRWK.row == 7 && cFRWK.col == 6 &&
+        cWRFR.row == 7 && cWRFR.col == 7 &&
+        cFRWR.row == 7 && cFRWR.col == 5 &&
+        !isCellInCheck(prevBoard, 7, 5, metadata.enPassantCol, Color::BLACK) &&
+        !isCellInCheck(prevBoard, 7, 6, metadata.enPassantCol, Color::BLACK))
     {
         SPDLOG_TRACE("Kingside castle.");
         moveInternalToAlgebraic(
@@ -541,19 +541,23 @@ bool _isWhiteCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
             -1, -1,
             -1, -1,
             false, true, false, isOppositeKingInCheck, isOppositeKingInCheckmate, false, false, 'x', encoding);
-        metadata.castle.didWhiteKingMove = true;  // avoid possibility of future castling
+
+        // avoid possibility of future castling
+        metadata.castle.didWhiteKingMove = true;
+        metadata.castle.didWhiteKingsideRookMove = true;
+
         return true;
     }
 
     // queen side castle
     if (!metadata.castle.didWhiteKingMove && !metadata.castle.didWhiteQueensideRookMove &&
-        a.row == 7 && a.col == 4 &&
-        b.row == 7 && b.col == 0 &&
-        c.row == 7 && c.col == 2 &&
-        d.row == 7 && d.col == 3 &&
+        cWKFR.row == 7 && cWKFR.col == 4 &&
+        cFRWK.row == 7 && cFRWK.col == 2 &&
+        cWRFR.row == 7 && cWRFR.col == 0 &&
+        cFRWR.row == 7 && cFRWR.col == 3 &&
         IS_FREE(prevBoard[7][1]) &&  // no change shall be there since only 4 changes
-        !isCellInCheck(prevBoard, 7, 3, metadata.enPassantCol),
-        !isCellInCheck(prevBoard, 7, 2, metadata.enPassantCol))
+        !isCellInCheck(prevBoard, 7, 3, metadata.enPassantCol, Color::BLACK) &&
+        !isCellInCheck(prevBoard, 7, 2, metadata.enPassantCol, Color::BLACK))
     {
         SPDLOG_TRACE("Queenside castle");
         moveInternalToAlgebraic(
@@ -561,7 +565,10 @@ bool _isWhiteCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
             -1, -1,
             -1, -1,
             false, false, true, isOppositeKingInCheck, isOppositeKingInCheckmate, false, false, 'x', encoding);
-        metadata.castle.didWhiteKingMove = true;  // avoid possibility of future castling
+
+        // avoid possibility of future castling
+        metadata.castle.didWhiteKingMove = true;
+        metadata.castle.didWhiteQueensideRookMove = true;
         return true;
     }
 
@@ -570,7 +577,7 @@ bool _isWhiteCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
 }
 
 
-bool _isBlackCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata metadata, bool isOppositeKingInCheck, bool isOppositeKingInCheckmate, char encoding[10])
+bool _isBlackCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata &metadata, bool isOppositeKingInCheck, bool isOppositeKingInCheckmate, char encoding[10])
 {
     assert(changes.size() == 4);
 
@@ -582,33 +589,33 @@ bool _isBlackCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
     }
 
     // --- setup --- //
-    Change a, b, c, d;
-    int aCount = 0, bCount = 0, cCount = 0, dCount = 0;
+    Change cBKFR, cFRBK, cBRFR, cFRBR;
+    int cBKFRCount = 0, cFRBKCount = 0, cBRFRCount = 0, cFRBRCount = 0;
     for (int i = 0; i < 4; i++)
     {
         if (changes[i].wasBlackKing() && changes[i].isFree())
         {
-            a = changes[i];
-            aCount++;
-        }
-        else if (changes[i].wasBlackRook() && changes[i].isFree())
-        {
-            b = changes[i];
-            bCount++;
+            cBKFR = changes[i];
+            cBKFRCount++;
         }
         else if (changes[i].wasFree() && changes[i].isBlackKing())
         {
-            c = changes[i];
-            cCount++;
+            cFRBK = changes[i];
+            cFRBKCount++;
+        }
+        else if (changes[i].wasBlackRook() && changes[i].isFree())
+        {
+            cBRFR = changes[i];
+            cBRFRCount++;
         }
         else if (changes[i].wasFree() && changes[i].isBlackRook())
         {
-            d = changes[i];
-            dCount++;
+            cFRBR = changes[i];
+            cFRBRCount++;
         }
     }
 
-    if (aCount != 1 || bCount != 1 || cCount != 1 || dCount != 1)
+    if (cBKFRCount != 1 || cFRBKCount != 1 || cBRFRCount != 1 || cFRBRCount != 1)
     {
         SPDLOG_TRACE("Incorrect setup.");
         return false;
@@ -620,12 +627,12 @@ bool _isBlackCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
     // --- special checks --- //
     // kingside castle
     if (!metadata.castle.didBlackKingMove && !metadata.castle.didBlackKingsideRookMove &&
-        a.row == 0 && a.col == 4 &&
-        b.row == 0 && b.col == 7 &&
-        c.row == 0 && c.col == 6 &&
-        d.row == 0 && d.col == 5 &&
-        !isCellInCheck(prevBoard, 0, 5, metadata.enPassantCol),
-        !isCellInCheck(prevBoard, 0, 6, metadata.enPassantCol))
+        cBKFR.row == 0 && cBKFR.col == 4 &&
+        cFRBK.row == 0 && cFRBK.col == 6 &&
+        cBRFR.row == 0 && cBRFR.col == 7 &&
+        cFRBR.row == 0 && cFRBR.col == 5 &&
+        !isCellInCheck(prevBoard, 0, 5, metadata.enPassantCol, Color::WHITE) &&
+        !isCellInCheck(prevBoard, 0, 6, metadata.enPassantCol, Color::WHITE))
     {
         SPDLOG_TRACE("Kingside castle.");
         moveInternalToAlgebraic(
@@ -633,19 +640,22 @@ bool _isBlackCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
             -1, -1,
             -1, -1,
             false, true, false, isOppositeKingInCheck, isOppositeKingInCheckmate, false, false, 'x', encoding);
-        metadata.castle.didBlackKingMove = true;  // avoid possibility of future castling
+
+        // avoid possibility of future castling
+        metadata.castle.didBlackKingMove = true;
+        metadata.castle.didBlackKingsideRookMove = true;
         return true;
     }
 
     // queen side castle
     if (!metadata.castle.didBlackKingMove && !metadata.castle.didBlackQueensideRookMove &&
-        a.row == 0 && a.col == 4 &&
-        b.row == 0 && b.col == 0 &&
-        c.row == 0 && c.col == 2 &&
-        d.row == 0 && d.col == 3 &&
+        cBKFR.row == 0 && cBKFR.col == 4 &&
+        cFRBK.row == 0 && cFRBK.col == 2 &&
+        cBRFR.row == 0 && cBRFR.col == 0 &&
+        cFRBR.row == 0 && cFRBR.col == 3 &&
         IS_FREE(prevBoard[0][1]) &&  // no change shall be there since only 4 changes
-        !isCellInCheck(prevBoard, 0, 3, metadata.enPassantCol),
-        !isCellInCheck(prevBoard, 0, 2, metadata.enPassantCol))
+        !isCellInCheck(prevBoard, 0, 3, metadata.enPassantCol, Color::WHITE) &&
+        !isCellInCheck(prevBoard, 0, 2, metadata.enPassantCol, Color::WHITE))
     {
         SPDLOG_TRACE("Queenside castle.");
         moveInternalToAlgebraic(
@@ -653,7 +663,11 @@ bool _isBlackCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
             -1, -1,
             -1, -1,
             false, false, true, isOppositeKingInCheck, isOppositeKingInCheckmate, false, false, 'x', encoding);
-        metadata.castle.didBlackKingMove = true;  // avoid possibility of future castling
+
+        // avoid possibility of future castling
+        metadata.castle.didBlackKingMove = true;
+        metadata.castle.didBlackQueensideRookMove = true;
+
         return true;
     }
 
@@ -665,7 +679,7 @@ bool _isBlackCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
 // Checks if prevBoard to currBoard transition can happen in one legal move.
 //      If yes, message will contain S_SUCCESS (message.h) and encoding will contain the encoding of the move
 //      If not, message will contain the corresponding error message (message.h) and encoding must be discarded
-void processMove(char prevBoard[8][8], char currBoard[8][8], Metadata metadata, char message[200])
+void processMove(char prevBoard[8][8], char currBoard[8][8], Metadata &metadata, char message[200])
 {
     SPDLOG_TRACE("Entered processMove");
     // gather changed cells and needed info

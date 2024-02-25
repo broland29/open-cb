@@ -136,7 +136,8 @@ bool isCellInCheck(
     char board[8][8],
     int row,
     int col,
-    int enPassantCol
+    int enPassantCol,
+    Color attackerColor
 );
 
 

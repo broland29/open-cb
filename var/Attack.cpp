@@ -304,7 +304,7 @@ bool canPieceAttackCell(char board[8][8], int currRow, int currCol, int destRow,
 
 
 // Checks if anything can attack cell (row, col)
-bool isCellInCheck(char board[8][8], int row, int col, int enPassantCol)
+bool isCellInCheck(char board[8][8], int row, int col, int enPassantCol, Color attackerColor)
 {
     assert(_isInside(row) && _isInside(col));
 
@@ -313,6 +313,13 @@ bool isCellInCheck(char board[8][8], int row, int col, int enPassantCol)
     {
         for (int j = 0; j < 8; j++)
         {
+            // since this method might be used on free cells, which have no color, we need to
+            // explicitly check for attacker color instead of letting canPieceAttackCell deal with it
+            if (attackerColor == Color::WHITE && IS_BLACK(board[i][j]) ||
+                attackerColor == Color::BLACK && IS_WHITE(board[i][j]))
+            {
+                continue;
+            }
             if (canPieceAttackCell(board, i, j, row, col, enPassantCol)) {
                 return true;
             }
@@ -346,6 +353,7 @@ bool _getCanKingMove(char board[8][8], int kingRow, int kingCol, int enPassantCo
     int di[8] = { -1, -1,  0,  1,  1,  1,  0, -1 };
     int dj[8] = {  0,  1,  1,  1,  0, -1, -1, -1 };
 
+    Color attackerColor = (IS_WHITE(board[kingRow][kingCol])) ? Color::BLACK : Color::WHITE;
     for (int i = 0; i < 8; i++)
     {
         int destRow = kingRow + di[i];
@@ -370,7 +378,7 @@ bool _getCanKingMove(char board[8][8], int kingRow, int kingCol, int enPassantCo
         auxBoard[kingRow][kingCol] = FR;
 
         // skip cell which would put king in check
-        if (isCellInCheck(auxBoard, destRow, destCol, enPassantCol))
+        if (isCellInCheck(auxBoard, destRow, destCol, enPassantCol, attackerColor))
         {
             continue;
         }
@@ -420,6 +428,7 @@ bool _getCanOtherMove(char board[8][8], int kingRow, int kingCol, int enPassantC
 
 bool __canAnyPieceAttackWithoutCausingCheckmate(char board[8][8], int destRow, int destCol, int kingRow, int kingCol, int enPassantCol)
 {
+    Color attackerColor = (IS_WHITE(board[kingRow][kingCol])) ? Color::BLACK : Color::WHITE;
     for (int i = 0; i < 8; i++)
     {
         for (int j = 0; j < 8; j++)
@@ -444,7 +453,7 @@ bool __canAnyPieceAttackWithoutCausingCheckmate(char board[8][8], int destRow, i
                 auxBoard[destRow][destCol] = board[i][j];
                 auxBoard[i][j] = FR;
 
-                if (!isCellInCheck(auxBoard, kingRow, kingCol, -1))
+                if (!isCellInCheck(auxBoard, kingRow, kingCol, -1, attackerColor))
                 {
                     return true;  // found a solution
                 }
