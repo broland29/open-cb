@@ -1,3 +1,0 @@
-Folder name: test\test_main\test_000
-Could not open folder test\test_main\test_000.
-Closing log.

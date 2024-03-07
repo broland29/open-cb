@@ -1,0 +1,19 @@
+<!-- piece images from https://github.com/lichess-org/lila/tree/master/public/piece/alpha -->
+
+<RCC>
+	<qresource prefix="/pieceImages">
+		<file>BB.png</file>
+		<file>BK.png</file>
+		<file>BN.png</file>
+		<file>BP.png</file>
+		<file>BQ.png</file>
+		<file>BR.png</file>
+		<file>FR.png</file>
+		<file>WB.png</file>
+		<file>WK.png</file>
+		<file>WN.png</file>
+		<file>WP.png</file>
+		<file>WQ.png</file>
+		<file>WR.png</file>
+	</qresource>
+</RCC>
