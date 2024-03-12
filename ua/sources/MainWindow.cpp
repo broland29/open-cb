@@ -143,12 +143,14 @@ MainWindow::MainWindow(QWidget* parent) :
     // -- bottom -- //
     QWidget* bottomWidget = new QWidget;
     QHBoxLayout* bottomLayout = new QHBoxLayout(bottomWidget);
+    configureButton = new QPushButton("Configure");
     getImageButton = new QPushButton("Get image");
     sendToVARButton = new QPushButton("Send to VAR");
     getFromVARButton = new QPushButton("Get from VAR");
     newGameButton = new QPushButton("New game");
     helpButton = new QPushButton("Help");
     exitButton = new QPushButton("Exit");
+    bottomLayout->addWidget(configureButton);
     bottomLayout->addWidget(getImageButton);
     bottomLayout->addWidget(sendToVARButton);
     bottomLayout->addWidget(getFromVARButton);
@@ -173,6 +175,7 @@ MainWindow::MainWindow(QWidget* parent) :
     connect(resetTrainButton, SIGNAL(clicked()), this, SLOT(resetTrainButtonClicked()));
     connect(resetTestButton, SIGNAL(clicked()), this, SLOT(resetTestButtonClicked()));
 
+    connect(configureButton, &QPushButton::clicked, this, &MainWindow::configureButtonClicked);
     connect(getImageButton, &QPushButton::clicked, this, &MainWindow::getImageButtonClicked);
     connect(sendToVARButton, &QPushButton::clicked, this, &MainWindow::sendToVARButtonClicked);
     connect(getFromVARButton, &QPushButton::clicked, this, &MainWindow::getFromVARButtonClicked);
@@ -279,6 +282,12 @@ void MainWindow::resetTestButtonClicked()
 
 // ---------- bottom buttons, clicked slots ---------- //
 
+void MainWindow::configureButtonClicked()
+{
+    messageLabel->setText("configureButtonClicked");
+    emit configureSignal();
+}
+
 void MainWindow::getImageButtonClicked()
 {
     messageLabel->setText("getImageButtonClicked");
@@ -358,6 +367,12 @@ void MainWindow::resetTestReplySlot(bool succeeded)
 // ---------- bottom buttons, IP/VAR -> UA ---------- //
 #define PATH_IMG_CAM_ONE "preview\\cam1.jpeg"
 #define PATH_IMG_CAM_TWO "preview\\cam2.jpeg"
+
+void MainWindow::configureReplySlot(bool succeeded)
+{
+    QString message = (succeeded) ? "Succeeded" : "Failed";
+    messageLabel->setText(message);
+}
 
 void MainWindow::getImageReplySlot(QString board)
 {

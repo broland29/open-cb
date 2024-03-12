@@ -14,6 +14,8 @@ public:
 	static void test();
 	CameraReader* cameraReaderOne;
 	CameraReader* cameraReaderTwo;
+	Crop* cropOne;
+	Crop* cropTwo;
 
 signals:
 	// right buttons, IP -> UA
@@ -25,6 +27,7 @@ signals:
 	void resetTestReplySignal(bool succeeded);
 	
 	// bottom buttons, IP -> UA
+	void configureReplySignal(bool succeeded);
 	void getImageReplySignal(QString board);
 
 public slots:
@@ -37,5 +40,6 @@ public slots:
 	void resetTestSlot();
 
 	// bottom buttons, UA -> IP
+	void configureSlot();
 	void getImageSlot(bool classifyWhenGettingImage);
 };

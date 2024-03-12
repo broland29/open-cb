@@ -11,6 +11,14 @@ ImageProcessing::ImageProcessing()
 
 	cameraReaderOne = new CameraReader(0, imshowMutex);  // modify if needed
 	cameraReaderTwo = new CameraReader(1, imshowMutex);  // modify if needed
+	
+	cropOne = new Crop(imshowMutex);
+	cropTwo = new Crop(imshowMutex);
+
+	QObject::connect(cameraReaderOne, &CameraReader::configureSignal, cropOne, &Crop::configureSlot);
+	QObject::connect(cameraReaderTwo, &CameraReader::configureSignal, cropTwo, &Crop::configureSlot);
+	QObject::connect(cameraReaderOne, &CameraReader::getImageSignal, cropOne, &Crop::getImageSlot);
+	QObject::connect(cameraReaderTwo, &CameraReader::getImageSignal, cropTwo, &Crop::getImageSlot);
 }
 
 
@@ -55,10 +63,18 @@ void ImageProcessing::resetTestSlot()
 
 // ---------- bottom buttons, IP -> UA ---------- //
 
+void ImageProcessing::configureSlot()
+{
+	cameraReaderOne->toggleConfigure();
+	cameraReaderTwo->toggleConfigure();
+
+	emit configureReplySignal(true);
+}
+
 void ImageProcessing::getImageSlot(bool classiftWhenGettingImage)
 {
-	cameraReaderOne->setSaveAFrame(true);
-	cameraReaderTwo->setSaveAFrame(true);
+	cameraReaderOne->toggleGetImage();
+	cameraReaderTwo->toggleGetImage();
 
 	if (classiftWhenGettingImage)
 	{

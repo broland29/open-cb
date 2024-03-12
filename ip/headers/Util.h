@@ -11,6 +11,10 @@ using namespace cv;
 
 #define IMAGE_WIDTH				500
 #define IMAGE_HEIGHT			500
+#define BORDER_SIZE             25      // 500 / 8 = 62.5 one cell (2.5 cm) -> border (1 cm) = 62.5 / 2.5 = 25
+#define CELL_WIDTH              (IMAGE_WIDTH - 2 * BORDER_SIZE) / 8
+#define CELL_HEIGHT             (IMAGE_HEIGHT - 2 * BORDER_SIZE) / 8
+
 #define PATH_IMG_CAM_ONE        "C:\\open-cb\\mem\\cam1.jpeg"
 #define PATH_IMG_CAM_TWO        "C:\\open-cb\\mem\\cam2.jpeg"
 #define PATH_DUMMY_IMG_CAM_ONE  "C:\\open-cb\\ua\\preview\\dummy_cam_left.jpeg"

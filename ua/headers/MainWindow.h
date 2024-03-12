@@ -38,6 +38,7 @@ private:
     QLabel* messageLabel;
 
     // -- bottom -- //
+    QPushButton* configureButton;
     QPushButton* getImageButton;
     QPushButton* sendToVARButton;
     QPushButton* getFromVARButton;
@@ -64,6 +65,7 @@ public slots:
     void resetTestButtonClicked();
 
     // bottom buttons, clicked slots
+    void configureButtonClicked();
     void getImageButtonClicked();
     void sendToVARButtonClicked();
     void getFromVARButtonClicked();
@@ -80,6 +82,7 @@ public slots:
     void resetTestReplySlot(bool succeded);
 
     // bottom buttons, IP/VAR -> UA
+    void configureReplySlot(bool succeeded);
     void getImageReplySlot(QString board);
     void sendToVARReplySlot(QString message);
     void getFromVARReplySlot(QString board);
@@ -104,6 +107,7 @@ signals:
     void resetTestSignal();
 
     // bottom buttons, UA -> IP/VAR
+    void configureSignal();
     void getImageSignal(bool classifyWhenGettingImage);
     void sendToVARSignal(QString board);
     void getFromVARSignal();

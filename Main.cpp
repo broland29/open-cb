@@ -7,6 +7,7 @@
 #define TEST_DEPENDENCIES false
 
 
+// here only connect's which are inter-module
 int main(int argc, char* argv[])
 {
 	Logger::initialize();
@@ -25,9 +26,11 @@ int main(int argc, char* argv[])
 	// for shorter code
 	CameraReader* cameraReaderOne = imageProcessing->cameraReaderOne;
 	CameraReader* cameraReaderTwo = imageProcessing->cameraReaderTwo;
+	Crop* cropOne = imageProcessing->cropOne;
+	Crop* cropTwo = imageProcessing->cropTwo;
 	MainWindow* mainWindow = userApplication->mainWindow;
 
-	// create worker thread
+	// create worker threads
 	QThread* cameraReaderOneThread = new QThread;
 	QObject::connect(cameraReaderOneThread, &QThread::started, cameraReaderOne, &CameraReader::doWork);
 	QObject::connect(cameraReaderOne, &CameraReader::stop, cameraReaderOneThread, &QThread::quit);
@@ -38,6 +41,8 @@ int main(int argc, char* argv[])
 	QObject::connect(cameraReaderTwo, &CameraReader::stop, cameraReaderTwoThread, &QThread::quit);
 	QObject::connect(cameraReaderTwoThread, &QThread::finished, cameraReaderTwo, &CameraReader::deleteLater);
 
+	QThread* cropOneThread = new QThread;
+	QThread* cropTwoThread = new QThread;
 
 	// cross - thread communication
 	QObject::connect(cameraReaderOne, &CameraReader::imageUpdateSignal, mainWindow, &MainWindow::imageUpdateSlotOne);
@@ -60,6 +65,7 @@ int main(int argc, char* argv[])
 	QObject::connect(imageProcessing, &ImageProcessing::resetTestReplySignal,	mainWindow, &MainWindow::resetTestReplySlot);
 
 	// bottom buttons, UA -> IP/VAR
+	QObject::connect(mainWindow, &MainWindow::configureSignal, imageProcessing, &ImageProcessing::configureSlot);  // sends 
 	QObject::connect(mainWindow, &MainWindow::getImageSignal, imageProcessing, &ImageProcessing::getImageSlot);
 	QObject::connect(mainWindow, &MainWindow::sendToVARSignal, validationAndResponse, &ValidationAndResponse::sendToVARSlot);
 	QObject::connect(mainWindow, &MainWindow::getFromVARSignal, validationAndResponse, &ValidationAndResponse::getFromVARSlot);
@@ -68,17 +74,22 @@ int main(int argc, char* argv[])
 	QObject::connect(mainWindow, &MainWindow::exitSignal, cameraReaderTwo, &CameraReader::stop);
 
 	// bottom buttons, IP/VAR -> UA
+	QObject::connect(imageProcessing, &ImageProcessing::configureReplySignal, mainWindow, &MainWindow::configureReplySlot);
 	QObject::connect(imageProcessing, &ImageProcessing::getImageReplySignal, mainWindow, &MainWindow::getImageReplySlot);
 	QObject::connect(validationAndResponse, &ValidationAndResponse::sendToVARReplySignal, mainWindow, &MainWindow::sendToVARReplySlot);
 	QObject::connect(validationAndResponse, &ValidationAndResponse::getFromVARReplySignal, mainWindow, &MainWindow::getFromVARReplySlot);
 	QObject::connect(validationAndResponse, &ValidationAndResponse::newGameReplySignal, mainWindow, &MainWindow::newGameReplySlot);
 
-
 	// start thread
 	cameraReaderOne->moveToThread(cameraReaderOneThread);
 	cameraReaderTwo->moveToThread(cameraReaderTwoThread);
+	cropOne->moveToThread(cropOneThread);
+	cropTwo->moveToThread(cropTwoThread);
+	
 	cameraReaderOneThread->start();
 	cameraReaderTwoThread->start();
+	cropOneThread->start();
+	cropTwoThread->start();
 
 	return userApplication->run();
 }

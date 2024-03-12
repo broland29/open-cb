@@ -6,15 +6,27 @@
 #define HOUGH_RO_STEP_SIZE		1
 #define HOUGH_THETA_STEP_SIZE	1
 #define HOUGH_WINDOW_SIZE		3
-#define HOUGH_NUMBER_OF_LINES	10
+#define HOUGH_NUMBER_OF_LINES	20
 
 #define SHOW_IMAGES true
+#define CONCAT_IMAGES true
 #define GENERATE_IMAGES false
 #define CLASSIFY false
 
 
-void Crop::crop(Mat_<Vec3b> imgOriginal)
+
+
+Crop::Crop(std::shared_ptr<QMutex> imshowMutex)
 {
+	configured = false;
+	this->imshowMutex = imshowMutex;
+}
+
+
+void Crop::configureSlot(QString path)
+{
+	Mat_<Vec3b> imgOriginal = imread(path.toStdString(), IMREAD_COLOR);
+
 	Mat_<Vec3b> imgResizedColor;
 	resize(imgOriginal, imgResizedColor, cv::Size(IMAGE_WIDTH, IMAGE_HEIGHT));
 
@@ -144,57 +156,137 @@ void Crop::crop(Mat_<Vec3b> imgOriginal)
 	drawCrossColor(imgCorners, cornerChessboardBR, 50, Vec3b(0, 0, 255));
 
 	// orders important
-	std::vector<Point2f> srcCorners;
-	srcCorners.push_back(cornerChessboardTL);
-	srcCorners.push_back(cornerChessboardTR);
-	srcCorners.push_back(cornerChessboardBR);
-	srcCorners.push_back(cornerChessboardBL);
-	std::vector<Point2f> dstCorners;
-	dstCorners.push_back(Point2d(0, 0));
-	dstCorners.push_back(Point2d(500, 0));
-	dstCorners.push_back(Point2d(500, 500));
-	dstCorners.push_back(Point2d(0, 500));
+	corners.clear();
+	corners.push_back(cornerChessboardTL);
+	corners.push_back(cornerChessboardTR);
+	corners.push_back(cornerChessboardBR);
+	corners.push_back(cornerChessboardBL);
 
-	// perform rectification
-	Mat M = getPerspectiveTransform(srcCorners, dstCorners);
-	Mat_<Vec3b> imgWarped;
-	warpPerspective(imgResizedColor, imgWarped, M, Size(500, 500));
-
-	//Mat_<Vec3b> imgCell00 = extractCell(0, 0, imgWarped);
-	Mat_<Vec3b> imgCell77 = extractCell(7, 7, imgWarped);
-	Mat_<Vec3b> imgCell34 = extractCell(3, 4, imgWarped);
-
-	if (GENERATE_IMAGES)
-	{
-		for (int i = 0; i < 8; i++)
-		{
-			for (int j = 0; j < 8; j++)
-			{
-				Mat_<Vec3b> imgCell = extractCell(i, j, imgWarped);
-				//sprintf(fileName, "Cells\\cell_%02d%02d%02d.jpeg", fileNo, i, j);
-				//imwrite(fileName, imgCell);
-			}
-		}
-	}
+	this->configured = true;
 
 	if (SHOW_IMAGES)
 	{
-		// visualize each step
-		imshow("imgGrayscale", imgResizedGrayscale);
-		imshow("imgGauss", imgGauss);
-		imshow("imgBinary", imgBinary);
-		imshow("imgClosed", imgClosed);
-		imshow("imgCanny", imgCanny);
-		imshow("imgLines", imgLines);
-		imshow("imgIntersections", imgIntersections);
-		imshow("imgCorners", imgCorners);
-		imshow("imgWarped", imgWarped);
-		//imshow("imgROI", imgROI);
-		//imshow("imgCell00", imgCell00);
-		imshow("imgCell77", imgCell77);
-		imshow("imgCell34", imgCell34);
+		imshowMutex->lock();
+		if (CONCAT_IMAGES)
+		{
+			Mat_<uchar> grayscaleImages;
+			Mat_<Vec3b> colorImages;
 
+			Mat_<uchar> grayscaleFiller = Mat_<uchar>::zeros(IMAGE_HEIGHT, IMAGE_WIDTH);
+			Mat_<uchar> grayscaleRowOne;
+			Mat_<uchar> grayscaleRowTwo;
+			
+			cv::hconcat(imgResizedGrayscale, imgGauss, grayscaleRowOne);
+			cv::hconcat(grayscaleRowOne, imgBinary, grayscaleRowOne);
+			cv::hconcat(imgClosed, imgCanny, grayscaleRowTwo);
+			cv::hconcat(grayscaleRowTwo, grayscaleFiller, grayscaleRowTwo);
+			//cv::vconcat(grayscaleRowOne, grayscaleRowTwo, grayscaleImages);
+
+			cv::hconcat(imgLines, imgIntersections, colorImages);
+			cv::hconcat(colorImages, imgCorners, colorImages);
+
+			//imshow("grayscaleImages", grayscaleImages);
+			imshow("grayscaleRowOne", grayscaleRowOne);
+			imshow("grayscaleRowTwo", grayscaleRowTwo);
+			imshow("colorImages", colorImages);
+			moveWindow("grayscaleRowOne", 50, 50);
+			moveWindow("grayscaleRowTwo", 50, 50);
+			moveWindow("colorImages", 50, 50);
+		}
+		else
+		{
+			imshow("imgGrayscale", imgResizedGrayscale);		// GS
+			imshow("imgGauss", imgGauss);						// GS
+			imshow("imgBinary", imgBinary);						// GS
+			imshow("imgClosed", imgClosed);					    // GS
+			imshow("imgCanny", imgCanny);						// GS
+			imshow("imgLines", imgLines);						// Color
+			imshow("imgIntersections", imgIntersections);		// Color
+			imshow("imgCorners", imgCorners);					// Color
+		}
 		waitKey();
+		imshowMutex->unlock();
+	}
+}
+
+void Crop::getImageSlot(QString path)
+{
+	if (!configured)
+	{
+		std::cout << "Not configured, returning" << std::endl;
+		return;  // todo - error messages
 	}
 
+	std::string path_ = path.toStdString();
+	Mat_<Vec3b> imgOriginal = imread(path_, IMREAD_COLOR);
+	if (imgOriginal.empty())
+	{
+		std::cout << "Could not open " << path_ << std::endl;
+		return;  // todo - error messages
+	}
+
+	Mat_<Vec3b> imgResizedColor;
+	resize(imgOriginal, imgResizedColor, cv::Size(IMAGE_WIDTH, IMAGE_HEIGHT));
+
+	std::vector<Point2f> dstCorners;
+	dstCorners.push_back(Point2d(0, 0));						// TL 
+	dstCorners.push_back(Point2d(IMAGE_WIDTH, 0));				// TR
+	dstCorners.push_back(Point2d(IMAGE_WIDTH, IMAGE_HEIGHT));	// BR
+	dstCorners.push_back(Point2d(0, IMAGE_HEIGHT));				// BL
+
+	// perform rectification
+	Mat M = getPerspectiveTransform(corners, dstCorners);
+	Mat_<Vec3b> imgWarped;
+	warpPerspective(imgResizedColor, imgWarped, M, Size(500, 500));
+
+	Mat_<Vec3b> imgNoBorder = imgWarped(Rect{
+		BORDER_SIZE,						// x
+		BORDER_SIZE,						// y
+		IMAGE_WIDTH - 2 * BORDER_SIZE,		// width
+		IMAGE_HEIGHT - 2 * BORDER_SIZE		// height
+		});
+
+	// "corner cells"
+	Mat_<Vec3b> imgCell40 = extractCell(4, 0, imgNoBorder);
+	Mat_<Vec3b> imgCell47 = extractCell(4, 7, imgNoBorder);
+	Mat_<Vec3b> imgCell70 = extractCell(7, 0, imgNoBorder);
+	Mat_<Vec3b> imgCell77 = extractCell(7, 7, imgNoBorder);
+
+	if (SHOW_IMAGES)
+	{
+		imshowMutex->lock();
+		if (CONCAT_IMAGES)
+		{
+			Mat_<Vec3b> wholeImages;
+			Mat_<Vec3b> filler = Mat_<Vec3b>::zeros(imgWarped.rows - imgNoBorder.rows, imgNoBorder.cols);  // padding for imgNoBorder height
+			Mat_<Vec3b> imgNoBorderPadded;
+			cv::vconcat(imgNoBorder, filler, imgNoBorderPadded);
+			cv::hconcat(imgWarped, imgNoBorderPadded, wholeImages);
+
+			Mat_<Vec3b> cellImagesRow1;	
+			Mat_<Vec3b> cellImagesRow2;
+			Mat_<Vec3b> cellImages;
+
+			cv::hconcat(imgCell40, imgCell47, cellImagesRow1);
+			cv::hconcat(imgCell70, imgCell77, cellImagesRow2);
+			cv::vconcat(cellImagesRow1, cellImagesRow2, cellImages);
+
+			imshow("wholeImages", wholeImages);
+			imshow("cellImages", cellImages);
+
+			moveWindow("wholeImages", 50, 50);
+			moveWindow("cellImages", 50, 50);
+		}
+		else
+		{
+			imshow("imgWarped", imgWarped);
+			imshow("imgNoBorder", imgNoBorder);
+			imshow("imgCell40", imgCell40);
+			imshow("imgCell47", imgCell47);
+			imshow("imgCell70", imgCell70);
+			imshow("imgCell77", imgCell77);
+		}
+		waitKey();
+		imshowMutex->unlock();
+	}
 }

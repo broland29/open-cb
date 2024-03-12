@@ -18,16 +18,24 @@ public:
 	void doWork();
 	void stop();
 	void deleteLater();
-	void setSaveAFrame(bool value);
-	bool getSaveAFrame();
+
+	void toggleConfigure();
+	void toggleGetImage();
 
 private:
 	bool isRunning;
 	int cameraNo;
-	bool saveAFrame;
-	QMutex saveAFrameMutex;  // https://stackoverflow.com/questions/4897912/how-to-properly-interrupt-a-qthread-infinite-loop
-	std::shared_ptr<QMutex> imshowMutex;  // imshow is not thread safe!
+
+	// parameters set to request "Configure", "Get Image"
+	bool configure;
+	bool getImage;
+	QMutex parameterMutex;  // https://stackoverflow.com/questions/4897912/how-to-properly-interrupt-a-qthread-infinite-loop
+	
+	// imshow is not thread safe!
+	std::shared_ptr<QMutex> imshowMutex;
 
 signals:
 	void imageUpdateSignal(QImage image);
+	void configureSignal(QString path);  // delegated to Crop
+	void getImageSignal(QString path);  // delegated to Crop
 };

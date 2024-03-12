@@ -6,9 +6,14 @@ using namespace cv;
 CameraReader::CameraReader(int cameraNo, std::shared_ptr<QMutex> imshowMutex)
 {
 	cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_SILENT);  // comment out if log if needed
+	
 	isRunning = false;
+
+	// no need to use mutex in constructor
+	configure = false;
+	getImage = false;
+
 	this->cameraNo = cameraNo;
-	this->saveAFrame = false;
 	this->imshowMutex = imshowMutex;
 }
 
@@ -28,7 +33,8 @@ void CameraReader::doWork()
 
 	Mat_<Vec3b> frame;
 	char path[256];
-	sprintf(path, "C:\\open-cb\\mem\\cam%d.jpeg", cameraNo);
+	unsigned int confCount = 0;
+	unsigned int getCount = 0;
 
 	while (isRunning)
 	{
@@ -39,22 +45,28 @@ void CameraReader::doWork()
 			break;
 		}
 
-		// if save requested, do before conversion!
-		saveAFrameMutex.lock();
-		if (saveAFrame)
+		// check for special requests (before conversion!)
+		parameterMutex.lock();
+		if (configure)
 		{
+			sprintf(path, "C:\\open-cb\\mem\\conf_cam%d_cnt%d.jpeg", cameraNo, confCount++);
+			imwrite(path, frame);
+			
+			emit configureSignal(QString::fromLatin1(path));
+			
+			configure = false;  // "used up"
+		}
+		if (getImage)
+		{
+			sprintf(path, "C:\\open-cb\\mem\\get_cam%d_cnt%d.jpeg", cameraNo, getCount++);
 			imwrite(path, frame);
 
-			imshowMutex.get()->lock();
-			imshow(path, frame);
-			Crop::crop(frame);
+			emit getImageSignal(QString::fromLatin1(path));
 
-			waitKey();
-			imshowMutex.get()->unlock();
-
-			saveAFrame = false;
+			getImage = false;  // "used up"
 		}
-		saveAFrameMutex.unlock();
+		parameterMutex.unlock();
+
 
 		cv::cvtColor(frame, frame, COLOR_BGR2RGB);
 		if (isRunning)
@@ -78,14 +90,16 @@ void CameraReader::deleteLater()
 
 }
 
-void CameraReader::setSaveAFrame(bool value)
+void CameraReader::toggleConfigure()
 {
-	saveAFrameMutex.lock();
-	saveAFrame = value;
-	saveAFrameMutex.unlock();
+	parameterMutex.lock();
+	configure = true;
+	parameterMutex.unlock();
 }
 
-bool CameraReader::getSaveAFrame()
+void CameraReader::toggleGetImage()
 {
-	return saveAFrame;
+	parameterMutex.lock();
+	getImage = true;
+	parameterMutex.unlock();
 }

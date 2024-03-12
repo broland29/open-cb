@@ -186,16 +186,14 @@ double euclideanDistance(Point2i a, Point2i b)
 }
 
 
+// actually extracts two cells
 Mat_<Vec3b> extractCell(int i, int j, Mat_<Vec3b> img)
 {
-	int stepX = img.cols / 8;
-	int stepY = img.rows / 8;
-
 	return img(Rect{
-		stepX * j,              // x
-		stepY * (i - 1),        // y - start from cell above
-		stepX,                  // width
-		stepY * 2               // height - two cells
+		CELL_WIDTH * j,			// x
+		CELL_HEIGHT * (i - 1),  // y - start from cell above
+		CELL_WIDTH,             // width
+		CELL_HEIGHT * 2         // height - two cells
 		});
 }
 
