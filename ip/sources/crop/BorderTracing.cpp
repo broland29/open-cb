@@ -1,5 +1,5 @@
-#include "../headers/Util.h"
-#include "../headers/BorderTracing.h"
+#include "../../headers/Util.h"
+#include "../../headers/crop/BorderTracing.h"
 
 
 std::vector<Point2i> borderTracing(Mat_<uchar> img)

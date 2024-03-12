@@ -25,21 +25,27 @@ MainWindow::MainWindow(QWidget* parent) :
     // middle left
     QWidget* middleLeftWidget = new QWidget;
     QVBoxLayout* middleLeftLayout = new QVBoxLayout(middleLeftWidget);
-    middleLeftWidget->setFixedWidth(250);
+    middleLeftWidget->setFixedWidth(300);
     middleLeftWidget->setStyleSheet("background-color:green");
 
     QPixmap cameraOnePlaceholder = QPixmap(":/UserApplicationModule/placeholder.jpeg");
     cameraOneImageLabel = new QLabel();
-    cameraOneImageLabel->setFixedWidth(230);
-    cameraOneImageLabel->setPixmap(cameraOnePlaceholder.scaled(cameraOneImageLabel->width(), cameraOneImageLabel->height(), Qt::KeepAspectRatio));
+    //cameraOneImageLabel->setFixedWidth(230);
+    cameraOneImageLabel->setFixedHeight(200);
+    //cameraOneImageLabel->adjustSize();
+    //cameraOneImageLabel->setMinimumWidth(320);
+    cameraOneImageLabel->setScaledContents(true);
+    //cameraOneImageLabel->setPixmap(cameraOnePlaceholder.scaled(cameraOneImageLabel->width(), cameraOneImageLabel->height(), Qt::KeepAspectRatio));
     middleLeftLayout->addWidget(cameraOneImageLabel);
     QLabel* cameraOneTextLabel = new QLabel("Camera one");
     middleLeftLayout->addWidget(cameraOneTextLabel);
 
     QPixmap cameraTwoPlaceholder = QPixmap(":/UserApplicationModule/placeholder.jpeg");
     cameraTwoImageLabel = new QLabel();
-    cameraTwoImageLabel->setFixedWidth(230);
-    cameraTwoImageLabel->setPixmap(cameraTwoPlaceholder.scaled(cameraTwoImageLabel->width(), cameraTwoImageLabel->height(), Qt::KeepAspectRatio));
+    //cameraTwoImageLabel->setFixedWidth(230);
+    cameraTwoImageLabel->setFixedHeight(200);
+    cameraTwoImageLabel->setScaledContents(true);
+    //cameraTwoImageLabel->setPixmap(cameraTwoPlaceholder.scaled(cameraTwoImageLabel->width(), cameraTwoImageLabel->height(), Qt::KeepAspectRatio));
     middleLeftLayout->addWidget(cameraTwoImageLabel);
     QLabel* cameraTwoTextLabel = new QLabel("Camera two");
     middleLeftLayout->addWidget(cameraTwoTextLabel);
@@ -229,43 +235,49 @@ QString MainWindow::_extractComboBoxes()
     return board;
 }
 
+
+// ---------- right buttons, clicked slots ---------- //
+
 void MainWindow::sendToTrainButtonClicked()
 {
     QString board = _extractComboBoxes();
     messageLabel->setText(board);
-    emit sendToTrainSignalIP(board);
+    emit sendToTrainSignal(board);
 }
 
 void MainWindow::sendToTestButtonClicked()
 {
     QString board = _extractComboBoxes();
     messageLabel->setText(board);
-    emit sendToTestSignalIP(board);
+    emit sendToTestSignal(board);
 }
 
 void MainWindow::runTrainButtonClicked()
 {
     messageLabel->setText("runTrainButtonClicked");
-    emit runTrainSignalIP();
+    emit runTrainSignal();
 }
 
 void MainWindow::runTestButtonClicked()
 {
     messageLabel->setText("runTestButtonClicked");
-    emit runTestSignalIP();
+    emit runTestSignal();
 }
 
 void MainWindow::resetTrainButtonClicked()
 {
     messageLabel->setText("resetTrainButtonClicked");
-    emit resetTrainSignalIP();
+    emit resetTrainSignal();
 }
 
 void MainWindow::resetTestButtonClicked()
 {
     messageLabel->setText("resetTestButtonClicked");
-    emit resetTestSignalIP();
+    emit resetTestSignal();
 }
+
+
+// ---------- bottom buttons, clicked slots ---------- //
 
 void MainWindow::getImageButtonClicked()
 {
@@ -303,11 +315,54 @@ void MainWindow::exitButtonClicked()
     emit exitSignal();
 }
 
+
+// ---------- right buttons, IP -> UA ---------- //
+
+void MainWindow::sendToTrainReplySlot(bool succeeded)
+{
+    QString message = (succeeded) ? "Succeeded" : "Failed";
+    messageLabel->setText(message);
+}
+
+void MainWindow::sendToTestReplySlot(bool succeeded)
+{
+    QString message = (succeeded) ? "Succeeded" : "Failed";
+    messageLabel->setText(message);
+}
+
+void MainWindow::runTrainReplySlot(bool succeeded)
+{
+    QString message = (succeeded) ? "Succeeded" : "Failed";
+    messageLabel->setText(message);
+}
+
+void MainWindow::runTestReplySlot(bool succeeded)
+{
+    QString message = (succeeded) ? "Succeeded" : "Failed";
+    messageLabel->setText(message);
+}
+
+void MainWindow::resetTrainReplySlot(bool succeeded)
+{
+    QString message = (succeeded) ? "Succeeded" : "Failed";
+    messageLabel->setText(message);
+}
+
+void MainWindow::resetTestReplySlot(bool succeeded)
+{
+    QString message = (succeeded) ? "Succeeded" : "Failed";
+    messageLabel->setText(message);
+}
+
+
+// ---------- bottom buttons, IP/VAR -> UA ---------- //
 #define PATH_IMG_CAM_ONE "preview\\cam1.jpeg"
 #define PATH_IMG_CAM_TWO "preview\\cam2.jpeg"
 
 void MainWindow::getImageReplySlot(QString board)
 {
+    messageLabel->setText(board);
+    /*
     messageLabel->setText("Set image fired! Yippie!");
 
     QImage cameraOneImage, cameraTwoImage;
@@ -334,6 +389,7 @@ void MainWindow::getImageReplySlot(QString board)
         EncodingMapper::map(board[i], encoding);
         pieceLabels[i / 8][i % 8]->setPiece(encoding, nameToPixmap[encoding]);
     }
+    */
 }
 
 void MainWindow::sendToVARReplySlot(QString message)
@@ -354,14 +410,21 @@ void MainWindow::getFromVARReplySlot(QString board)
     }
 }
 
-void MainWindow::newGameReplySlot()
+void MainWindow::newGameReplySlot(bool succeeded)
 {
-    qDebug() << "newGameReplySlotVAR";
+    QString message = (succeeded) ? "Succeeded" : "Failed";
+    messageLabel->setText(message);
+
     _setInitialSetup();
 }
 
+void MainWindow::exitReplySlot(bool succeeded)
+{
+    QString message = (succeeded) ? "Succeeded" : "Failed";
+    messageLabel->setText(message);
+}
 
-
+// ---------- clicks on chess GUI ---------- //
 void MainWindow::leftClickedSlot(int row, int col, std::string pieceName)
 {
     qDebug() << "leftClickedSlot" << row << col;
@@ -410,13 +473,16 @@ void MainWindow::rightClickedSlot(int row, int col, std::string pieceName)
 }
 
 
-
+// ---------- getting a new frame ---------- // 
 void MainWindow::imageUpdateSlotOne(QImage image)
 {   
-    cameraOneImageLabel->setPixmap(QPixmap::fromImage(image));
+    QPixmap pixmap = QPixmap::fromImage(image);
+    //cameraOneImageLabel->setPixmap(pixmap.scaled(cameraOneImageLabel->width(), cameraOneImageLabel->height(), Qt::KeepAspectRatio));
+    cameraOneImageLabel->setPixmap(pixmap);
 }
 
 void MainWindow::imageUpdateSlotTwo(QImage image)
 {
-    cameraTwoImageLabel->setPixmap(QPixmap::fromImage(image));
+    QPixmap pixmap = QPixmap::fromImage(image);
+    cameraTwoImageLabel->setPixmap(pixmap.scaled(cameraTwoImageLabel->width(), cameraTwoImageLabel->height(), Qt::KeepAspectRatio));
 }

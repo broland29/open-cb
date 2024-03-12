@@ -55,6 +55,7 @@ private:
     void _setInitialSetup();
 
 public slots:
+    // right buttons, clicked slots
     void sendToTrainButtonClicked();
     void sendToTestButtonClicked();
     void runTrainButtonClicked();
@@ -62,6 +63,7 @@ public slots:
     void resetTrainButtonClicked();
     void resetTestButtonClicked();
 
+    // bottom buttons, clicked slots
     void getImageButtonClicked();
     void sendToVARButtonClicked();
     void getFromVARButtonClicked();
@@ -69,26 +71,39 @@ public slots:
     void helpButtonClicked();
     void exitButtonClicked();
 
+    // right buttons, IP -> UA
+    void sendToTrainReplySlot(bool succeded);
+    void sendToTestReplySlot(bool succeded);
+    void runTrainReplySlot(bool succeded);
+    void runTestReplySlot(bool succeded);
+    void resetTrainReplySlot(bool succeded);
+    void resetTestReplySlot(bool succeded);
+
+    // bottom buttons, IP/VAR -> UA
     void getImageReplySlot(QString board);
     void sendToVARReplySlot(QString message);
     void getFromVARReplySlot(QString board);
-    void newGameReplySlot();
-    //void exitReplySlot(); ?
+    void newGameReplySlot(bool succeded);
+    void exitReplySlot(bool succeded);
 
+    // clicks on chess GUI
     void leftClickedSlot(int row, int col, std::string pieceName);
     void rightClickedSlot(int row, int col, std::string pieceName);
 
+    // getting a new frame
     void imageUpdateSlotOne(QImage image);
     void imageUpdateSlotTwo(QImage image);
 
 signals:
-    void sendToTrainSignalIP(QString board);
-    void sendToTestSignalIP(QString board);
-    void runTrainSignalIP();
-    void runTestSignalIP();
-    void resetTrainSignalIP();
-    void resetTestSignalIP();
+    // right buttons, UA -> IP
+    void sendToTrainSignal(QString board);
+    void sendToTestSignal(QString board);
+    void runTrainSignal();
+    void runTestSignal();
+    void resetTrainSignal();
+    void resetTestSignal();
 
+    // bottom buttons, UA -> IP/VAR
     void getImageSignal(bool classifyWhenGettingImage);
     void sendToVARSignal(QString board);
     void getFromVARSignal();

@@ -1,8 +1,10 @@
-#include "../headers/KNearestNeighbors.h"
+#include "../../headers/classify/KNearestNeighborsClassifier.h"
+
+/*
 
 // colorIndex:  0 = blue, 1 = green, 2 = red
 // m:           total number of bins
-void getHistogram(Mat_<Vec3b> img, int colorIndex, int* hist)
+void KNearestNeighborsClassifier::getHistogram(Mat_<Vec3b> img, int colorIndex, int* hist)
 {
     for (int i = 0; i < KNN_TOTAL_NO_OF_BINS; i++)
     {
@@ -20,7 +22,7 @@ void getHistogram(Mat_<Vec3b> img, int colorIndex, int* hist)
 }
 
 // returns 3 color histograms "in a row" (like in feature matrix)
-Mat_<double> getFeatureKNearest(Mat_<Vec3b> img)
+Mat_<double> KNearestNeighborsClassifier::getFeatureHistogram(Mat_<Vec3b> img)
 {
     Mat_<double> feature(1, KNN_TOTAL_NO_OF_BINS * 3, CV_32FC1);
 
@@ -37,20 +39,18 @@ Mat_<double> getFeatureKNearest(Mat_<Vec3b> img)
     return feature;
 }
 
-struct distanceAndLabel
-{
-    float distance;
-    int label;
 
-    // override comparison so std::sort can be used
-    bool operator < (const distanceAndLabel& o) const {
-        return distance < o.distance;  // we will sort increasing!
-    }
-};
 
-std::string KNearestNeighborsClassifier::classify(Mat_<Vec3b> image)
+
+KNearestNeighborsClassifier::KNearestNeighborsClassifier(int k)
 {
-    Mat_<double> feature = getFeatureKNearest(image);
+    this->k = k;
+}
+
+
+Piece KNearestNeighborsClassifier::classify(Mat_<Vec3b> image)
+{
+    Mat_<double> feature = getFeatureHistogram(image);
 
     // calculate distance from each point and their labels
     std::vector<distanceAndLabel> distancesAndLabels;
@@ -64,20 +64,20 @@ std::string KNearestNeighborsClassifier::classify(Mat_<Vec3b> image)
                 (feature(0, j) - X(i, j));
         }
         distance = sqrt(distance);
-        distancesAndLabels.push_back(distanceAndLabel{ distance, y.at<uchar>(i) });
+        distancesAndLabels.push_back(distanceAndLabel{ distance, y(i) });
     }
 
     sort(distancesAndLabels.begin(), distancesAndLabels.end());
 
     // check k nearest neighbors, each neighbor's label counts as a vote, highest vote wins
     std::vector<int> votes;
-    for (int i = 0; i < classEncodings.size(); i++)
+    for (int i = 0; i < PIECE_COUNT; i++)
     {
         votes.push_back(0);
     }
     for (int i = 0; i < k; i++)
     {
-        votes[distancesAndLabels[i].label]++;
+        votes[static_cast<int>(distancesAndLabels[i].label)]++;
     }
     int maxVotes = votes[0];
     int winningLabel = 0;
@@ -90,10 +90,12 @@ std::string KNearestNeighborsClassifier::classify(Mat_<Vec3b> image)
         }
     }
 
-    return classEncodings[winningLabel];
+    return static_cast<Piece>(winningLabel);
 }
 
-KNearestNeighborsClassifier::KNearestNeighborsClassifier(std::map<std::string, std::vector<Mat_<Vec3b>>> trainImages, int k)
+
+
+void KNearestNeighborsClassifier::train(std::vector<std::pair<Mat_<Vec3b>, Piece>> trainImages)
 {
     const int m = 8;        // number of bins in histogram(s)
     const int d = 3 * m;    // number of features, width of X
@@ -102,30 +104,21 @@ KNearestNeighborsClassifier::KNearestNeighborsClassifier(std::map<std::string, s
     Mat_<double> X(0, d);  // feature matrix
     Mat_<uchar> y(0, 1);   // class labels (classes from 0 to C-1)
 
-    std::map<uchar, std::string> classEncodings;
-    uchar classEncoding = 0;
-
     for (auto const& pair : trainImages)
     {
-        std::string classString = pair.first;           // class
-        std::vector<Mat_<Vec3b>> images = pair.second;  // vector of images
-        classEncodings.insert(std::pair<uchar, std::string>(classEncoding, classString));
+        Mat_<Vec3b> image = pair.first;  // vector of images
+        Piece label = pair.second;
 
-        for (Mat_<Vec3b> image : images)
-        {
-            Mat_<double> feature = getFeatureKNearest(image);
-            X.push_back(feature);
+        Mat_<double> feature = getFeatureHistogram(image);
+        X.push_back(feature);
 
-            Mat_<uchar> label(1, 1);
-            label.at<uchar>(0, 0) = classEncoding;
-            y.push_back(label);
-        }
-
-        classEncoding++;
+        Mat_<Piece> label_(1, 1);
+        label_(0, 0) = label;
+        y.push_back(label);
     }
 
     this->X = X.clone();
     this->y = y.clone();
     this->k = k;
-    this->classEncodings = std::map<uchar, std::string>(classEncodings);
 }
+*/

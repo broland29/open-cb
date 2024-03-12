@@ -1,10 +1,11 @@
-﻿cmake_minimum_required (VERSION 3.8)
-set (CMAKE_CXX_STANDARD 11)
+﻿cmake_minimum_required(VERSION 3.8)
+set(CMAKE_CXX_STANDARD 11)
 
-project (OpenCB)
+project(OpenCB)
 
 
 # some magic
+add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)  # set logging level before compilation
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)  # https://stackoverflow.com/questions/75387108/how-to-properly-add-a-qrc-file-to-a-qt-6-widget-app-with-cmake-as-building-syst
 #set(CMAKE_INCLUDE_CURRENT_DIR ON)

@@ -11,10 +11,31 @@ using namespace cv;
 
 #define IMAGE_WIDTH				500
 #define IMAGE_HEIGHT			500
-#define PATH_IMG_CAM_ONE        "C:\\open-cb\\ua\\preview\\cam1.jpeg"
-#define PATH_IMG_CAM_TWO        "C:\\open-cb\\ua\\preview\\cam2.jpeg"
+#define PATH_IMG_CAM_ONE        "C:\\open-cb\\mem\\cam1.jpeg"
+#define PATH_IMG_CAM_TWO        "C:\\open-cb\\mem\\cam2.jpeg"
 #define PATH_DUMMY_IMG_CAM_ONE  "C:\\open-cb\\ua\\preview\\dummy_cam_left.jpeg"
 #define PATH_DUMMY_IMG_CAM_TWO  "C:\\open-cb\\ua\\preview\\dummy_cam_right.jpeg"
+
+
+#define PIECE_COUNT 14
+enum class Piece
+{
+    WHITE_FREE,
+    WHITE_PAWN,
+    WHITE_BISHOP,
+    WHITE_KNIGHT,
+    WHITE_ROOK,
+    WHITE_QUEEN,
+    WHITE_KING,
+    BLACK_FREE,
+    BLACK_PAWN,
+    BLACK_BISHOP,
+    BLACK_KNIGHT,
+    BLACK_ROOK,
+    BLACK_QUEEN,
+    BLACK_KING,
+};
+
 
 // "The normal parameterization of a line consists of representing the line
 // by its normal vector and the distance from origin to the line."

@@ -1,5 +1,5 @@
-#include "../headers/Util.h"
-#include "../headers/Canny.h"
+#include "../../headers/Util.h"
+#include "../../headers/crop/Canny.h"
 
 
 Mat_<uchar> canny(Mat_<uchar> img)

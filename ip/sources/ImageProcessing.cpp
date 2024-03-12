@@ -7,9 +7,67 @@ ImageProcessing::ImageProcessing()
 {
 	utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_SILENT);
 
-	cameraReaderOne = new CameraReader(1);  // modify if needed
-	cameraReaderTwo = new CameraReader(2);  // modify if needed
+	std::shared_ptr<QMutex> imshowMutex = std::make_shared<QMutex>();
+
+	cameraReaderOne = new CameraReader(0, imshowMutex);  // modify if needed
+	cameraReaderTwo = new CameraReader(1, imshowMutex);  // modify if needed
 }
+
+
+// ---------- right buttons, IP -> UA ---------- //
+
+void ImageProcessing::sendToTrainSlot(QString board)
+{
+	// todo
+	emit sendToTrainReplySignal(true);
+}
+
+void ImageProcessing::sendToTestSlot(QString board)
+{
+	// todo
+	emit sendToTestReplySignal(true);
+}
+
+void ImageProcessing::runTrainSlot()
+{
+	// todo
+	emit runTrainReplySignal(true);
+}
+
+void ImageProcessing::runTestSlot()
+{
+	// todo
+	emit runTestReplySignal(true);
+}
+
+void ImageProcessing::resetTrainSlot()
+{
+	// todo
+	emit resetTrainReplySignal(true);
+}
+
+void ImageProcessing::resetTestSlot()
+{
+	// todo
+	emit resetTestReplySignal(true);
+}
+
+
+// ---------- bottom buttons, IP -> UA ---------- //
+
+void ImageProcessing::getImageSlot(bool classiftWhenGettingImage)
+{
+	cameraReaderOne->setSaveAFrame(true);
+	cameraReaderTwo->setSaveAFrame(true);
+
+	if (classiftWhenGettingImage)
+	{
+		// todo
+	}
+	QString predictedBoard = "todo";
+	emit getImageReplySignal(predictedBoard);
+}
+
 
 
 void ImageProcessing::test()

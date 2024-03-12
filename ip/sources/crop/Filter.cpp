@@ -1,18 +1,18 @@
-#include "../headers/Util.h"
-#include "../headers/Filter.h"
-#include "../headers/Conversion.h"
+#include "../../headers/Util.h"
+#include "../../headers/crop/Filter.h"
+#include "../../headers/crop/Conversion.h"
 
 
 Mat_<uchar> gaussianFilter(Mat_<uchar> img, int w)
 {
 	// build kernel - see IP10
-	float sigma = w / 6.0;
-	float sigma2 = sigma * sigma;
-	float frac = 1 / (2 * PI * sigma2);
+	double sigma = w / 6.0;
+	double sigma2 = sigma * sigma;
+	double frac = 1 / (2 * PI * sigma2);
 	int x0 = w / 2;
 	int y0 = w / 2;
 
-	Mat_<float> kernel(w, w);
+	Mat_<double> kernel(w, w);
 	for (int x = 0; x < w; x++)
 	{
 		for (int y = 0; y < w; y++)

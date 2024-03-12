@@ -1,7 +1,5 @@
-#include "../headers/Util.h"
-#include "../headers/Conversion.h"
-
-
+#include "../../headers/Util.h"
+#include "../../headers/crop/Conversion.h"
 
 
 Mat_<uchar> grayscaleToBinary(Mat_<uchar> img, int threshold)

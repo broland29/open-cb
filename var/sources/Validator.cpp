@@ -4,11 +4,10 @@
 
 Validator::Validator()
 {
-    std::cout << "in constru\n";
     copyBoard(prevBoard, initialSetup);
     copyBoard(currBoard, initialSetup);
-    SPDLOG_INFO("After construction, validator state:");  // todo - somehow get it to work with trace
-    SPDLOG_INFO(*this);
+    SPDLOG_TRACE("After construction, validator state:");  // todo - somehow get it to work with trace
+    SPDLOG_TRACE(*this);
 }
 
 
@@ -66,8 +65,8 @@ void Validator::validateBoard(char board[8][8], char message[200])
         metadata.enPassantCol = -1;
     }
 
-    SPDLOG_INFO("After update, validator state:");
-    SPDLOG_INFO(*this);
+    SPDLOG_TRACE("After update, validator state:");
+    SPDLOG_TRACE(*this);
 }
 
 

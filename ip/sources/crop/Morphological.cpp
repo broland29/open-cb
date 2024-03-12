@@ -1,5 +1,5 @@
-#include "../headers/Util.h"
-#include "../headers/Morphological.h"
+#include "../../headers/Util.h"
+#include "../../headers/crop/Morphological.h"
 
 
 Mat_<uchar> erosion(Mat_<uchar> img, Mat_<uchar> sel)
