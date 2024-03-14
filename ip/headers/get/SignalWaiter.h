@@ -15,11 +15,11 @@ class SignalWaiter : public QObject
 	Q_OBJECT
 
 public:
-	QVariant variant;  // where reply from signal will be saved
+	std::string path;  // where reply from signal will be saved
 
 private:
 	CameraReader* cameraReader;
-	std::string request;
+	std::string requestImagePathPrefix;
 	std::string signalWaiterName;
 	QEventLoop loop;
 	QTimer timer;
@@ -27,12 +27,12 @@ private:
 public:
 	SignalWaiter(
 		CameraReader* cameraReader,
-		std::string request,
+		std::string requestImagePathPrefix,
 		std::string signalWaiterName = "Anonymous"
 	);
 
 	int start();
 
 public slots:
-	void variantGrabberSlot(QVariant variant);
+	void pathGrabberSlot(QString path);
 };

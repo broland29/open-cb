@@ -10,8 +10,8 @@ CameraReader::CameraReader(int cameraNo, std::shared_ptr<QMutex> imshowMutex)
 	isRunning = false;
 
 	// no need to use mutex in constructor
-	requestConfigure = false;
-	requestGetImage = false;
+	isImageRequested = false;
+	requestImagePathPrefix = "";
 
 	this->cameraNo = cameraNo;
 	this->imshowMutex = imshowMutex;
@@ -32,9 +32,7 @@ void CameraReader::doWork()
 	}
 
 	Mat_<Vec3b> frame;
-	char path[256];
-	unsigned int confCount = 0;
-	unsigned int getCount = 0;
+	unsigned int count = 0;
 
 	while (isRunning)
 	{
@@ -45,28 +43,23 @@ void CameraReader::doWork()
 			break;
 		}
 
-		// check for special requests (before conversion!)
+		// check for requests (before conversion!)
 		requestMutex.lock();
-		if (requestConfigure)
+		if (isImageRequested)
 		{
-			sprintf(path, "C:\\open-cb\\mem\\conf_cam%d_cnt%d.jpeg", cameraNo, confCount++);
+			std::string path = 
+				"C:\\open-cb\\mem\\" +
+				requestImagePathPrefix +
+				"_cam" + std::to_string(cameraNo) +
+				"_cnt" + std::to_string(count);
 			imwrite(path, frame);
+			emit imageSaved(QString::fromLatin1(path));
 			
-			emit configureDoneSignal(QVariant(QString::fromLatin1(path)));
-			
-			requestConfigure = false;  // "used up"
-		}
-		if (requestGetImage)
-		{
-			sprintf(path, "C:\\open-cb\\mem\\get_cam%d_cnt%d.jpeg", cameraNo, getCount++);
-			imwrite(path, frame);
-
-			emit getImageDoneSignal(QVariant(QString::fromLatin1(path)));
-
-			requestGetImage = false;  // "used up"
+			// "used up"
+			isImageRequested = false;
+			requestImagePathPrefix = "";
 		}
 		requestMutex.unlock();
-
 
 		cv::cvtColor(frame, frame, COLOR_BGR2RGB);
 		if (isRunning)
@@ -90,20 +83,10 @@ void CameraReader::deleteLater()
 
 }
 
-void CameraReader::toggleRequest(std::string request)
+void CameraReader::toggleRequest(std::string requestImagePathPrefix)
 {
 	requestMutex.lock();
-	if (request == "configure")
-	{
-		requestConfigure = true;
-	}
-	else if (request == "getImage")
-	{
-		requestGetImage = true;
-	}
-	else
-	{
-		SPDLOG_ERROR("Unknown request {}!", request);
-	}
+	isImageRequested = true;
+	this->requestImagePathPrefix = requestImagePathPrefix;
 	requestMutex.unlock();
 }

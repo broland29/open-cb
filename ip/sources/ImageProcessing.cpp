@@ -36,37 +36,37 @@ void ImageProcessing::sendToTrainSlot(QString board)
 	Mat_<Vec3b> imgCamLeft = imread(PATH_DUMMY_IMG_CAM_ONE, IMREAD_COLOR);
 
 	// todo
-	emit sendToTrainReplySignal(true);
+	emit sendToTrainReplySignal();
 }
 
 void ImageProcessing::sendToTestSlot(QString board)
 {
 	// todo
-	emit sendToTestReplySignal(true);
+	emit sendToTestReplySignal();
 }
 
 void ImageProcessing::runTrainSlot()
 {
 	// todo
-	emit runTrainReplySignal(true);
+	emit runTrainReplySignal();
 }
 
 void ImageProcessing::runTestSlot()
 {
 	// todo
-	emit runTestReplySignal(true);
+	emit runTestReplySignal();
 }
 
 void ImageProcessing::resetTrainSlot()
 {
 	// todo
-	emit resetTrainReplySignal(true);
+	emit resetTrainReplySignal();
 }
 
 void ImageProcessing::resetTestSlot()
 {
 	// todo
-	emit resetTestReplySignal(true);
+	emit resetTestReplySignal();
 }
 
 
@@ -75,8 +75,8 @@ void ImageProcessing::resetTestSlot()
 void ImageProcessing::configureSlot()
 {
 	// request configure and wait for reply signals
-	SignalWaiter configureSignalWaiter1{ cameraReaderOne, "configure", "configure1" };
-	SignalWaiter configureSignalWaiter2{ cameraReaderTwo, "configure", "configure2" };
+	SignalWaiter configureSignalWaiter1{ cameraReaderOne, "conf", "configure1" };
+	SignalWaiter configureSignalWaiter2{ cameraReaderTwo, "conf", "configure2" };
 
 	// if any unsuccessful, return
 	if (configureSignalWaiter1.start() + configureSignalWaiter2.start() != 0)
@@ -86,8 +86,8 @@ void ImageProcessing::configureSlot()
 	}
 
 	// extract paths
-	std::string path1 = configureSignalWaiter1.variant.toString().toStdString();
-	std::string path2 = configureSignalWaiter2.variant.toString().toStdString();
+	std::string path1 = configureSignalWaiter1.path;
+	std::string path2 = configureSignalWaiter2.path;
 
 	Mat_<Vec3b> img1 = imread(path1, IMREAD_COLOR);
 	if (img1.empty())
@@ -126,8 +126,8 @@ void ImageProcessing::getImageSlot(bool classifyWhenGettingImage)
 	// note: reply message starting with "$" reserved to encode that a board is being passed
 
 	// request getImage and wait for reply signals
-	SignalWaiter getImageSignalWaiter1{ cameraReaderOne, "getImage", "getImage1" };
-	SignalWaiter getImageSignalWaiter2{ cameraReaderTwo, "getImage", "getImage2" };
+	SignalWaiter getImageSignalWaiter1{ cameraReaderOne, "get", "getImage1" };
+	SignalWaiter getImageSignalWaiter2{ cameraReaderTwo, "get", "getImage2" };
 
 	// if any unsuccessful, return
 	if (getImageSignalWaiter1.start() + getImageSignalWaiter2.start() != 0)
@@ -137,8 +137,8 @@ void ImageProcessing::getImageSlot(bool classifyWhenGettingImage)
 	}
 
 	// extract paths
-	std::string path1 = getImageSignalWaiter1.variant.toString().toStdString();
-	std::string path2 = getImageSignalWaiter2.variant.toString().toStdString();
+	std::string path1 = getImageSignalWaiter1.path;
+	std::string path2 = getImageSignalWaiter2.path;
 
 	Mat_<Vec3b> img1 = imread(path1, IMREAD_COLOR);
 	if (img1.empty())

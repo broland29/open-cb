@@ -43,12 +43,12 @@ private:
 
 signals:
 	// right buttons, IP -> UA
-	void sendToTrainReplySignal(bool succeeded);
-	void sendToTestReplySignal(bool succeeded);
-	void runTrainReplySignal(bool succeeded);
-	void runTestReplySignal(bool succeeded);
-	void resetTrainReplySignal(bool succeeded);
-	void resetTestReplySignal(bool succeeded);
+	void sendToTrainReplySignal(bool succeeded = true, QString message = "Success");
+	void sendToTestReplySignal(bool succeeded = true, QString message = "Success");
+	void runTrainReplySignal(bool succeeded = true, QString message = "Success");
+	void runTestReplySignal(bool succeeded = true, QString message = "Success");
+	void resetTrainReplySignal(bool succeeded = true, QString message = "Success");
+	void resetTestReplySignal(bool succeeded = true, QString message = "Success");
 	
 	// bottom buttons, IP -> UA
 	void configureReplySignal(bool succeeded = true, QString message = "Success");

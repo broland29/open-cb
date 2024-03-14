@@ -327,39 +327,33 @@ void MainWindow::exitButtonClicked()
 
 // ---------- right buttons, IP -> UA ---------- //
 
-void MainWindow::sendToTrainReplySlot(bool succeeded)
+void MainWindow::sendToTrainReplySlot(bool succeeded, QString message)
 {
-    QString message = (succeeded) ? "Succeeded" : "Failed";
     messageLabel->setText(message);
 }
 
-void MainWindow::sendToTestReplySlot(bool succeeded)
+void MainWindow::sendToTestReplySlot(bool succeeded, QString message)
 {
-    QString message = (succeeded) ? "Succeeded" : "Failed";
     messageLabel->setText(message);
 }
 
-void MainWindow::runTrainReplySlot(bool succeeded)
+void MainWindow::runTrainReplySlot(bool succeeded, QString message)
 {
-    QString message = (succeeded) ? "Succeeded" : "Failed";
     messageLabel->setText(message);
 }
 
-void MainWindow::runTestReplySlot(bool succeeded)
+void MainWindow::runTestReplySlot(bool succeeded, QString message)
 {
-    QString message = (succeeded) ? "Succeeded" : "Failed";
     messageLabel->setText(message);
 }
 
-void MainWindow::resetTrainReplySlot(bool succeeded)
+void MainWindow::resetTrainReplySlot(bool succeeded, QString message)
 {
-    QString message = (succeeded) ? "Succeeded" : "Failed";
     messageLabel->setText(message);
 }
 
-void MainWindow::resetTestReplySlot(bool succeeded)
+void MainWindow::resetTestReplySlot(bool succeeded, QString message)
 {
-    QString message = (succeeded) ? "Succeeded" : "Failed";
     messageLabel->setText(message);
 }
 

@@ -74,12 +74,12 @@ public slots:
     void exitButtonClicked();
 
     // right buttons, IP -> UA
-    void sendToTrainReplySlot(bool succeded);
-    void sendToTestReplySlot(bool succeded);
-    void runTrainReplySlot(bool succeded);
-    void runTestReplySlot(bool succeded);
-    void resetTrainReplySlot(bool succeded);
-    void resetTestReplySlot(bool succeded);
+    void sendToTrainReplySlot(bool succeeded, QString message);
+    void sendToTestReplySlot(bool succeeded, QString message);
+    void runTrainReplySlot(bool succeeded, QString message);
+    void runTestReplySlot(bool succeeded, QString message);
+    void resetTrainReplySlot(bool succeeded, QString message);
+    void resetTestReplySlot(bool succeeded, QString message);
 
     // bottom buttons, IP/VAR -> UA
     void configureReplySlot(bool succeeded, QString message);

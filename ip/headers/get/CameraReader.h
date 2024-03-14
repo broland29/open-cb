@@ -22,8 +22,8 @@ private:
 	int cameraNo;
 
 	// request parameters set to request "Configure", "Get Image"
-	bool requestConfigure;
-	bool requestGetImage;
+	bool isImageRequested;
+	std::string requestImagePathPrefix;
 	QMutex requestMutex;  // https://stackoverflow.com/questions/4897912/how-to-properly-interrupt-a-qthread-infinite-loop
 
 	// imshow is not thread safe!
@@ -36,10 +36,9 @@ public:
 	void stop();
 	void deleteLater();
 
-	void toggleRequest(std::string request);
+	void toggleRequest(std::string requestImagePathPrefix);
 
 signals:
 	void imageUpdateSignal(QImage image);
-	void configureDoneSignal(QVariant path);  // delegated to Crop
-	void getImageDoneSignal(QVariant path);  // delegated to Crop
+	void imageSaved(QString path);
 };
