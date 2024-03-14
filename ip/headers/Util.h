@@ -114,3 +114,5 @@ Mat_<Vec3b> extractCell(int i, int j, Mat_<Vec3b> img);
 
 
 void mapCharToFolder(char enc, char folder[3]);
+
+

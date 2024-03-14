@@ -26,8 +26,6 @@ int main(int argc, char* argv[])
 	// for shorter code
 	CameraReader* cameraReaderOne = imageProcessing->cameraReaderOne;
 	CameraReader* cameraReaderTwo = imageProcessing->cameraReaderTwo;
-	Crop* cropOne = imageProcessing->cropOne;
-	Crop* cropTwo = imageProcessing->cropTwo;
 	MainWindow* mainWindow = userApplication->mainWindow;
 
 	// create worker threads
@@ -83,13 +81,9 @@ int main(int argc, char* argv[])
 	// start thread
 	cameraReaderOne->moveToThread(cameraReaderOneThread);
 	cameraReaderTwo->moveToThread(cameraReaderTwoThread);
-	cropOne->moveToThread(cropOneThread);
-	cropTwo->moveToThread(cropTwoThread);
 	
 	cameraReaderOneThread->start();
 	cameraReaderTwoThread->start();
-	cropOneThread->start();
-	cropTwoThread->start();
 
 	return userApplication->run();
 }

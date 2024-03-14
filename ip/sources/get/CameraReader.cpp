@@ -10,8 +10,8 @@ CameraReader::CameraReader(int cameraNo, std::shared_ptr<QMutex> imshowMutex)
 	isRunning = false;
 
 	// no need to use mutex in constructor
-	configure = false;
-	getImage = false;
+	requestConfigure = false;
+	requestGetImage = false;
 
 	this->cameraNo = cameraNo;
 	this->imshowMutex = imshowMutex;
@@ -46,26 +46,26 @@ void CameraReader::doWork()
 		}
 
 		// check for special requests (before conversion!)
-		parameterMutex.lock();
-		if (configure)
+		requestMutex.lock();
+		if (requestConfigure)
 		{
 			sprintf(path, "C:\\open-cb\\mem\\conf_cam%d_cnt%d.jpeg", cameraNo, confCount++);
 			imwrite(path, frame);
 			
-			emit configureSignal(QString::fromLatin1(path));
+			emit configureDoneSignal(QVariant(QString::fromLatin1(path)));
 			
-			configure = false;  // "used up"
+			requestConfigure = false;  // "used up"
 		}
-		if (getImage)
+		if (requestGetImage)
 		{
 			sprintf(path, "C:\\open-cb\\mem\\get_cam%d_cnt%d.jpeg", cameraNo, getCount++);
 			imwrite(path, frame);
 
-			emit getImageSignal(QString::fromLatin1(path));
+			emit getImageDoneSignal(QVariant(QString::fromLatin1(path)));
 
-			getImage = false;  // "used up"
+			requestGetImage = false;  // "used up"
 		}
-		parameterMutex.unlock();
+		requestMutex.unlock();
 
 
 		cv::cvtColor(frame, frame, COLOR_BGR2RGB);
@@ -90,16 +90,20 @@ void CameraReader::deleteLater()
 
 }
 
-void CameraReader::toggleConfigure()
+void CameraReader::toggleRequest(std::string request)
 {
-	parameterMutex.lock();
-	configure = true;
-	parameterMutex.unlock();
-}
-
-void CameraReader::toggleGetImage()
-{
-	parameterMutex.lock();
-	getImage = true;
-	parameterMutex.unlock();
+	requestMutex.lock();
+	if (request == "configure")
+	{
+		requestConfigure = true;
+	}
+	else if (request == "getImage")
+	{
+		requestGetImage = true;
+	}
+	else
+	{
+		SPDLOG_ERROR("Unknown request {}!", request);
+	}
+	requestMutex.unlock();
 }

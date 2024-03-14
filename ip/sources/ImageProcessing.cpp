@@ -7,18 +7,23 @@ ImageProcessing::ImageProcessing()
 {
 	utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_SILENT);
 
-	std::shared_ptr<QMutex> imshowMutex = std::make_shared<QMutex>();
+	imshowMutex = std::make_shared<QMutex>();
 
 	cameraReaderOne = new CameraReader(0, imshowMutex);  // modify if needed
 	cameraReaderTwo = new CameraReader(1, imshowMutex);  // modify if needed
-	
-	cropOne = new Crop(imshowMutex);
-	cropTwo = new Crop(imshowMutex);
+}
 
-	QObject::connect(cameraReaderOne, &CameraReader::configureSignal, cropOne, &Crop::configureSlot);
-	QObject::connect(cameraReaderTwo, &CameraReader::configureSignal, cropTwo, &Crop::configureSlot);
-	QObject::connect(cameraReaderOne, &CameraReader::getImageSignal, cropOne, &Crop::getImageSlot);
-	QObject::connect(cameraReaderTwo, &CameraReader::getImageSignal, cropTwo, &Crop::getImageSlot);
+
+void ImageProcessing::leftToMain(int lr, int lc, int& mr, int& mc)
+{
+	mr = lc;
+	mc = 7 - lr;
+}
+
+void ImageProcessing::rightToMain(int rr, int rc, int& mr, int& mc)
+{
+	mr = 7 - rc;
+	mc = rr;
 }
 
 
@@ -26,6 +31,10 @@ ImageProcessing::ImageProcessing()
 
 void ImageProcessing::sendToTrainSlot(QString board)
 {
+	// left part of board detected by cam1, right part by cam2
+	// however, each camera sees what's closer to it as "lower cells" (different perspective)
+	Mat_<Vec3b> imgCamLeft = imread(PATH_DUMMY_IMG_CAM_ONE, IMREAD_COLOR);
+
 	// todo
 	emit sendToTrainReplySignal(true);
 }
@@ -65,24 +74,115 @@ void ImageProcessing::resetTestSlot()
 
 void ImageProcessing::configureSlot()
 {
-	cameraReaderOne->toggleConfigure();
-	cameraReaderTwo->toggleConfigure();
+	// request configure and wait for reply signals
+	SignalWaiter configureSignalWaiter1{ cameraReaderOne, "configure", "configure1" };
+	SignalWaiter configureSignalWaiter2{ cameraReaderTwo, "configure", "configure2" };
 
-	emit configureReplySignal(true);
-}
-
-void ImageProcessing::getImageSlot(bool classiftWhenGettingImage)
-{
-	cameraReaderOne->toggleGetImage();
-	cameraReaderTwo->toggleGetImage();
-
-	if (classiftWhenGettingImage)
+	// if any unsuccessful, return
+	if (configureSignalWaiter1.start() + configureSignalWaiter2.start() != 0)
 	{
-		// todo
+		emit configureReplySignal(false, "Error when getting image");
+		return;
 	}
-	QString predictedBoard = "todo";
-	emit getImageReplySignal(predictedBoard);
+
+	// extract paths
+	std::string path1 = configureSignalWaiter1.variant.toString().toStdString();
+	std::string path2 = configureSignalWaiter2.variant.toString().toStdString();
+
+	Mat_<Vec3b> img1 = imread(path1, IMREAD_COLOR);
+	if (img1.empty())
+	{
+		SPDLOG_ERROR("Image at {} not found", path1);
+		emit configureReplySignal(false, "Image not found");
+		return;
+	}
+
+	Mat_<Vec3b> img2 = imread(path2, IMREAD_COLOR);
+	if (img2.empty())
+	{
+		SPDLOG_ERROR("Image at {} not found", path2);
+		emit configureReplySignal(false, "Image not found");
+		return;
+	}
+
+	if (Crop::configure(img1, corners1, configured1, imshowMutex) + Crop::configure(img2, corners2, configured2, imshowMutex) != 0)
+	{
+		emit configureReplySignal(false, "Error when cropping");
+		return;
+	}
+
+	imshowMutex->lock();
+	imshow(path1, img1);
+	imshow(path2, img2);
+	waitKey();
+	imshowMutex->unlock();
+
+	emit configureReplySignal();
 }
+
+
+void ImageProcessing::getImageSlot(bool classifyWhenGettingImage)
+{
+	// note: reply message starting with "$" reserved to encode that a board is being passed
+
+	// request getImage and wait for reply signals
+	SignalWaiter getImageSignalWaiter1{ cameraReaderOne, "getImage", "getImage1" };
+	SignalWaiter getImageSignalWaiter2{ cameraReaderTwo, "getImage", "getImage2" };
+
+	// if any unsuccessful, return
+	if (getImageSignalWaiter1.start() + getImageSignalWaiter2.start() != 0)
+	{
+		emit getImageReplySignal(false, "Error when getting image");
+		return;
+	}
+
+	// extract paths
+	std::string path1 = getImageSignalWaiter1.variant.toString().toStdString();
+	std::string path2 = getImageSignalWaiter2.variant.toString().toStdString();
+
+	Mat_<Vec3b> img1 = imread(path1, IMREAD_COLOR);
+	if (img1.empty())
+	{
+		SPDLOG_ERROR("Image at {} not found", path1);
+		emit getImageReplySignal("Camera one image not found");
+		return;
+	}
+
+	Mat_<Vec3b> img2 = imread(path2, IMREAD_COLOR);
+	if (img2.empty())
+	{
+		SPDLOG_ERROR("Image at {} not found", path2);
+		emit getImageReplySignal("Camera two image not found");
+		return;
+	}
+
+	if (classifyWhenGettingImage)
+	{
+		// TODO: call classification
+		QString board = "$";
+
+		imshowMutex->lock();
+		imshow(path1, img1);
+		imshow(path2, img2);
+		waitKey();
+		imshowMutex->unlock();
+	
+		emit getImageReplySignal(true, board);
+		return;
+	}
+	else
+	{
+		imshowMutex->lock();
+		imshow(path1, img1);
+		imshow(path2, img2);
+		waitKey();
+		imshowMutex->unlock();
+
+		emit getImageReplySignal();
+		return;
+	}
+}
+
 
 
 

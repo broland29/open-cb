@@ -82,8 +82,8 @@ public slots:
     void resetTestReplySlot(bool succeded);
 
     // bottom buttons, IP/VAR -> UA
-    void configureReplySlot(bool succeeded);
-    void getImageReplySlot(QString board);
+    void configureReplySlot(bool succeeded, QString message);
+    void getImageReplySlot(bool succeeded, QString message);
     void sendToVARReplySlot(QString message);
     void getFromVARReplySlot(QString board);
     void newGameReplySlot(bool succeded);

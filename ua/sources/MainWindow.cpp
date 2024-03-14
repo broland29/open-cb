@@ -368,43 +368,27 @@ void MainWindow::resetTestReplySlot(bool succeeded)
 #define PATH_IMG_CAM_ONE "preview\\cam1.jpeg"
 #define PATH_IMG_CAM_TWO "preview\\cam2.jpeg"
 
-void MainWindow::configureReplySlot(bool succeeded)
+void MainWindow::configureReplySlot(bool succeeded, QString message)
 {
-    QString message = (succeeded) ? "Succeeded" : "Failed";
     messageLabel->setText(message);
 }
 
-void MainWindow::getImageReplySlot(QString board)
+void MainWindow::getImageReplySlot(bool succeeded, QString message)
 {
-    messageLabel->setText(board);
-    /*
-    messageLabel->setText("Set image fired! Yippie!");
+    if (succeeded && message.at(0) == '$')  // we are getting a board
+    {
+        messageLabel->setText("Got board: " + message);
 
-    QImage cameraOneImage, cameraTwoImage;
-    if (cameraOneImage.load(PATH_IMG_CAM_ONE) == false)
-    {
-        messageLabel->setText("Could not load" + QString::fromUtf8(PATH_IMG_CAM_ONE));
-        return;
-    }
-    if (cameraTwoImage.load(PATH_IMG_CAM_TWO) == false)
-    {
-        messageLabel->setText("Could not load" + QString::fromUtf8(PATH_IMG_CAM_TWO));
+        for (int i = 1; i < 65; i++)
+        {
+            std::string encoding;
+            EncodingMapper::map(message.at(i), encoding);
+            pieceLabels[i / 8][i % 8]->setPiece(encoding, nameToPixmap[encoding]);
+        }
         return;
     }
 
-    QPixmap cameraOnePixmap = QPixmap::fromImage(cameraOneImage);
-    QPixmap cameraTwoPixmap = QPixmap::fromImage(cameraTwoImage);
-
-    cameraOneImageLabel->setPixmap(cameraOnePixmap.scaled(cameraOneImageLabel->width(), cameraOneImageLabel->height(), Qt::KeepAspectRatio));
-    cameraTwoImageLabel->setPixmap(cameraTwoPixmap.scaled(cameraTwoImageLabel->width(), cameraTwoImageLabel->height(), Qt::KeepAspectRatio));
-
-    for (int i = 0; i < 64; i++)
-    {
-        std::string encoding;
-        EncodingMapper::map(board[i], encoding);
-        pieceLabels[i / 8][i % 8]->setPiece(encoding, nameToPixmap[encoding]);
-    }
-    */
+    messageLabel->setText(message);
 }
 
 void MainWindow::sendToVARReplySlot(QString message)

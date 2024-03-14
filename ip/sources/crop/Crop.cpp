@@ -1,35 +1,13 @@
 #include "../../headers/crop/Crop.h"
 
 
-#define BINARY_THRESHOLD		120
-#define CLOSING_SIZE			6
-#define HOUGH_RO_STEP_SIZE		1
-#define HOUGH_THETA_STEP_SIZE	1
-#define HOUGH_WINDOW_SIZE		3
-#define HOUGH_NUMBER_OF_LINES	20
-
-#define SHOW_IMAGES true
-#define CONCAT_IMAGES true
-#define GENERATE_IMAGES false
-#define CLASSIFY false
-
-
-
-
-Crop::Crop(std::shared_ptr<QMutex> imshowMutex)
+int Crop::configure(Mat_<Vec3b> imgOriginal, std::vector<Point2f> corners, bool &configured, std::shared_ptr<QMutex> imshowMutex)
 {
-	configured = false;
-	this->imshowMutex = imshowMutex;
-}
-
-
-void Crop::configureSlot(QString path)
-{
-	Mat_<Vec3b> imgOriginal = imread(path.toStdString(), IMREAD_COLOR);
-
+	// resize
 	Mat_<Vec3b> imgResizedColor;
 	resize(imgOriginal, imgResizedColor, cv::Size(IMAGE_WIDTH, IMAGE_HEIGHT));
 
+	// convert to grayscale
 	Mat_<uchar> imgResizedGrayscale;
 	cv::cvtColor(imgResizedColor, imgResizedGrayscale, cv::COLOR_BGR2GRAY);
 
@@ -76,35 +54,30 @@ void Crop::configureSlot(QString path)
 			int ret = lines[i].getIntersection(lines[j], intersection);
 			if (ret == 1)
 			{
-				std::cout << "Lines [" << lines[i].ro << "," << lines[i].theta;
-				std::cout << "] and [" << lines[j].ro << "," << lines[j].theta;
-				std::cout << "] are parallel!" << std::endl;
+				SPDLOG_TRACE("Lines [{},{}] and [{},{}] are parallel!",
+					lines[i].ro, lines[i].theta, lines[j].ro, lines[j].theta);
 				continue;
 			}
 
 			if (!isInside(imgIntersections, intersection.y, intersection.x))
 			{
-				std::cout << "Lines [" << lines[i].ro << "," << lines[i].theta;
-				std::cout << "] and [" << lines[j].ro << "," << lines[j].theta;
-				std::cout << "] intersect out of the image, in [" << intersection << "]." << std::endl;
+				SPDLOG_TRACE("Lines [{},{}] and [{},{}] intersect outside of the image!",
+					lines[i].ro, lines[i].theta, lines[j].ro, lines[j].theta);
 				continue;
 			}
 
 			intersections.push_back(intersection);
 			drawCrossColor(imgIntersections, intersection, 50, Vec3b(0, 0, 255));
-			std::cout << "Lines [" << lines[i].ro << "," << lines[i].theta;
-			std::cout << "] and [" << lines[j].ro << "," << lines[j].theta;
-			std::cout << "] intersect in [" << intersection << "]." << std::endl;
+			SPDLOG_TRACE("Lines [{},{}] and [{},{}] intersect in [{},{}]",
+				lines[i].ro, lines[i].theta, lines[j].ro, lines[j].theta, intersection.x, intersection.y);
 		}
-		//std::cout << lines[i].first << " " << lines[i].second << std::endl;
 	}
 
-	std::cout << "Intersections:" << std::endl;
+	SPDLOG_TRACE("Intersections:");
 	for (Point2i intersection : intersections)
 	{
-		std::cout << intersection << std::endl;
+		SPDLOG_TRACE("[{},{}]", intersection.x, intersection.y);
 	}
-	std::cout << std::endl;
 
 	// get corners from intersections
 	Point2i cornerChessboardTL = intersections[0];
@@ -145,10 +118,11 @@ void Crop::configureSlot(QString path)
 		}
 	}
 
-	std::cout << "minX: " << cornerChessboardTL << std::endl;
-	std::cout << "maxX: " << cornerChessboardTR << std::endl;
-	std::cout << "minY: " << cornerChessboardBL << std::endl;
-	std::cout << "maxY: " << cornerChessboardBR << std::endl;
+	SPDLOG_TRACE("minX: [{},{}]", cornerChessboardTL.x, cornerChessboardTL.y);
+	SPDLOG_TRACE("maxX: [{},{}]", cornerChessboardTR.x, cornerChessboardTR.y);
+	SPDLOG_TRACE("minY: [{},{}]", cornerChessboardBL.x, cornerChessboardBL.y);
+	SPDLOG_TRACE("maxY: [{},{}]", cornerChessboardBR.x, cornerChessboardBR.y);
+
 	Mat_<Vec3b> imgCorners = imgResizedColor.clone();
 	drawCrossColor(imgCorners, cornerChessboardTL, 50, Vec3b(0, 0, 255));
 	drawCrossColor(imgCorners, cornerChessboardTR, 50, Vec3b(0, 0, 255));
@@ -162,8 +136,10 @@ void Crop::configureSlot(QString path)
 	corners.push_back(cornerChessboardBR);
 	corners.push_back(cornerChessboardBL);
 
-	this->configured = true;
+	// set flag
+	configured = true;
 
+	// visualize
 	if (SHOW_IMAGES)
 	{
 		imshowMutex->lock();
@@ -207,22 +183,16 @@ void Crop::configureSlot(QString path)
 		waitKey();
 		imshowMutex->unlock();
 	}
+
+	return 0;
 }
 
-void Crop::getImageSlot(QString path)
+int Crop::getImage(Mat_<Vec3b> imgOriginal, std::vector<Point2f> corners, bool configured, std::shared_ptr<QMutex> imshowMutex)
 {
 	if (!configured)
 	{
-		std::cout << "Not configured, returning" << std::endl;
-		return;  // todo - error messages
-	}
-
-	std::string path_ = path.toStdString();
-	Mat_<Vec3b> imgOriginal = imread(path_, IMREAD_COLOR);
-	if (imgOriginal.empty())
-	{
-		std::cout << "Could not open " << path_ << std::endl;
-		return;  // todo - error messages
+		SPDLOG_ERROR("Must run configure first!");
+		return 1;
 	}
 
 	Mat_<Vec3b> imgResizedColor;
