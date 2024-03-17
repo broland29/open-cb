@@ -4,6 +4,9 @@
 #include <QMutex>
 #include <spdlog/spdlog.h>
 
+#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
+#include <experimental/filesystem>
+
 #include "../Util.h"
 #include "Filter.h"
 #include "Conversion.h"
@@ -23,21 +26,88 @@
 #define GENERATE_IMAGES			false
 #define CLASSIFY				false
 
-namespace Crop
+#define TRAIN_FOLDER_PATH "C:\\open-cb\\mem\\train"
+#define TEST_FOLDER_PATH "C:\\open-cb\\mem\\test"
+
+
+enum class CameraSide
 {
+	LEFT,
+	RIGHT
+};
+
+
+class Crop
+{
+public:
+private:
+	// "Standard behavior: Windows file system treats file and directory names as case-insensitive"
+	//  so, unfortunately, cannot use P and p, must use WP and BP
+	static inline std::string folders[] = { "WF", "WP", "WB", "WN", "WR", "WQ", "WK", "BF", "BP", "BB", "BN", "BR", "BQ", "BK" };
+
+public:
+	static int sendToTrain(
+		Mat_<Vec3b> img,
+		std::vector<Point2f> corners,			
+		bool configured,						
+		CameraSide cameraSide,
+		std::string board[8][8],
+		int imageCount
+	);
+
+	static int sendToTest(
+		Mat_<Vec3b> img,
+		std::vector<Point2f> corners,
+		bool configured,
+		CameraSide cameraSide,
+		std::string board[8][8],
+		int imageCount
+	);
+
+	static int resetTrain();
+
+	static int resetTest();
+
 	// gets the corners of the chessboard
-	int configure(
+	static int configure(
 		Mat_<Vec3b> imgOriginal,				// image from which the corner positions will be extracted
-		std::vector<Point2f> corners,			// will be filled (success case)
+		std::vector<Point2f>& corners,			// will be filled (success case)
 		bool& configured,						// will be set (success case)
 		std::shared_ptr<QMutex> imshowMutex		// since imshow not thread-safe
 	);
 
 	// does experimental processing: gets warped image, image without border and "corner cells of interest"
-	int getImage(
+	static int getImage(
 		Mat_<Vec3b> imgOriginal,				// image which will be processed
 		std::vector<Point2f> corners,			// corners of the chessboard, previously filled
 		bool configured,						// should be set (meaning corners were filled)
 		std::shared_ptr<QMutex> imshowMutex		// since imshow not thread-safe
 	);
+
+private:
+	// coordinate system transformation: left -> main (see cams.drawio)
+	static void leftToMain(int lr, int lc, int& mr, int& mc);
+
+	// coordinate system transformation: right -> main (see cams.drawio)
+	static void rightToMain(int rr, int rc, int& mr, int& mc);
+
+	static int warpAndRemoveBorder(
+		Mat_<Vec3b> imgOriginal,
+		std::vector<Point2f> corners,
+		bool configured,
+		Mat_<Vec3b>& imgWarped,
+		Mat_<Vec3b>& imgNoBorder
+	);
+
+	static int sendToFolder(
+		Mat_<Vec3b> img,				// the image
+		std::vector<Point2f> corners,
+		bool configured,
+		CameraSide cameraSide,			// self explanatory
+		std::string board[8][8],		// encoding of chess pieces, following indexation convention, as user gives through GUI = subfolder
+		int imageCount,					// the number associated with the image
+		std::string basePath			// train or test folder path
+	);
+	
+	static int resetFolder(std::string basePath);
 };

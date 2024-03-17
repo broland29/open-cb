@@ -9,40 +9,87 @@ ImageProcessing::ImageProcessing()
 
 	imshowMutex = std::make_shared<QMutex>();
 
-	cameraReaderOne = new CameraReader(0, imshowMutex);  // modify if needed
-	cameraReaderTwo = new CameraReader(1, imshowMutex);  // modify if needed
-}
+	cameraReaderOne = new CameraReader(0, CameraSide::LEFT, imshowMutex);  // modify if needed
+	cameraReaderTwo = new CameraReader(1, CameraSide::RIGHT, imshowMutex);  // modify if needed
 
-
-void ImageProcessing::leftToMain(int lr, int lc, int& mr, int& mc)
-{
-	mr = lc;
-	mc = 7 - lr;
-}
-
-void ImageProcessing::rightToMain(int rr, int rc, int& mr, int& mc)
-{
-	mr = 7 - rc;
-	mc = rr;
+	count = 0;  // todo: store in memory, session-wise
 }
 
 
 // ---------- right buttons, IP -> UA ---------- //
 
+// https://isocpp.org/wiki/faq/pointers-to-members
+// https://stackoverflow.com/questions/1485983/how-can-i-create-a-pointer-to-a-member-function-and-call-it
+typedef void (ImageProcessing::* ReplySignal)(bool succeeded, QString message);
+#define EMIT_REPLY_SIGNAL(replySignal, succeeded, message) (*this.*replySignal)(succeeded, message)
+
+void ImageProcessing::sendToFolder(QString board, std::string folder)
+{
+	ReplySignal replySignal = (board == "train") ? &ImageProcessing::sendToTrainReplySignal : &ImageProcessing::sendToTestReplySignal;
+
+	// request image and wait for response
+	SignalWaiter configureSignalWaiter1{ cameraReaderOne, folder + "_temp", folder + "1" };
+	SignalWaiter configureSignalWaiter2{ cameraReaderTwo, folder + "_temp", folder + "2" };
+
+	// if any unsuccessful, return
+	if (configureSignalWaiter1.start() + configureSignalWaiter2.start() != 0)
+	{
+		EMIT_REPLY_SIGNAL(replySignal, false, "Error when getting image");
+		return;
+	}
+	count++;
+
+	// extract paths
+	std::string path1 = configureSignalWaiter1.path;
+	std::string path2 = configureSignalWaiter2.path;
+
+	Mat_<Vec3b> img1 = imread(path1, IMREAD_COLOR);
+	if (img1.empty())
+	{
+		SPDLOG_ERROR("Image at {} not found", path1);
+		EMIT_REPLY_SIGNAL(replySignal, false, "Image not found");
+		return;
+	}
+
+	Mat_<Vec3b> img2 = imread(path2, IMREAD_COLOR);
+	if (img2.empty())
+	{
+		SPDLOG_ERROR("Image at {} not found", path2);
+		EMIT_REPLY_SIGNAL(replySignal, false, "Image not found");
+		return;
+	}
+
+	std::string board_[8][8];
+	for (int i = 0; i < 8; i++)
+	{
+		for (int j = 0; j < 8; j++)
+		{
+			if (EncodingMapperIP::map(board[i * 8 + j], i, j, board_[i][j]) != 0)
+			{
+				EMIT_REPLY_SIGNAL(replySignal, false, "Error when processing board");
+				return;
+			}
+		}
+	}
+
+	if (Crop::sendToTrain(img1, corners1, configured1, cameraReaderOne->cameraSide, board_, count) +
+		Crop::sendToTrain(img2, corners2, configured2, cameraReaderTwo->cameraSide, board_, count) != 0)
+	{
+		EMIT_REPLY_SIGNAL(replySignal, false, "Error when cropping");
+		return;
+	}
+
+	EMIT_REPLY_SIGNAL(replySignal, true, "Success!");
+}
+
 void ImageProcessing::sendToTrainSlot(QString board)
 {
-	// left part of board detected by cam1, right part by cam2
-	// however, each camera sees what's closer to it as "lower cells" (different perspective)
-	Mat_<Vec3b> imgCamLeft = imread(PATH_DUMMY_IMG_CAM_ONE, IMREAD_COLOR);
-
-	// todo
-	emit sendToTrainReplySignal();
+	sendToFolder(board, "train");
 }
 
 void ImageProcessing::sendToTestSlot(QString board)
 {
-	// todo
-	emit sendToTestReplySignal();
+	sendToFolder(board, "test");
 }
 
 void ImageProcessing::runTrainSlot()
@@ -59,13 +106,23 @@ void ImageProcessing::runTestSlot()
 
 void ImageProcessing::resetTrainSlot()
 {
-	// todo
+	if (Crop::resetTrain() != 0)
+	{
+		emit resetTrainReplySignal(false, "Reset train failed");
+		return;
+	}
+
 	emit resetTrainReplySignal();
 }
 
 void ImageProcessing::resetTestSlot()
 {
-	// todo
+	if (Crop::resetTest() != 0)
+	{
+		emit resetTestReplySignal(false, "Reset test failed");
+		return;
+	}
+
 	emit resetTestReplySignal();
 }
 
@@ -84,6 +141,7 @@ void ImageProcessing::configureSlot()
 		emit configureReplySignal(false, "Error when getting image");
 		return;
 	}
+	count++;
 
 	// extract paths
 	std::string path1 = configureSignalWaiter1.path;
@@ -135,6 +193,7 @@ void ImageProcessing::getImageSlot(bool classifyWhenGettingImage)
 		emit getImageReplySignal(false, "Error when getting image");
 		return;
 	}
+	count++;
 
 	// extract paths
 	std::string path1 = getImageSignalWaiter1.path;
@@ -172,11 +231,12 @@ void ImageProcessing::getImageSlot(bool classifyWhenGettingImage)
 	}
 	else
 	{
-		imshowMutex->lock();
-		imshow(path1, img1);
-		imshow(path2, img2);
-		waitKey();
-		imshowMutex->unlock();
+		if (Crop::getImage(img1, corners1, configured1, imshowMutex) +
+			Crop::getImage(img2, corners2, configured2, imshowMutex) != 0)
+		{
+			emit configureReplySignal(false, "Error when cropping");
+			return;
+		}
 
 		emit getImageReplySignal();
 		return;

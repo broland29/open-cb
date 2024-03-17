@@ -1,7 +1,157 @@
 #include "../../headers/crop/Crop.h"
 
+namespace fs = std::experimental::filesystem;
 
-int Crop::configure(Mat_<Vec3b> imgOriginal, std::vector<Point2f> corners, bool &configured, std::shared_ptr<QMutex> imshowMutex)
+
+void Crop::leftToMain(int lr, int lc, int& mr, int& mc)
+{
+	mr = lc;
+	mc = 7 - lr;
+}
+
+
+void Crop::rightToMain(int rr, int rc, int& mr, int& mc)
+{
+	mr = 7 - rc;
+	mc = rr;
+}
+
+int Crop::warpAndRemoveBorder(Mat_<Vec3b> imgOriginal, std::vector<Point2f> corners, bool configured, Mat_<Vec3b>& imgWarped, Mat_<Vec3b>& imgNoBorder)
+{
+	if (!configured)
+	{
+		SPDLOG_ERROR("Must run configure first!");
+		return 1;
+	}
+
+	Mat_<Vec3b> imgResizedColor;
+	resize(imgOriginal, imgResizedColor, cv::Size(IMAGE_WIDTH, IMAGE_HEIGHT));
+
+	std::vector<Point2f> dstCorners;
+	dstCorners.push_back(Point2d(0, 0));						// TL 
+	dstCorners.push_back(Point2d(IMAGE_WIDTH, 0));				// TR
+	dstCorners.push_back(Point2d(IMAGE_WIDTH, IMAGE_HEIGHT));	// BR
+	dstCorners.push_back(Point2d(0, IMAGE_HEIGHT));				// BL
+
+	// perform rectification
+	Mat M = getPerspectiveTransform(corners, dstCorners);
+	warpPerspective(imgResizedColor, imgWarped, M, Size(500, 500));
+
+	imgNoBorder = imgWarped(Rect{
+		BORDER_SIZE,						// x
+		BORDER_SIZE,						// y
+		IMAGE_WIDTH - 2 * BORDER_SIZE,		// width
+		IMAGE_HEIGHT - 2 * BORDER_SIZE		// height
+		});
+
+	return 0;
+}
+
+int Crop::sendToFolder(Mat_<Vec3b> img, std::vector<Point2f> corners, bool configured, CameraSide cameraSide, std::string board[8][8], int imageCount, std::string basePath)
+{
+	std::string path;															// final path
+	std::string side = (cameraSide == CameraSide::LEFT) ? "le" : "ri";			// part of name as well
+
+	Mat_<Vec3b> imgWarped, imgNoBorder;
+	int result = warpAndRemoveBorder(img, corners, configured, imgWarped, imgNoBorder);
+	if (result != 0)
+	{
+		return 1;
+	}
+
+	// left part of board detected by cam1, right part by cam2
+	// however, each camera sees what's closer to it as "lower cells" (different perspective)
+	for (int i = 4; i < 8; i++)
+	{
+		for (int j = 0; j < 8; j++)
+		{
+			// coordinate conversion to main coordinate system
+			int row, col;
+			if (cameraSide == CameraSide::LEFT)
+			{
+				leftToMain(i, j, row, col);
+			}
+			else
+			{
+				rightToMain(i, j, row, col);
+			}
+
+			path = basePath +
+				std::string("\\") + board[row][col] + std::string("\\") +									// folder - encoding given in main coord system
+				std::string("no") + std::to_string(imageCount) + side +										// image identification
+				std::string("_row") + std::to_string(row) + std::string("_col") + std::to_string(col) +		// cell identification - only care about main coord system
+				std::string(".jpeg");																		// extension
+
+			// extract and save cell
+			Mat_<Vec3b> imgCell = extractCell(i, j, imgNoBorder);  // extraction based on camera's coord system
+			if (cv::imwrite(path, imgCell) == false)
+			{
+				SPDLOG_ERROR("Failed to save cell to {}", path);
+				return 1;
+			}
+		}
+	}
+
+	return 0;
+}
+
+int Crop::sendToTrain(Mat_<Vec3b> img, std::vector<Point2f> corners, bool configured, CameraSide cameraSide, std::string board[8][8], int imageCount)
+{
+	return sendToFolder(img, corners, configured, cameraSide, board, imageCount, TRAIN_FOLDER_PATH);
+}
+
+
+int Crop::sendToTest(Mat_<Vec3b> img, std::vector<Point2f> corners, bool configured, CameraSide cameraSide, std::string board[8][8], int imageCount)
+{
+	return sendToFolder(img, corners, configured, cameraSide, board, imageCount, TEST_FOLDER_PATH);
+}
+
+
+int Crop::resetFolder(std::string basePath)
+{
+	std::string path = basePath;
+
+	// delete whole train folder
+	if (fs::remove_all(path) == -1)  // https://en.cppreference.com/w/cpp/filesystem/remove
+	{
+		SPDLOG_ERROR("Error when removing folder {}", path);
+		return 1;
+	}
+
+	// re-create train folder
+	if (fs::create_directory(path) == false)  // https://en.cppreference.com/w/cpp/filesystem/create_directory
+	{
+		SPDLOG_ERROR("Error when creating folder {}", path);
+		return 2;
+	}
+
+	// re-create subdirectories
+	for (std::string folder : folders)
+	{
+		path = basePath + std::string("\\") + folder;
+		if (fs::create_directory(path) == false)  // https://en.cppreference.com/w/cpp/filesystem/create_directory
+		{
+			SPDLOG_ERROR("Error when creating folder {}", path);
+			return 3;
+		}
+	}
+
+	return 0;
+}
+
+int Crop::resetTrain()
+{
+	return resetFolder(TRAIN_FOLDER_PATH);
+}
+
+
+int Crop::resetTest()
+{
+	return resetFolder(TEST_FOLDER_PATH);
+}
+
+
+int Crop::configure(Mat_<Vec3b> imgOriginal, std::vector<Point2f> &corners, bool &configured, std::shared_ptr<QMutex> imshowMutex)
 {
 	// resize
 	Mat_<Vec3b> imgResizedColor;
@@ -189,32 +339,12 @@ int Crop::configure(Mat_<Vec3b> imgOriginal, std::vector<Point2f> corners, bool 
 
 int Crop::getImage(Mat_<Vec3b> imgOriginal, std::vector<Point2f> corners, bool configured, std::shared_ptr<QMutex> imshowMutex)
 {
-	if (!configured)
+	Mat_<Vec3b> imgWarped, imgNoBorder;
+	int result = warpAndRemoveBorder(imgOriginal, corners, configured, imgWarped, imgNoBorder);
+	if (result != 0)
 	{
-		SPDLOG_ERROR("Must run configure first!");
 		return 1;
 	}
-
-	Mat_<Vec3b> imgResizedColor;
-	resize(imgOriginal, imgResizedColor, cv::Size(IMAGE_WIDTH, IMAGE_HEIGHT));
-
-	std::vector<Point2f> dstCorners;
-	dstCorners.push_back(Point2d(0, 0));						// TL 
-	dstCorners.push_back(Point2d(IMAGE_WIDTH, 0));				// TR
-	dstCorners.push_back(Point2d(IMAGE_WIDTH, IMAGE_HEIGHT));	// BR
-	dstCorners.push_back(Point2d(0, IMAGE_HEIGHT));				// BL
-
-	// perform rectification
-	Mat M = getPerspectiveTransform(corners, dstCorners);
-	Mat_<Vec3b> imgWarped;
-	warpPerspective(imgResizedColor, imgWarped, M, Size(500, 500));
-
-	Mat_<Vec3b> imgNoBorder = imgWarped(Rect{
-		BORDER_SIZE,						// x
-		BORDER_SIZE,						// y
-		IMAGE_WIDTH - 2 * BORDER_SIZE,		// width
-		IMAGE_HEIGHT - 2 * BORDER_SIZE		// height
-		});
 
 	// "corner cells"
 	Mat_<Vec3b> imgCell40 = extractCell(4, 0, imgNoBorder);

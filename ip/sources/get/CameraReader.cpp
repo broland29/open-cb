@@ -3,18 +3,17 @@
 using namespace cv;
 
 
-CameraReader::CameraReader(int cameraNo, std::shared_ptr<QMutex> imshowMutex)
+CameraReader::CameraReader(int cameraNo, CameraSide cameraSide, std::shared_ptr<QMutex> imshowMutex)
 {
+	this->cameraNo = cameraNo;
+	this->cameraSide = cameraSide;
+	this->imshowMutex = imshowMutex;
+
 	cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_SILENT);  // comment out if log if needed
 	
 	isRunning = false;
-
-	// no need to use mutex in constructor
-	isImageRequested = false;
+	isImageRequested = false;  		// no need to use mutex in constructor
 	requestImagePathPrefix = "";
-
-	this->cameraNo = cameraNo;
-	this->imshowMutex = imshowMutex;
 }
 
 
@@ -47,12 +46,39 @@ void CameraReader::doWork()
 		requestMutex.lock();
 		if (isImageRequested)
 		{
-			std::string path = 
-				"C:\\open-cb\\mem\\" +
-				requestImagePathPrefix +
-				"_cam" + std::to_string(cameraNo) +
-				"_cnt" + std::to_string(count);
-			imwrite(path, frame);
+			std::string path =
+				"C:\\open-cb\\mem\\get\\" +				// main folder
+				requestImagePathPrefix +				// whatever the requester wants to add to the name
+				"_cam" + std::to_string(cameraNo) +		// the camera's number
+				"_cnt" + std::to_string(count) +		// the number of image
+				".jpeg";								// extension
+			
+			// imwrite and error handling
+			int result = false;
+			try
+			{
+				result = imwrite(path, frame);
+			}
+			catch (const cv::Exception& ex)
+			{
+				SPDLOG_ERROR("Exception converting image: {}!", ex.what());
+				isImageRequested = false;
+				requestImagePathPrefix = "";
+				emit imageSaved("CONVERSION_ERROR_PATH");  // todo - add success to signal
+				requestMutex.unlock();
+				continue;
+			}
+
+			if (!result)
+			{
+				SPDLOG_ERROR("Could not save image!");
+				isImageRequested = false;
+				requestImagePathPrefix = "";
+				emit imageSaved("SAVE_ERROR_PATH");
+				requestMutex.unlock();
+				continue;
+			}
+			
 			emit imageSaved(QString::fromLatin1(path));
 			
 			// "used up"

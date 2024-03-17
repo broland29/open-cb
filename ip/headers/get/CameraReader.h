@@ -16,6 +16,7 @@ class CameraReader : public QObject
 	Q_OBJECT
 
 public:
+	CameraSide cameraSide;
 
 private:
 	bool isRunning;
@@ -31,7 +32,7 @@ private:
 
 
 public:
-	CameraReader(int cameraNo, std::shared_ptr<QMutex> imshowMutex);
+	CameraReader(int cameraNo, CameraSide cameraSide, std::shared_ptr<QMutex> imshowMutex);
 	void doWork();
 	void stop();
 	void deleteLater();

@@ -9,6 +9,7 @@
 #include "get/CameraReader.h"
 #include <QVariant>
 #include "get/SignalWaiter.h"
+#include "EncodingMapperIP.h"
 
 class ImageProcessing : public QObject
 {
@@ -20,8 +21,8 @@ public:
 
 private:
 	// fields related to camera one
-	std::vector<Point2f> corners1;
-	bool configured1;
+	std::vector<Point2f> corners1;		// corners of chessboard
+	bool configured1;					// true if corners set at least once
 
 	// fields related to camera two
 	std::vector<Point2f> corners2;
@@ -29,17 +30,17 @@ private:
 
 	// common fields
 	std::shared_ptr<QMutex> imshowMutex;
+	unsigned int count;  // the count of images which were saved; common since success case only when both cameras save
 
 public:
 	ImageProcessing();
 	static void test();
 
 private:
-	// coordinate system transformation: left -> main (see cams.drawio)
-	void leftToMain(int lr, int lc, int& mr, int& mc);
-
-	// coordinate system transformation: right -> main (see cams.drawio)
-	void rightToMain(int rr, int rc, int& mr, int& mc);
+	void sendToFolder(
+		QString board,			// the board we get from signal
+		std::string folder		// train or test
+	);
 
 signals:
 	// right buttons, IP -> UA

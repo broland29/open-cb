@@ -37,7 +37,7 @@ MainWindow::MainWindow(QWidget* parent) :
     cameraOneImageLabel->setScaledContents(true);
     //cameraOneImageLabel->setPixmap(cameraOnePlaceholder.scaled(cameraOneImageLabel->width(), cameraOneImageLabel->height(), Qt::KeepAspectRatio));
     middleLeftLayout->addWidget(cameraOneImageLabel);
-    QLabel* cameraOneTextLabel = new QLabel("Camera one");
+    QLabel* cameraOneTextLabel = new QLabel("Camera one - left");
     middleLeftLayout->addWidget(cameraOneTextLabel);
 
     QPixmap cameraTwoPlaceholder = QPixmap(":/UserApplicationModule/placeholder.jpeg");
@@ -47,7 +47,7 @@ MainWindow::MainWindow(QWidget* parent) :
     cameraTwoImageLabel->setScaledContents(true);
     //cameraTwoImageLabel->setPixmap(cameraTwoPlaceholder.scaled(cameraTwoImageLabel->width(), cameraTwoImageLabel->height(), Qt::KeepAspectRatio));
     middleLeftLayout->addWidget(cameraTwoImageLabel);
-    QLabel* cameraTwoTextLabel = new QLabel("Camera two");
+    QLabel* cameraTwoTextLabel = new QLabel("Camera two - right");
     middleLeftLayout->addWidget(cameraTwoTextLabel);
 
     // middle right
