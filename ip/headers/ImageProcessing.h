@@ -1,15 +1,19 @@
 #pragma once
 
 #include <iostream>
+
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/utils/logger.hpp>
+
 #include <QTimer>
 #include <QEventLoop>
 #include <QObject>
-#include "get/CameraReader.h"
 #include <QVariant>
+
+#include "get/CameraReader.h"
 #include "get/SignalWaiter.h"
 #include "EncodingMapperIP.h"
+#include "classify/Classify.h"
 
 class ImageProcessing : public QObject
 {
@@ -32,6 +36,7 @@ private:
 	std::shared_ptr<QMutex> imshowMutex;
 	unsigned int count;  // the count of images which were saved; common since success case only when both cameras save
 
+	Classify* classify = NULL;
 public:
 	ImageProcessing();
 	static void test();

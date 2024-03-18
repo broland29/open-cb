@@ -188,6 +188,13 @@ MainWindow::~MainWindow()
 {
 }
 
+// https://stackoverflow.com/questions/17480984/how-do-i-handle-the-event-of-the-user-pressing-the-x-close-button
+void MainWindow::closeEvent(QCloseEvent* event)
+{
+    //emit exitSignal();
+    //event->ignore();
+}
+
 void MainWindow::_setInitialSetup()
 {
     for (int i = 0; i < 8; i++)
@@ -415,6 +422,7 @@ void MainWindow::exitReplySlot(bool succeeded)
 {
     QString message = (succeeded) ? "Succeeded" : "Failed";
     messageLabel->setText(message);
+    close();
 }
 
 // ---------- clicks on chess GUI ---------- //

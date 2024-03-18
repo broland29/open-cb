@@ -1,6 +1,11 @@
 #include "../../headers/classify/KNearestNeighborsClassifier.h"
 
-/*
+
+KNearestNeighborsClassifier::KNearestNeighborsClassifier(int k)
+{
+    this->k = k;
+}
+
 
 // colorIndex:  0 = blue, 1 = green, 2 = red
 // m:           total number of bins
@@ -39,16 +44,39 @@ Mat_<double> KNearestNeighborsClassifier::getFeatureHistogram(Mat_<Vec3b> img)
     return feature;
 }
 
-
-
-
-KNearestNeighborsClassifier::KNearestNeighborsClassifier(int k)
+void KNearestNeighborsClassifier::train(std::vector<std::pair<Mat_<Vec3b>, uchar>> trainImages)
 {
-    this->k = k;
+    // --- get X and y --- //
+    const int m = 8;        // number of bins in histogram(s)
+    const int d = 3 * m;    // number of features, width of X
+
+    // unknown number of images -> unknown number of rows -> start with 0 and push_back
+    Mat_<double> X(0, d);  // feature matrix
+    Mat_<uchar> y(0, 1);   // class labels (classes from 0 to C-1)
+
+    for (auto const& pair : trainImages)
+    {
+        Mat_<Vec3b> image = pair.first;  // vector of images
+        uchar label = pair.second;
+
+        Mat_<double> feature = getFeatureHistogram(image);
+        X.push_back(feature);
+
+        Mat_<uchar> label_(1, 1);
+        label_(0, 0) = label;
+        y.push_back(label);
+    }
+
+    this->X = X.clone();
+    this->y = y.clone();
+
+
+    // --- train --- //
+    // KNN does not require training
 }
 
 
-Piece KNearestNeighborsClassifier::classify(Mat_<Vec3b> image)
+uchar KNearestNeighborsClassifier::classify(Mat_<Vec3b> image)
 {
     Mat_<double> feature = getFeatureHistogram(image);
 
@@ -71,13 +99,13 @@ Piece KNearestNeighborsClassifier::classify(Mat_<Vec3b> image)
 
     // check k nearest neighbors, each neighbor's label counts as a vote, highest vote wins
     std::vector<int> votes;
-    for (int i = 0; i < PIECE_COUNT; i++)
+    for (int i = 0; i < CLASS_COUNT; i++)
     {
         votes.push_back(0);
     }
     for (int i = 0; i < k; i++)
     {
-        votes[static_cast<int>(distancesAndLabels[i].label)]++;
+        votes[distancesAndLabels[i].label]++;  // works, since uchar
     }
     int maxVotes = votes[0];
     int winningLabel = 0;
@@ -90,35 +118,8 @@ Piece KNearestNeighborsClassifier::classify(Mat_<Vec3b> image)
         }
     }
 
-    return static_cast<Piece>(winningLabel);
+    return winningLabel;
 }
 
 
 
-void KNearestNeighborsClassifier::train(std::vector<std::pair<Mat_<Vec3b>, Piece>> trainImages)
-{
-    const int m = 8;        // number of bins in histogram(s)
-    const int d = 3 * m;    // number of features, width of X
-
-    // unknown number of images -> unknown number of rows -> start with 0 and push_back
-    Mat_<double> X(0, d);  // feature matrix
-    Mat_<uchar> y(0, 1);   // class labels (classes from 0 to C-1)
-
-    for (auto const& pair : trainImages)
-    {
-        Mat_<Vec3b> image = pair.first;  // vector of images
-        Piece label = pair.second;
-
-        Mat_<double> feature = getFeatureHistogram(image);
-        X.push_back(feature);
-
-        Mat_<Piece> label_(1, 1);
-        label_(0, 0) = label;
-        y.push_back(label);
-    }
-
-    this->X = X.clone();
-    this->y = y.clone();
-    this->k = k;
-}
-*/

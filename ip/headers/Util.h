@@ -20,25 +20,15 @@ using namespace cv;
 #define PATH_DUMMY_IMG_CAM_ONE  "C:\\open-cb\\ua\\preview\\dummy_cam_left.jpeg"
 #define PATH_DUMMY_IMG_CAM_TWO  "C:\\open-cb\\ua\\preview\\dummy_cam_right.jpeg"
 
+#define TRAIN_FOLDER_PATH "C:\\open-cb\\mem\\train"
+#define TEST_FOLDER_PATH "C:\\open-cb\\mem\\test"
 
-#define PIECE_COUNT 14
-enum class Piece
-{
-    WHITE_FREE,
-    WHITE_PAWN,
-    WHITE_BISHOP,
-    WHITE_KNIGHT,
-    WHITE_ROOK,
-    WHITE_QUEEN,
-    WHITE_KING,
-    BLACK_FREE,
-    BLACK_PAWN,
-    BLACK_BISHOP,
-    BLACK_KNIGHT,
-    BLACK_ROOK,
-    BLACK_QUEEN,
-    BLACK_KING,
-};
+
+#define CLASS_COUNT 14
+
+// "Standard behavior: Windows file system treats file and directory names as case-insensitive"
+//  so, unfortunately, cannot use P and p, must use WP and BP
+static inline std::string folders[] = { "WF", "WP", "WB", "WN", "WR", "WQ", "WK", "BF", "BP", "BB", "BN", "BR", "BQ", "BK" };
 
 
 // "The normal parameterization of a line consists of representing the line

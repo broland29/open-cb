@@ -94,13 +94,33 @@ void ImageProcessing::sendToTestSlot(QString board)
 
 void ImageProcessing::runTrainSlot()
 {
-	// todo
+	// late initialization
+	if (classify == NULL)
+	{
+		classify = new Classify();
+	}
+
+	if (classify->runTrain() != 0)
+	{
+		emit runTrainReplySignal(false, "Failed");
+		return;
+	}
 	emit runTrainReplySignal();
 }
 
 void ImageProcessing::runTestSlot()
 {
-	// todo
+	// late initialization
+	if (classify == NULL)
+	{
+		classify = new Classify();
+	}
+	
+	if (classify->runTest() != 0)
+	{
+		emit runTestReplySignal(false, "Failed");
+		return;
+	}
 	emit runTestReplySignal();
 }
 

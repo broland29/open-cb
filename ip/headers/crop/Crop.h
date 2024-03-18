@@ -26,8 +26,7 @@
 #define GENERATE_IMAGES			false
 #define CLASSIFY				false
 
-#define TRAIN_FOLDER_PATH "C:\\open-cb\\mem\\train"
-#define TEST_FOLDER_PATH "C:\\open-cb\\mem\\test"
+
 
 
 enum class CameraSide
@@ -41,10 +40,6 @@ class Crop
 {
 public:
 private:
-	// "Standard behavior: Windows file system treats file and directory names as case-insensitive"
-	//  so, unfortunately, cannot use P and p, must use WP and BP
-	static inline std::string folders[] = { "WF", "WP", "WB", "WN", "WR", "WQ", "WK", "BF", "BP", "BB", "BN", "BR", "BQ", "BK" };
-
 public:
 	static int sendToTrain(
 		Mat_<Vec3b> img,

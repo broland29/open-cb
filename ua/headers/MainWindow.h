@@ -21,6 +21,7 @@ public:
     explicit MainWindow(QWidget* parent = nullptr);
     ~MainWindow();
     QString _extractComboBoxes();
+    void closeEvent(QCloseEvent* event);
 private:
     // -- middle -- //
     QLabel* cameraOneImageLabel;
