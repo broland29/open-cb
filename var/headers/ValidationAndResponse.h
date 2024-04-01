@@ -16,12 +16,12 @@ private:
 	Validator* validator;
 
 signals:
-	void sendToVARReplySignal(QString message);
-	void getFromVARReplySignal(QString board);
-	void newGameReplySignal(bool succeeded);
+	void validateMoveReplySignal(bool succeeded, QString message);
+	void discardMoveReplySignal(bool succeeded, QString message);
+	void newGameReplySignal(bool succeeded, QString message);
 
 public slots:
-	void sendToVARSlot(QString board);
-	void getFromVARSlot();
+	void validateMoveSlot(QString board);
+	void discardMoveSlot();
 	void newGameSlot();
 };

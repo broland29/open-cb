@@ -12,6 +12,17 @@
 #include "ClickableLabel.h"
 #include "EncodingMapper.h"
 
+#include <spdlog/spdlog.h>
+#include <spdlog/fmt/ostr.h>
+
+#if FMT_VERSION >= 90000
+// https://github.com/fmtlib/fmt/issues/2245
+template<> struct fmt::formatter<QString> : formatter<const char*> {
+    auto format(const QString& s, format_context& ctx) {
+        return formatter<const char*>::format((const char*)s.toUtf8(), ctx);
+    }
+};
+#endif
 
 class MainWindow : public QMainWindow
 {
@@ -20,32 +31,37 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget* parent = nullptr);
     ~MainWindow();
-    QString _extractComboBoxes();
     void closeEvent(QCloseEvent* event);
 private:
-    // -- middle -- //
     QLabel* cameraOneImageLabel;
     QLabel* cameraTwoImageLabel;
-    std::array<std::array<ClickableLabel*, 8>, 8> pieceLabels;
-    QPushButton* sendToTrainButton;
-    QPushButton* sendToTestButton;
-    QPushButton* runTrainButton;
-    QPushButton* runTestButton;
-    QPushButton* resetTrainButton;
-    QPushButton* resetTestButton;
-    QCheckBox* classifyWhenGettingImageCheckbox;
 
-    // -- message -- //
+    std::array<std::array<ClickableLabel*, 8>, 8> pieceLabels;
+    
+    QPushButton* validateMoveButton;
+    QPushButton* discardMoveButton;
+    QPushButton* newGameButton;
+
+    QComboBox* classifierComboBox;
+    QPushButton* saveClassifierButton;
+    QPushButton* loadClassifierButton;
+    QPushButton* trainClassifierButton;
+    QPushButton* testClassifierButton;
+    QPushButton* classifyBoardButton;
+
+
     QLabel* messageLabel;
 
-    // -- bottom -- //
+
+    QPushButton* testConfigureButton;
     QPushButton* configureButton;
-    QPushButton* getImageButton;
-    QPushButton* sendToVARButton;
-    QPushButton* getFromVARButton;
-    QPushButton* newGameButton;
+    QPushButton* testCropAndLabelButton;
+    QPushButton* cropAndLabelButton;
+    QPushButton* shuffleAndSplitButton;
+    QPushButton* clearAllImagesButton;
+    QPushButton* settingsButton;
     QPushButton* helpButton;
-    QPushButton* exitButton;
+
 
     // clicking logic
     std::array<std::string, 13> pieceNames = { "FR", "WP", "WB", "WN", "WR", "WQ", "WK", "BP", "BB", "BN", "BR", "BQ", "BK" };
@@ -54,65 +70,76 @@ private:
     int lastCol = -1;
     std::string lastPieceName;
 
-    void _setInitialSetup();
+    void setInitialSetup();
+    QString getBoardFromChessGUI();
 
 public slots:
-    // right buttons, clicked slots
-    void sendToTrainButtonClicked();
-    void sendToTestButtonClicked();
-    void runTrainButtonClicked();
-    void runTestButtonClicked();
-    void resetTrainButtonClicked();
-    void resetTestButtonClicked();
-
-    // bottom buttons, clicked slots
-    void configureButtonClicked();
-    void getImageButtonClicked();
-    void sendToVARButtonClicked();
-    void getFromVARButtonClicked();
+    // slots for raw qt signals
+    void validateMoveButtonClicked();
+    void discardMoveButtonClicked();
     void newGameButtonClicked();
+
+    void classifierComboBoxChanged();
+    void saveClassifierButtonClicked();
+    void loadClassifierButtonClicked();
+    void trainClassifierButtonClicked();
+    void testClassifierButtonClicked();
+    void classifyBoardButtonClicked();
+
+    void testConfigureButtonClicked();
+    void configureButtonClicked();
+    void testCropAndLabelButtonClicked();
+    void cropAndLabelButtonClicked();
+    void shuffleAndSplitButtonClicked();
+    void clearAllImagesButtonClicked();
+    void settingsButtonClicked();
     void helpButtonClicked();
-    void exitButtonClicked();
 
-    // right buttons, IP -> UA
-    void sendToTrainReplySlot(bool succeeded, QString message);
-    void sendToTestReplySlot(bool succeeded, QString message);
-    void runTrainReplySlot(bool succeeded, QString message);
-    void runTestReplySlot(bool succeeded, QString message);
-    void resetTrainReplySlot(bool succeeded, QString message);
-    void resetTestReplySlot(bool succeeded, QString message);
+    // reply slots for signals
+    void validateMoveReplySlot(bool succeeded, QString message);
+    void discardMoveReplySlot(bool succeeded, QString message);
+    void newGameReplySlot(bool succeeded, QString message);
 
-    // bottom buttons, IP/VAR -> UA
+    void changeClassifierReplySlot(bool succeeded, QString message);
+    void saveClassifierReplySlot(bool succeeded, QString message);
+    void loadClassifierReplySlot(bool succeeded, QString message);
+    void trainClassifierReplySlot(bool succeeded, QString message);
+    void testClassifierReplySlot(bool succeeded, QString message);
+    void classifyBoardReplySlot(bool succeeded, QString message);
+
+    void testConfigureReplySlot(bool succeeded, QString message);
     void configureReplySlot(bool succeeded, QString message);
-    void getImageReplySlot(bool succeeded, QString message);
-    void sendToVARReplySlot(QString message);
-    void getFromVARReplySlot(QString board);
-    void newGameReplySlot(bool succeded);
-    void exitReplySlot(bool succeded);
+    void testCropAndLabelReplySlot(bool succeeded, QString message);
+    void cropAndLabelReplySlot(bool succeeded, QString message);
+    void shuffleAndSplitReplySlot(bool succeeded, QString message);
+    void clearAllImagesReplySlot(bool succeeded, QString message);
+    void changeSettingsReplySlot(bool succeeded, QString message);
 
     // clicks on chess GUI
     void leftClickedSlot(int row, int col, std::string pieceName);
     void rightClickedSlot(int row, int col, std::string pieceName);
 
     // getting a new frame
-    void imageUpdateSlotOne(QImage image);
-    void imageUpdateSlotTwo(QImage image);
+    void previewImageReadySlotLeft(QImage previewImage);
+    void previewImageReadySlotRight(QImage previewImage);
 
 signals:
-    // right buttons, UA -> IP
-    void sendToTrainSignal(QString board);
-    void sendToTestSignal(QString board);
-    void runTrainSignal();
-    void runTestSignal();
-    void resetTrainSignal();
-    void resetTestSignal();
-
-    // bottom buttons, UA -> IP/VAR
-    void configureSignal();
-    void getImageSignal(bool classifyWhenGettingImage);
-    void sendToVARSignal(QString board);
-    void getFromVARSignal();
+    void validateMoveSignal(QString board);
+    void discardMoveSignal();
     void newGameSignal();
-    void helpSignal();
-    void exitSignal();
+
+    void changeClassifierSignal(QString classifier);
+    void saveClassifierSignal(QString path);
+    void loadClassifierSignal(QString path);
+    void trainClassifierSignal();
+    void testClassifierSignal();
+    void classifyBoardSignal();
+
+    void testConfigureSignal();
+    void configureSignal();
+    void testCropAndLabelSignal(QString board);
+    void cropAndLabelSignal(QString board);
+    void shuffleAndSplitSignal();
+    void clearAllImagesSignal();
+    void changeSettingsSignal();
 };

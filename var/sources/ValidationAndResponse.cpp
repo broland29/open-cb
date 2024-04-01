@@ -8,7 +8,7 @@ ValidationAndResponse::ValidationAndResponse()
 }
 
 
-void ValidationAndResponse::sendToVARSlot(QString board)
+void ValidationAndResponse::validateMoveSlot(QString board)
 {
 	char _board[8][8];
 	Map::qStringToCharMatrix(board, _board);
@@ -19,22 +19,22 @@ void ValidationAndResponse::sendToVARSlot(QString board)
 	QString message;
 	Map::charArrayToQString(_message, message);
 	
-	emit sendToVARReplySignal(message);
+	emit validateMoveReplySignal(true, message);
 }
 
 
-void ValidationAndResponse::getFromVARSlot()
+void ValidationAndResponse::discardMoveSlot()
 {
 	QString board;
 	Map::charMatrixToQString(validator->currBoard, board);
-	emit getFromVARReplySignal(board);
+	emit discardMoveReplySignal(true, board);
 }
 
 
 void ValidationAndResponse::newGameSlot()
 {
 	validator = new Validator();
-	emit newGameReplySignal(true);
+	emit newGameReplySignal(true, "New game started");
 }
 
 

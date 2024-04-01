@@ -1,8 +1,14 @@
 #pragma once
 
-#include <iostream>
+#include "camera_handling/CameraHandler.h"
+#include "camera_handling/SignalWaiter.h"
+#include "classification/Classifier.h"
+#include "configuration/Configurer.h"
+#include "file_handling/FileHandler.h"
 
-#include <opencv2/opencv.hpp>
+#include "Common.h"
+#include "EncodingMapperIP.h"
+
 #include <opencv2/core/utils/logger.hpp>
 
 #include <QTimer>
@@ -10,66 +16,69 @@
 #include <QObject>
 #include <QVariant>
 
-#include "get/CameraReader.h"
-#include "get/SignalWaiter.h"
-#include "EncodingMapperIP.h"
-#include "classify/Classify.h"
+#define DEFAULT_LEFT_CAMERA_INDEX 0
+#define DEFAULT_RIGHT_CAMERA_INDEX 1
+
 
 class ImageProcessing : public QObject
 {
 	Q_OBJECT
 
 public:
-	CameraReader* cameraReaderOne;
-	CameraReader* cameraReaderTwo;
+	int leftCameraIndex = DEFAULT_LEFT_CAMERA_INDEX;
+	int rightCameraIndex = DEFAULT_RIGHT_CAMERA_INDEX;
+	CameraHandler* cameraHandlerLeft;
+	CameraHandler* cameraHandlerRight;
 
 private:
-	// fields related to camera one
-	std::vector<Point2f> corners1;		// corners of chessboard
-	bool configured1;					// true if corners set at least once
+	Classifier* classifier;
+	Configurer* configurerLeft;
+	Configurer* configurerRight;
+	FileHandler* fileHandler;
 
-	// fields related to camera two
-	std::vector<Point2f> corners2;
-	bool configured2;
 
 	// common fields
 	std::shared_ptr<QMutex> imshowMutex;
 	unsigned int count;  // the count of images which were saved; common since success case only when both cameras save
 
-	Classify* classify = NULL;
 public:
 	ImageProcessing();
 	static void test();
 
 private:
-	void sendToFolder(
-		QString board,			// the board we get from signal
-		std::string folder		// train or test
-	);
+	int getImage(SignalWaiter* signalWaiter, Mat_<Vec3b>& img);
+	void configure(bool isTest);
+	void cropAndLabel(std::string board[64], bool isTest);
 
 signals:
-	// right buttons, IP -> UA
-	void sendToTrainReplySignal(bool succeeded = true, QString message = "Success");
-	void sendToTestReplySignal(bool succeeded = true, QString message = "Success");
-	void runTrainReplySignal(bool succeeded = true, QString message = "Success");
-	void runTestReplySignal(bool succeeded = true, QString message = "Success");
-	void resetTrainReplySignal(bool succeeded = true, QString message = "Success");
-	void resetTestReplySignal(bool succeeded = true, QString message = "Success");
-	
-	// bottom buttons, IP -> UA
-	void configureReplySignal(bool succeeded = true, QString message = "Success");
-	void getImageReplySignal(bool succeeded = true, QString message = "Success");
+	void changeClassifierReplySignal(bool succeeded, QString message);
+	void saveClassifierReplySignal(bool succeeded, QString message);
+	void loadClassifierReplySignal(bool succeeded, QString message);
+	void trainClassifierReplySignal(bool succeeded, QString message);
+	void testClassifierReplySignal(bool succeeded, QString message);
+	void classifyBoardReplySignal(bool succeeded, QString message);
+
+	void testConfigureReplySignal(bool succeeded, QString message);
+	void configureReplySignal(bool succeeded, QString message);
+	void testCropAndLabelReplySignal(bool succeeded, QString message);
+	void cropAndLabelReplySignal(bool succeeded, QString message);
+	void shuffleAndSplitReplySignal(bool succeeded, QString message);
+	void clearAllImagesReplySignal(bool succeeded, QString message);
+	void changeSettingsReplySignal(bool succeeded, QString message);
 
 public slots:
-	// right buttons, UA -> IP
-	void sendToTrainSlot(QString board);
-	void sendToTestSlot(QString board);
-	void runTrainSlot();
-	void runTestSlot();
-	void resetTrainSlot();
-	void resetTestSlot();
+	void changeClassifierSlot(QString newClassifierName);
+	void saveClassifierSlot(QString folderPath);
+	void loadClassifierSlot(QString folderPath);
+	void trainClassifierSlot();
+	void testClassifierSlot();
+	void classifyBoardSlot();
 
-	// bottom buttons, UA -> IP
+	void testConfigureSlot();
 	void configureSlot();
-	void getImageSlot(bool classifyWhenGettingImage);
+	void testCropAndLabelSlot(QString board);
+	void cropAndLabelSlot(QString board);
+	void shuffleAndSplitSlot();
+	void clearAllImagesSlot();
+	void changeSettingsSlot();
 };

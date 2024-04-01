@@ -1,8 +1,8 @@
-#include "log/headers/Logger.h"
-#include <iostream>
-#include "ua/headers/UserApplication.h"
 #include "ip/headers/ImageProcessing.h"
+#include "log/headers/Logger.h"
+#include "ua/headers/UserApplication.h"
 #include "var/headers/ValidationAndResponse.h"
+
 
 #define TEST_DEPENDENCIES false
 
@@ -24,66 +24,70 @@ int main(int argc, char* argv[])
 	UserApplication* userApplication = new UserApplication(argc, argv);
 
 	// for shorter code
-	CameraReader* cameraReaderOne = imageProcessing->cameraReaderOne;
-	CameraReader* cameraReaderTwo = imageProcessing->cameraReaderTwo;
+	CameraHandler* cameraHandlerLeft = imageProcessing->cameraHandlerLeft;
+	CameraHandler* cameraHandlerRight = imageProcessing->cameraHandlerRight;
 	MainWindow* mainWindow = userApplication->mainWindow;
 
 	// create worker threads
-	QThread* cameraReaderOneThread = new QThread;
-	QObject::connect(cameraReaderOneThread, &QThread::started, cameraReaderOne, &CameraReader::doWork);
-	QObject::connect(cameraReaderOne, &CameraReader::stop, cameraReaderOneThread, &QThread::quit);
-	QObject::connect(cameraReaderOneThread, &QThread::finished, cameraReaderOne, &CameraReader::deleteLater);
+	QThread* cameraHandlerLeftThread = new QThread;
+	QObject::connect(cameraHandlerLeftThread, &QThread::started, cameraHandlerLeft, &CameraHandler::doWork);
+	QObject::connect(cameraHandlerLeft, &CameraHandler::stop, cameraHandlerLeftThread, &QThread::quit);
+	QObject::connect(cameraHandlerLeftThread, &QThread::finished, cameraHandlerLeft, &CameraHandler::deleteLater);
 
-	QThread* cameraReaderTwoThread = new QThread;
-	QObject::connect(cameraReaderTwoThread, &QThread::started, cameraReaderTwo, &CameraReader::doWork);
-	QObject::connect(cameraReaderTwo, &CameraReader::stop, cameraReaderTwoThread, &QThread::quit);
-	QObject::connect(cameraReaderTwoThread, &QThread::finished, cameraReaderTwo, &CameraReader::deleteLater);
+	QThread* cameraHandlerRightThread = new QThread;
+	QObject::connect(cameraHandlerRightThread, &QThread::started, cameraHandlerRight, &CameraHandler::doWork);
+	QObject::connect(cameraHandlerRight, &CameraHandler::stop, cameraHandlerRightThread, &QThread::quit);
+	QObject::connect(cameraHandlerRightThread, &QThread::finished, cameraHandlerRight, &CameraHandler::deleteLater);
 
-	QThread* cropOneThread = new QThread;
-	QThread* cropTwoThread = new QThread;
 
 	// cross - thread communication
-	QObject::connect(cameraReaderOne, &CameraReader::imageUpdateSignal, mainWindow, &MainWindow::imageUpdateSlotOne);
-	QObject::connect(cameraReaderTwo, &CameraReader::imageUpdateSignal, mainWindow, &MainWindow::imageUpdateSlotTwo);
+	QObject::connect(cameraHandlerLeft, &CameraHandler::previewImageReadySignal, mainWindow, &MainWindow::previewImageReadySlotLeft);
+	QObject::connect(cameraHandlerRight, &CameraHandler::previewImageReadySignal, mainWindow, &MainWindow::previewImageReadySlotRight);
 
-	// right buttons, UA -> IP
-	QObject::connect(mainWindow, &MainWindow::sendToTrainSignal, imageProcessing, &ImageProcessing::sendToTrainSlot);
-	QObject::connect(mainWindow, &MainWindow::sendToTestSignal, imageProcessing, &ImageProcessing::sendToTestSlot);
-	QObject::connect(mainWindow, &MainWindow::runTrainSignal, imageProcessing, &ImageProcessing::runTrainSlot);
-	QObject::connect(mainWindow, &MainWindow::runTestSignal, imageProcessing, &ImageProcessing::runTestSlot);
-	QObject::connect(mainWindow, &MainWindow::resetTrainSignal, imageProcessing, &ImageProcessing::resetTrainSlot);
-	QObject::connect(mainWindow, &MainWindow::resetTestSignal, imageProcessing, &ImageProcessing::resetTestSlot);
-
-	// right buttons, IP -> UA
-	QObject::connect(imageProcessing, &ImageProcessing::sendToTrainReplySignal, mainWindow, &MainWindow::sendToTrainReplySlot);
-	QObject::connect(imageProcessing, &ImageProcessing::sendToTestReplySignal,	mainWindow, &MainWindow::sendToTestReplySlot);
-	QObject::connect(imageProcessing, &ImageProcessing::runTrainReplySignal,	mainWindow, &MainWindow::runTrainReplySlot);
-	QObject::connect(imageProcessing, &ImageProcessing::runTestReplySignal,		mainWindow, &MainWindow::runTestReplySlot);
-	QObject::connect(imageProcessing, &ImageProcessing::resetTrainReplySignal,	mainWindow, &MainWindow::resetTrainReplySlot);
-	QObject::connect(imageProcessing, &ImageProcessing::resetTestReplySignal,	mainWindow, &MainWindow::resetTestReplySlot);
-
-	// bottom buttons, UA -> IP/VAR
-	QObject::connect(mainWindow, &MainWindow::configureSignal, imageProcessing, &ImageProcessing::configureSlot);  // sends 
-	QObject::connect(mainWindow, &MainWindow::getImageSignal, imageProcessing, &ImageProcessing::getImageSlot);
-	QObject::connect(mainWindow, &MainWindow::sendToVARSignal, validationAndResponse, &ValidationAndResponse::sendToVARSlot);
-	QObject::connect(mainWindow, &MainWindow::getFromVARSignal, validationAndResponse, &ValidationAndResponse::getFromVARSlot);
+	QObject::connect(mainWindow, &MainWindow::validateMoveSignal, validationAndResponse, &ValidationAndResponse::validateMoveSlot);
+	QObject::connect(mainWindow, &MainWindow::discardMoveSignal, validationAndResponse, &ValidationAndResponse::discardMoveSlot);
 	QObject::connect(mainWindow, &MainWindow::newGameSignal, validationAndResponse, &ValidationAndResponse::newGameSlot);
-	QObject::connect(mainWindow, &MainWindow::exitSignal, cameraReaderOne, &CameraReader::stop);
-	QObject::connect(mainWindow, &MainWindow::exitSignal, cameraReaderTwo, &CameraReader::stop);
 
-	// bottom buttons, IP/VAR -> UA
-	QObject::connect(imageProcessing, &ImageProcessing::configureReplySignal, mainWindow, &MainWindow::configureReplySlot);
-	QObject::connect(imageProcessing, &ImageProcessing::getImageReplySignal, mainWindow, &MainWindow::getImageReplySlot);
-	QObject::connect(validationAndResponse, &ValidationAndResponse::sendToVARReplySignal, mainWindow, &MainWindow::sendToVARReplySlot);
-	QObject::connect(validationAndResponse, &ValidationAndResponse::getFromVARReplySignal, mainWindow, &MainWindow::getFromVARReplySlot);
+	QObject::connect(validationAndResponse, &ValidationAndResponse::validateMoveReplySignal, mainWindow, &MainWindow::validateMoveReplySlot);
+	QObject::connect(validationAndResponse, &ValidationAndResponse::discardMoveReplySignal, mainWindow, &MainWindow::discardMoveReplySlot);
 	QObject::connect(validationAndResponse, &ValidationAndResponse::newGameReplySignal, mainWindow, &MainWindow::newGameReplySlot);
 
-	// start thread
-	cameraReaderOne->moveToThread(cameraReaderOneThread);
-	cameraReaderTwo->moveToThread(cameraReaderTwoThread);
+	QObject::connect(mainWindow, &MainWindow::changeClassifierSignal, imageProcessing, &ImageProcessing::changeClassifierSlot);
+	QObject::connect(mainWindow, &MainWindow::saveClassifierSignal, imageProcessing, &ImageProcessing::saveClassifierSlot);
+	QObject::connect(mainWindow, &MainWindow::loadClassifierSignal, imageProcessing, &ImageProcessing::loadClassifierSlot);
+	QObject::connect(mainWindow, &MainWindow::trainClassifierSignal, imageProcessing, &ImageProcessing::trainClassifierSlot);
+	QObject::connect(mainWindow, &MainWindow::testClassifierSignal, imageProcessing, &ImageProcessing::testClassifierSlot);
+	QObject::connect(mainWindow, &MainWindow::classifyBoardSignal, imageProcessing, &ImageProcessing::classifyBoardSlot);
+
+	QObject::connect(mainWindow, &MainWindow::testConfigureSignal, imageProcessing, &ImageProcessing::testConfigureSlot);
+	QObject::connect(mainWindow, &MainWindow::configureSignal, imageProcessing, &ImageProcessing::configureSlot);
+	QObject::connect(mainWindow, &MainWindow::testCropAndLabelSignal, imageProcessing, &ImageProcessing::testCropAndLabelSlot);
+	QObject::connect(mainWindow, &MainWindow::cropAndLabelSignal, imageProcessing, &ImageProcessing::cropAndLabelSlot);
+	QObject::connect(mainWindow, &MainWindow::shuffleAndSplitSignal, imageProcessing, &ImageProcessing::shuffleAndSplitSlot);
+	QObject::connect(mainWindow, &MainWindow::clearAllImagesSignal, imageProcessing, &ImageProcessing::clearAllImagesSlot);
+	QObject::connect(mainWindow, &MainWindow::changeSettingsSignal, imageProcessing, &ImageProcessing::changeSettingsSlot);
+
+	QObject::connect(imageProcessing, &ImageProcessing::changeClassifierReplySignal, mainWindow, &MainWindow::changeClassifierReplySlot);
+	QObject::connect(imageProcessing, &ImageProcessing::saveClassifierReplySignal, mainWindow, &MainWindow::saveClassifierReplySlot);
+	QObject::connect(imageProcessing, &ImageProcessing::loadClassifierReplySignal, mainWindow, &MainWindow::loadClassifierReplySlot);
+	QObject::connect(imageProcessing, &ImageProcessing::trainClassifierReplySignal, mainWindow, &MainWindow::trainClassifierReplySlot);
+	QObject::connect(imageProcessing, &ImageProcessing::testClassifierReplySignal, mainWindow, &MainWindow::testClassifierReplySlot);
+	QObject::connect(imageProcessing, &ImageProcessing::classifyBoardReplySignal, mainWindow, &MainWindow::classifyBoardReplySlot);
 	
-	cameraReaderOneThread->start();
-	cameraReaderTwoThread->start();
+	QObject::connect(imageProcessing, &ImageProcessing::testConfigureReplySignal, mainWindow, &MainWindow::testConfigureReplySlot);
+	QObject::connect(imageProcessing, &ImageProcessing::configureReplySignal, mainWindow, &MainWindow::configureReplySlot);
+	QObject::connect(imageProcessing, &ImageProcessing::testCropAndLabelReplySignal, mainWindow, &MainWindow::testCropAndLabelReplySlot);
+	QObject::connect(imageProcessing, &ImageProcessing::cropAndLabelReplySignal, mainWindow, &MainWindow::cropAndLabelReplySlot);
+	QObject::connect(imageProcessing, &ImageProcessing::shuffleAndSplitReplySignal, mainWindow, &MainWindow::shuffleAndSplitReplySlot);
+	QObject::connect(imageProcessing, &ImageProcessing::clearAllImagesReplySignal, mainWindow, &MainWindow::clearAllImagesReplySlot);
+	QObject::connect(imageProcessing, &ImageProcessing::changeSettingsReplySignal, mainWindow, &MainWindow::changeSettingsReplySlot);
+
+	// start thread
+	cameraHandlerLeft->moveToThread(cameraHandlerLeftThread);
+	cameraHandlerRight->moveToThread(cameraHandlerRightThread);
+	
+	cameraHandlerLeftThread->start();
+	cameraHandlerRightThread->start();
 
 	return userApplication->run();
 }

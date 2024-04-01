@@ -1,7 +1,5 @@
 #include "../headers/ImageProcessing.h"
 
-using namespace cv;
-
 
 ImageProcessing::ImageProcessing()
 {
@@ -9,261 +7,237 @@ ImageProcessing::ImageProcessing()
 
 	imshowMutex = std::make_shared<QMutex>();
 
-	cameraReaderOne = new CameraReader(0, CameraSide::LEFT, imshowMutex);  // modify if needed
-	cameraReaderTwo = new CameraReader(1, CameraSide::RIGHT, imshowMutex);  // modify if needed
-
-	count = 0;  // todo: store in memory, session-wise
+	cameraHandlerLeft = new CameraHandler(leftCameraIndex);
+	cameraHandlerRight = new CameraHandler(rightCameraIndex);
+	classifier = new Classifier();
+	configurerLeft = new Configurer(CameraSide::LEFT);
+	configurerRight = new Configurer(CameraSide::RIGHT);
 }
 
 
-// ---------- right buttons, IP -> UA ---------- //
-
-// https://isocpp.org/wiki/faq/pointers-to-members
-// https://stackoverflow.com/questions/1485983/how-can-i-create-a-pointer-to-a-member-function-and-call-it
-typedef void (ImageProcessing::* ReplySignal)(bool succeeded, QString message);
-#define EMIT_REPLY_SIGNAL(replySignal, succeeded, message) (*this.*replySignal)(succeeded, message)
-
-void ImageProcessing::sendToFolder(QString board, std::string folder)
+int ImageProcessing::getImage(SignalWaiter* signalWaiter, Mat_<Vec3b>& img)
 {
-	ReplySignal replySignal = (board == "train") ? &ImageProcessing::sendToTrainReplySignal : &ImageProcessing::sendToTestReplySignal;
-
-	// request image and wait for response
-	SignalWaiter configureSignalWaiter1{ cameraReaderOne, folder + "_temp", folder + "1" };
-	SignalWaiter configureSignalWaiter2{ cameraReaderTwo, folder + "_temp", folder + "2" };
-
-	// if any unsuccessful, return
-	if (configureSignalWaiter1.start() + configureSignalWaiter2.start() != 0)
+	// if unsuccessful, return
+	if (signalWaiter->start() != 0)
 	{
-		EMIT_REPLY_SIGNAL(replySignal, false, "Error when getting image");
-		return;
+		SPDLOG_ERROR("Error when getting image");
+		return 1;
 	}
-	count++;
-
-	// extract paths
-	std::string path1 = configureSignalWaiter1.path;
-	std::string path2 = configureSignalWaiter2.path;
-
-	Mat_<Vec3b> img1 = imread(path1, IMREAD_COLOR);
-	if (img1.empty())
+	if (signalWaiter->succeeded == false)
 	{
-		SPDLOG_ERROR("Image at {} not found", path1);
-		EMIT_REPLY_SIGNAL(replySignal, false, "Image not found");
-		return;
+		SPDLOG_ERROR("Failure grabbed, message {}", signalWaiter->message);
+		return 2;
 	}
 
-	Mat_<Vec3b> img2 = imread(path2, IMREAD_COLOR);
-	if (img2.empty())
+	// extract image
+	std::string path = signalWaiter->message;
+	img = imread(path, IMREAD_COLOR);
+	if (img.empty())
 	{
-		SPDLOG_ERROR("Image at {} not found", path2);
-		EMIT_REPLY_SIGNAL(replySignal, false, "Image not found");
+		SPDLOG_ERROR("Image at {} not found", path);
+		return 3;
+	}
+	
+	return 0;
+}
+
+
+void ImageProcessing::changeClassifierSlot(QString newClassifierName)
+{
+	int ret = classifier->changeClassifier(newClassifierName.toStdString());
+	if (ret != 0)
+	{
+		emit changeClassifierReplySignal(false, "Changing classifier failed");
+		return;
+	}
+	emit changeClassifierReplySignal(true, "Changed classifier");
+}
+
+
+void ImageProcessing::saveClassifierSlot(QString folderPath)
+{
+	int ret = classifier->saveClassifier(folderPath.toStdString());
+	if (ret != 0)
+	{
+		emit saveClassifierReplySignal(false, "Saving classifier failed");
+		return;
+	}
+	emit saveClassifierReplySignal(true, "Saved classifier to " + folderPath);
+}
+
+
+void ImageProcessing::loadClassifierSlot(QString folderPath)
+{
+	int ret = classifier->loadClassifier(folderPath.toStdString());
+	if (ret != 0)
+	{
+		emit loadClassifierReplySignal(false, "Loading classifier failed");
+		return;
+	}
+	emit loadClassifierReplySignal(true, "Loaded classifier from " + folderPath);
+}
+
+
+void ImageProcessing::trainClassifierSlot()
+{
+	int ret = classifier->trainClassifier();
+	if (ret != 0)
+	{
+		emit trainClassifierReplySignal(false, "Training classifier failed");
+		return;
+	}
+	emit trainClassifierReplySignal(true, "Trained classifier");
+}
+
+
+void ImageProcessing::testClassifierSlot()
+{
+	int ret = classifier->testClassifier();
+	if (ret != 0)
+	{
+		emit testClassifierReplySignal(false, "Testing classifier failed");
+		return;
+	}
+	emit testClassifierReplySignal(true, "Testing classifier");
+}
+
+
+void ImageProcessing::classifyBoardSlot()
+{
+	// get images
+	Mat_<Vec3b> imgLeft, imgRight;
+	if (getImage(new SignalWaiter(cameraHandlerLeft, "clas", "classifyLeft"), imgLeft) != 0)
+	{
+		emit classifyBoardReplySignal(false, "Error getting image from left camera");
+		return;
+	}
+	if (getImage(new SignalWaiter(cameraHandlerRight, "clas", "classifyRight"), imgRight) != 0)
+	{
+		emit classifyBoardReplySignal(false, "Error getting image from right camera");
 		return;
 	}
 
-	std::string board_[8][8];
+	// call on configurer - prepare cell images
+	if (configurerLeft->prepareCellImages(imgLeft) + configurerRight->prepareCellImages(imgRight) != 0)
+	{
+		emit configureReplySignal(false, "Error when preparing cells");
+		return;
+	}
+
+	// call on classifier
+	std::string ret = classifier->classifyBoard();
+	if (ret == "")
+	{
+		emit classifyBoardReplySignal(false, "Classifying board failed");
+		return;
+	}
+
+	emit classifyBoardReplySignal(true, QString::fromStdString(ret));
+}
+
+
+void ImageProcessing::configure(bool isTest)
+{
+	// get images
+	Mat_<Vec3b> imgLeft , imgRight;
+	if (getImage(new SignalWaiter(cameraHandlerLeft, "conf", "configureLeft"), imgLeft) != 0)
+	{
+		emit configureReplySignal(false, "Error getting image from left camera");
+		return;
+	}
+	if (getImage(new SignalWaiter(cameraHandlerRight, "conf", "configureRight"), imgRight) != 0)
+	{
+		emit configureReplySignal(false, "Error getting image from right camera");
+		return;
+	}
+	
+	// call on configurer
+	if (configurerLeft->configure(imgLeft, isTest) + configurerRight->configure(imgRight, isTest) != 0)
+	{
+		emit configureReplySignal(false, "Error when configuring");
+		return;
+	}
+
+	emit configureReplySignal(true, "Configuration successful");
+}
+
+void ImageProcessing::testConfigureSlot()
+{
+	configure(true);
+}
+
+void ImageProcessing::configureSlot()
+{
+	configure(false);
+}
+
+
+void ImageProcessing::cropAndLabel(std::string board[64], bool isTest)
+{
+	// get images
+	Mat_<Vec3b> imgLeft, imgRight;
+	if (getImage(new SignalWaiter(cameraHandlerLeft, "crop", "cropAndLabelLeft"), imgLeft) != 0)
+	{
+		emit cropAndLabelReplySignal(false, "Error getting image from left camera");
+		return;
+	}
+	if (getImage(new SignalWaiter(cameraHandlerRight, "crop", "cropAndLabelRight"), imgRight) != 0)
+	{
+		emit cropAndLabelReplySignal(false, "Error getting image from right camera");
+		return;
+	}
+
+	// call on configurer
+	if (configurerLeft->cropAndLabel(imgLeft, board, isTest) + configurerRight->cropAndLabel(imgRight, board, isTest) != 0)
+	{
+		emit cropAndLabelReplySignal(false, "Error when configuring");
+		return;
+	}
+
+	cropAndLabelReplySignal(true, "Configuration successful");
+}
+
+void ImageProcessing::testCropAndLabelSlot(QString board)
+{
+	std::string _board[64];
 	for (int i = 0; i < 8; i++)
 	{
 		for (int j = 0; j < 8; j++)
 		{
-			if (EncodingMapperIP::map(board[i * 8 + j], i, j, board_[i][j]) != 0)
-			{
-				EMIT_REPLY_SIGNAL(replySignal, false, "Error when processing board");
-				return;
-			}
+			EncodingMapperIP::map(board[i * 8 + j], i, j, _board[i * 8 + j]);
 		}
 	}
-
-	if (Crop::sendToTrain(img1, corners1, configured1, cameraReaderOne->cameraSide, board_, count) +
-		Crop::sendToTrain(img2, corners2, configured2, cameraReaderTwo->cameraSide, board_, count) != 0)
-	{
-		EMIT_REPLY_SIGNAL(replySignal, false, "Error when cropping");
-		return;
-	}
-
-	EMIT_REPLY_SIGNAL(replySignal, true, "Success!");
+	cropAndLabel(_board, true);
 }
 
-void ImageProcessing::sendToTrainSlot(QString board)
+void ImageProcessing::cropAndLabelSlot(QString board)
 {
-	sendToFolder(board, "train");
-}
-
-void ImageProcessing::sendToTestSlot(QString board)
-{
-	sendToFolder(board, "test");
-}
-
-void ImageProcessing::runTrainSlot()
-{
-	// late initialization
-	if (classify == NULL)
+	std::string _board[64];
+	for (int i = 0; i < 8; i++)
 	{
-		classify = new Classify();
-	}
-
-	if (classify->runTrain() != 0)
-	{
-		emit runTrainReplySignal(false, "Failed");
-		return;
-	}
-	emit runTrainReplySignal();
-}
-
-void ImageProcessing::runTestSlot()
-{
-	// late initialization
-	if (classify == NULL)
-	{
-		classify = new Classify();
-	}
-	
-	if (classify->runTest() != 0)
-	{
-		emit runTestReplySignal(false, "Failed");
-		return;
-	}
-	emit runTestReplySignal();
-}
-
-void ImageProcessing::resetTrainSlot()
-{
-	if (Crop::resetTrain() != 0)
-	{
-		emit resetTrainReplySignal(false, "Reset train failed");
-		return;
-	}
-
-	emit resetTrainReplySignal();
-}
-
-void ImageProcessing::resetTestSlot()
-{
-	if (Crop::resetTest() != 0)
-	{
-		emit resetTestReplySignal(false, "Reset test failed");
-		return;
-	}
-
-	emit resetTestReplySignal();
-}
-
-
-// ---------- bottom buttons, IP -> UA ---------- //
-
-void ImageProcessing::configureSlot()
-{
-	// request configure and wait for reply signals
-	SignalWaiter configureSignalWaiter1{ cameraReaderOne, "conf", "configure1" };
-	SignalWaiter configureSignalWaiter2{ cameraReaderTwo, "conf", "configure2" };
-
-	// if any unsuccessful, return
-	if (configureSignalWaiter1.start() + configureSignalWaiter2.start() != 0)
-	{
-		emit configureReplySignal(false, "Error when getting image");
-		return;
-	}
-	count++;
-
-	// extract paths
-	std::string path1 = configureSignalWaiter1.path;
-	std::string path2 = configureSignalWaiter2.path;
-
-	Mat_<Vec3b> img1 = imread(path1, IMREAD_COLOR);
-	if (img1.empty())
-	{
-		SPDLOG_ERROR("Image at {} not found", path1);
-		emit configureReplySignal(false, "Image not found");
-		return;
-	}
-
-	Mat_<Vec3b> img2 = imread(path2, IMREAD_COLOR);
-	if (img2.empty())
-	{
-		SPDLOG_ERROR("Image at {} not found", path2);
-		emit configureReplySignal(false, "Image not found");
-		return;
-	}
-
-	if (Crop::configure(img1, corners1, configured1, imshowMutex) + Crop::configure(img2, corners2, configured2, imshowMutex) != 0)
-	{
-		emit configureReplySignal(false, "Error when cropping");
-		return;
-	}
-
-	imshowMutex->lock();
-	imshow(path1, img1);
-	imshow(path2, img2);
-	waitKey();
-	imshowMutex->unlock();
-
-	emit configureReplySignal();
-}
-
-
-void ImageProcessing::getImageSlot(bool classifyWhenGettingImage)
-{
-	// note: reply message starting with "$" reserved to encode that a board is being passed
-
-	// request getImage and wait for reply signals
-	SignalWaiter getImageSignalWaiter1{ cameraReaderOne, "get", "getImage1" };
-	SignalWaiter getImageSignalWaiter2{ cameraReaderTwo, "get", "getImage2" };
-
-	// if any unsuccessful, return
-	if (getImageSignalWaiter1.start() + getImageSignalWaiter2.start() != 0)
-	{
-		emit getImageReplySignal(false, "Error when getting image");
-		return;
-	}
-	count++;
-
-	// extract paths
-	std::string path1 = getImageSignalWaiter1.path;
-	std::string path2 = getImageSignalWaiter2.path;
-
-	Mat_<Vec3b> img1 = imread(path1, IMREAD_COLOR);
-	if (img1.empty())
-	{
-		SPDLOG_ERROR("Image at {} not found", path1);
-		emit getImageReplySignal("Camera one image not found");
-		return;
-	}
-
-	Mat_<Vec3b> img2 = imread(path2, IMREAD_COLOR);
-	if (img2.empty())
-	{
-		SPDLOG_ERROR("Image at {} not found", path2);
-		emit getImageReplySignal("Camera two image not found");
-		return;
-	}
-
-	if (classifyWhenGettingImage)
-	{
-		// TODO: call classification
-		QString board = "$";
-
-		imshowMutex->lock();
-		imshow(path1, img1);
-		imshow(path2, img2);
-		waitKey();
-		imshowMutex->unlock();
-	
-		emit getImageReplySignal(true, board);
-		return;
-	}
-	else
-	{
-		if (Crop::getImage(img1, corners1, configured1, imshowMutex) +
-			Crop::getImage(img2, corners2, configured2, imshowMutex) != 0)
+		for (int j = 0; j < 8; j++)
 		{
-			emit configureReplySignal(false, "Error when cropping");
-			return;
+			EncodingMapperIP::map(board[i * 8 + j], i, j, _board[i * 8 + j]);
 		}
-
-		emit getImageReplySignal();
-		return;
 	}
+	cropAndLabel(_board, false);
 }
 
 
+void ImageProcessing::shuffleAndSplitSlot()
+{
+	FileHandler::shuffleAndSplit();
+}
+
+void ImageProcessing::clearAllImagesSlot()
+{
+	FileHandler::clearAllImages();
+}
+
+void ImageProcessing::changeSettingsSlot()
+{
+	// todo - set specific parameters of specific submodule which changed
+}
 
 
 void ImageProcessing::test()

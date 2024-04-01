@@ -9,61 +9,47 @@ MainWindow::MainWindow(QWidget* parent) :
     QWidget* centralWidget = new QWidget;
     QVBoxLayout* centralLayout = new QVBoxLayout();
 
-    // -- top -- //
-    QWidget* topWidget = new QWidget;
-    QHBoxLayout* topLayout = new QHBoxLayout(topWidget);
-    QLabel* topLabel = new QLabel("OpenCB User Application Beta");
-    topLayout->addWidget(topLabel, 0, Qt::AlignCenter);
-    topWidget->setStyleSheet("background-color:yellow");
-    topWidget->setFixedHeight(50);
 
+    QWidget* bigWidget = new QWidget;
+    QHBoxLayout* bigLayout = new QHBoxLayout(bigWidget);
+    bigWidget->setFixedHeight(500);
+    bigWidget->setStyleSheet("background-color:blue");
 
-    // -- middle -- //
-    QWidget* middleWidget = new QWidget;
-    QHBoxLayout* middleLayout = new QHBoxLayout(middleWidget);
+    QWidget* bigLeftWidget = new QWidget;
+    QVBoxLayout* middleLeftLayout = new QVBoxLayout(bigLeftWidget);
+    bigLeftWidget->setFixedWidth(300);
+    bigLeftWidget->setStyleSheet("background-color:green");
 
-    // middle left
-    QWidget* middleLeftWidget = new QWidget;
-    QVBoxLayout* middleLeftLayout = new QVBoxLayout(middleLeftWidget);
-    middleLeftWidget->setFixedWidth(300);
-    middleLeftWidget->setStyleSheet("background-color:green");
-
-    QPixmap cameraOnePlaceholder = QPixmap(":/UserApplicationModule/placeholder.jpeg");
     cameraOneImageLabel = new QLabel();
-    //cameraOneImageLabel->setFixedWidth(230);
     cameraOneImageLabel->setFixedHeight(200);
-    //cameraOneImageLabel->adjustSize();
-    //cameraOneImageLabel->setMinimumWidth(320);
     cameraOneImageLabel->setScaledContents(true);
-    //cameraOneImageLabel->setPixmap(cameraOnePlaceholder.scaled(cameraOneImageLabel->width(), cameraOneImageLabel->height(), Qt::KeepAspectRatio));
     middleLeftLayout->addWidget(cameraOneImageLabel);
     QLabel* cameraOneTextLabel = new QLabel("Camera one - left");
     middleLeftLayout->addWidget(cameraOneTextLabel);
 
     QPixmap cameraTwoPlaceholder = QPixmap(":/UserApplicationModule/placeholder.jpeg");
     cameraTwoImageLabel = new QLabel();
-    //cameraTwoImageLabel->setFixedWidth(230);
     cameraTwoImageLabel->setFixedHeight(200);
     cameraTwoImageLabel->setScaledContents(true);
-    //cameraTwoImageLabel->setPixmap(cameraTwoPlaceholder.scaled(cameraTwoImageLabel->width(), cameraTwoImageLabel->height(), Qt::KeepAspectRatio));
     middleLeftLayout->addWidget(cameraTwoImageLabel);
     QLabel* cameraTwoTextLabel = new QLabel("Camera two - right");
     middleLeftLayout->addWidget(cameraTwoTextLabel);
 
-    // middle right
-    QWidget* middleRightWidget = new QWidget;
-    QVBoxLayout* middleRightLayout = new QVBoxLayout(middleRightWidget);
-    middleRightWidget->setFixedWidth(450);
-    middleRightWidget->setStyleSheet("background-color:darkGreen");
+    bigLayout->addWidget(bigLeftWidget);
 
-    QWidget* resultWidget = new QWidget;
-    resultWidget->setStyleSheet("background-color:white");
-    QGridLayout* resultLayout = new QGridLayout(resultWidget);
-    resultWidget->setFixedWidth(300);
-    resultWidget->setFixedHeight(300);
-    resultLayout->setSpacing(0);
 
-    int flat;
+    QWidget* bigRightWidget = new QWidget;
+    QVBoxLayout* bigRightLayout = new QVBoxLayout(bigRightWidget);
+    bigRightWidget->setFixedWidth(450);
+    bigRightWidget->setStyleSheet("background-color:darkGreen");
+
+    QWidget* chessGUIWidget = new QWidget;
+    chessGUIWidget->setStyleSheet("background-color:white");
+    QGridLayout* chessGUILayout = new QGridLayout(chessGUIWidget);
+    chessGUIWidget->setFixedWidth(300);
+    chessGUIWidget->setFixedHeight(300);
+    chessGUILayout->setSpacing(0);
+
     for (int i = 0; i < 8; i++)
     {
         for (int j = 0; j < 8; j++)
@@ -74,13 +60,10 @@ MainWindow::MainWindow(QWidget* parent) :
             pieceLabels[i][j]->modifyStyleSheet("border: 2px solid black;");
             connect(pieceLabels[i][j], &ClickableLabel::leftClicked, this, &MainWindow::leftClickedSlot);
             connect(pieceLabels[i][j], &ClickableLabel::rightClicked, this, &MainWindow::rightClickedSlot);
-            resultLayout->addWidget(pieceLabels[i][j], i, j);
+            chessGUILayout->addWidget(pieceLabels[i][j], i, j);
         }
     }
 
-    int w = 30;
-    int h = 30;
-    qDebug() << w << h;
     for (auto pieceName : pieceNames)
     {
         char resourcePath[256];
@@ -88,100 +71,112 @@ MainWindow::MainWindow(QWidget* parent) :
         QPixmap piecePixmap;
         if (!piecePixmap.load(resourcePath))
         {
-            qDebug() << "Falied to load" << resourcePath;
+            SPDLOG_ERROR("Falied to load {}!", resourcePath);
         }
         else
         {
-            qDebug() << "Succesfully loaded" << resourcePath;
+            SPDLOG_TRACE("Succesfully loaded {}", resourcePath);
         }
-        piecePixmap = piecePixmap.scaled(w, h, Qt::KeepAspectRatio);
+        piecePixmap = piecePixmap.scaled(30, 30, Qt::KeepAspectRatio);
         nameToPixmap.insert(std::pair(pieceName, piecePixmap));
     }
 
-    _setInitialSetup();
-    middleRightLayout->addWidget(resultWidget, 0, Qt::AlignHCenter);
+    setInitialSetup();
+    bigRightLayout->addWidget(chessGUIWidget, 0, Qt::AlignHCenter);
 
-    QWidget* actionWidget = new QWidget;
-    QGridLayout* actionLayout = new QGridLayout(actionWidget);
-    actionWidget->setFixedHeight(130);
-    actionWidget->setStyleSheet("background-color:darkRed");
-    sendToTrainButton = new QPushButton("Send to Train");
-    sendToTestButton = new QPushButton("Send to Test");
-    runTrainButton = new QPushButton("Run Train");
-    runTestButton = new QPushButton("Run Test");
-    resetTrainButton = new QPushButton("Reset Train");
-    resetTestButton = new QPushButton("Reset Test");
-    actionLayout->addWidget(sendToTrainButton, 0, 0);
-    actionLayout->addWidget(sendToTestButton, 0, 1);
-    actionLayout->addWidget(runTrainButton, 1, 0);
-    actionLayout->addWidget(runTestButton, 1, 1);
-    actionLayout->addWidget(resetTrainButton, 2, 0);
-    actionLayout->addWidget(resetTestButton, 2, 1);
+    QWidget* VARWidget = new QWidget;
+    QGridLayout* VARLayout = new QGridLayout(VARWidget);
+    VARWidget->setFixedHeight(60);
+    VARWidget->setStyleSheet("background-color:magenta");
+    validateMoveButton = new QPushButton("Validate Move");
+    discardMoveButton = new QPushButton("Discard Move");
+    newGameButton = new QPushButton("New Game");
+    VARLayout->addWidget(validateMoveButton, 0, 0);
+    VARLayout->addWidget(discardMoveButton, 0, 1);
+    VARLayout->addWidget(newGameButton, 0, 2);
+    bigRightLayout->addWidget(VARWidget);
 
-    QWidget* checkboxWidget = new QWidget;
-    QHBoxLayout* checkboxLayout = new QHBoxLayout(checkboxWidget);
-    classifyWhenGettingImageCheckbox = new QCheckBox("Classify when getting image");
-    checkboxLayout->addWidget(classifyWhenGettingImageCheckbox, 0, Qt::AlignCenter);
-    //checkboxWidget->setFixedHeight(50);
+    QWidget* classificationWidget = new QWidget;
+    QGridLayout* classificationLayout = new QGridLayout(classificationWidget);
+    classificationWidget->setFixedHeight(80);
+    classificationWidget->setStyleSheet("background-color:yellow");
+    classifierComboBox = new QComboBox();
+    classifierComboBox->addItem("KNN");
+    classifierComboBox->addItem("SVM");
+    classifierComboBox->addItem("CNN");
+    saveClassifierButton = new QPushButton("Save");
+    loadClassifierButton = new QPushButton("Load");
+    trainClassifierButton = new QPushButton("Train");
+    testClassifierButton = new QPushButton("Test");
+    classifyBoardButton = new QPushButton("Classify Board");
+    classificationLayout->addWidget(classifierComboBox, 0, 0);
+    classificationLayout->addWidget(saveClassifierButton, 0, 1);
+    classificationLayout->addWidget(loadClassifierButton, 0, 2);
+    classificationLayout->addWidget(trainClassifierButton, 1, 0);
+    classificationLayout->addWidget(testClassifierButton, 1, 1);
+    classificationLayout->addWidget(classifyBoardButton, 1, 2);
+    bigRightLayout->addWidget(classificationWidget);
 
-    middleRightLayout->addWidget(actionWidget);
-    middleRightLayout->addWidget(checkboxWidget);
+    bigLayout->addWidget(bigRightWidget);
 
-    middleLayout->addWidget(middleLeftWidget);
-    middleLayout->addWidget(middleRightWidget);
-    middleWidget->setStyleSheet("background-color:blue");
-    middleWidget->setFixedHeight(500);
+    centralLayout->addWidget(bigWidget);
 
-    // -- message -- //
+
     QWidget* messageWidget = new QWidget;
     QHBoxLayout* messageLayout = new QHBoxLayout(messageWidget);
+    messageWidget->setFixedHeight(50);
+    messageWidget->setStyleSheet("background-color:cyan");
     messageLabel = new QLabel("message");
     messageLayout->addWidget(messageLabel);
-    messageWidget->setStyleSheet("background-color:cyan");
-    messageWidget->setFixedHeight(50);
 
-    // -- bottom -- //
-    QWidget* bottomWidget = new QWidget;
-    QHBoxLayout* bottomLayout = new QHBoxLayout(bottomWidget);
-    configureButton = new QPushButton("Configure");
-    getImageButton = new QPushButton("Get image");
-    sendToVARButton = new QPushButton("Send to VAR");
-    getFromVARButton = new QPushButton("Get from VAR");
-    newGameButton = new QPushButton("New game");
-    helpButton = new QPushButton("Help");
-    exitButton = new QPushButton("Exit");
-    bottomLayout->addWidget(configureButton);
-    bottomLayout->addWidget(getImageButton);
-    bottomLayout->addWidget(sendToVARButton);
-    bottomLayout->addWidget(getFromVARButton);
-    bottomLayout->addWidget(newGameButton);
-    bottomLayout->addWidget(helpButton);
-    bottomLayout->addWidget(exitButton);
-    bottomWidget->setStyleSheet("background-color:gray");
-    bottomWidget->setFixedHeight(50);
-
-    centralLayout->addWidget(topWidget);
-    centralLayout->addWidget(middleWidget);
     centralLayout->addWidget(messageWidget);
+
+
+    QWidget* bottomWidget = new QWidget;
+    QGridLayout* bottomLayout = new QGridLayout(bottomWidget);
+    bottomWidget->setFixedHeight(80);
+    bottomWidget->setStyleSheet("background-color:gray");
+    testConfigureButton = new QPushButton("Test Configure");
+    configureButton = new QPushButton("Configure");
+    testCropAndLabelButton = new QPushButton("Test Crop and Label");
+    cropAndLabelButton = new QPushButton("Crop and Label");
+    shuffleAndSplitButton = new QPushButton("Shuffle and Split");
+    clearAllImagesButton = new QPushButton("Clear All Images");
+    settingsButton = new QPushButton("Settings");
+    helpButton = new QPushButton("Help");
+    bottomLayout->addWidget(testConfigureButton, 0, 0);
+    bottomLayout->addWidget(configureButton, 1, 0);
+    bottomLayout->addWidget(testCropAndLabelButton, 0, 1);
+    bottomLayout->addWidget(cropAndLabelButton, 1, 1);
+    bottomLayout->addWidget(shuffleAndSplitButton, 0, 2);
+    bottomLayout->addWidget(clearAllImagesButton, 1, 2);
+    bottomLayout->addWidget(settingsButton, 0, 3);
+    bottomLayout->addWidget(helpButton, 1, 3);
+
     centralLayout->addWidget(bottomWidget);
 
     centralWidget->setLayout(centralLayout);
     setCentralWidget(centralWidget);
 
-    connect(sendToTrainButton, SIGNAL(clicked()), this, SLOT(sendToTrainButtonClicked()));
-    connect(sendToTestButton, SIGNAL(clicked()), this, SLOT(sendToTestButtonClicked()));
-    connect(runTrainButton, SIGNAL(clicked()), this, SLOT(runTrainButtonClicked()));
-    connect(runTestButton, SIGNAL(clicked()), this, SLOT(runTestButtonClicked()));
-    connect(resetTrainButton, SIGNAL(clicked()), this, SLOT(resetTrainButtonClicked()));
-    connect(resetTestButton, SIGNAL(clicked()), this, SLOT(resetTestButtonClicked()));
+    QObject::connect(validateMoveButton, &QPushButton::clicked, this, &MainWindow::validateMoveButtonClicked);
+    QObject::connect(discardMoveButton, &QPushButton::clicked, this, &MainWindow::discardMoveButtonClicked);
+    QObject::connect(newGameButton, &QPushButton::clicked, this, &MainWindow::newGameButtonClicked);
 
-    connect(configureButton, &QPushButton::clicked, this, &MainWindow::configureButtonClicked);
-    connect(getImageButton, &QPushButton::clicked, this, &MainWindow::getImageButtonClicked);
-    connect(sendToVARButton, &QPushButton::clicked, this, &MainWindow::sendToVARButtonClicked);
-    connect(getFromVARButton, &QPushButton::clicked, this, &MainWindow::getFromVARButtonClicked);
-    connect(newGameButton, &QPushButton::clicked, this, &MainWindow::newGameButtonClicked);
-    connect(helpButton, &QPushButton::clicked, this, &MainWindow::helpButtonClicked);
-    connect(exitButton, &QPushButton::clicked, this, &MainWindow::exitButtonClicked);
+    QObject::connect(classifierComboBox, &QComboBox::currentTextChanged, this, &MainWindow::classifierComboBoxChanged);
+    QObject::connect(saveClassifierButton, &QPushButton::clicked, this, &MainWindow::saveClassifierButtonClicked);
+    QObject::connect(loadClassifierButton, &QPushButton::clicked, this, &MainWindow::loadClassifierButtonClicked);
+    QObject::connect(trainClassifierButton, &QPushButton::clicked, this, &MainWindow::trainClassifierButtonClicked);
+    QObject::connect(testClassifierButton, &QPushButton::clicked, this, &MainWindow::testClassifierButtonClicked);
+    QObject::connect(classifyBoardButton, &QPushButton::clicked, this, &MainWindow::classifyBoardButtonClicked);
+
+    QObject::connect(testConfigureButton, &QPushButton::clicked, this, &MainWindow::testConfigureButtonClicked);
+    QObject::connect(configureButton, &QPushButton::clicked, this, &MainWindow::configureButtonClicked);
+    QObject::connect(testCropAndLabelButton, &QPushButton::clicked, this, &MainWindow::testCropAndLabelButtonClicked);
+    QObject::connect(cropAndLabelButton, &QPushButton::clicked, this, &MainWindow::cropAndLabelButtonClicked);
+    QObject::connect(shuffleAndSplitButton, &QPushButton::clicked, this, &MainWindow::shuffleAndSplitButtonClicked);
+    QObject::connect(clearAllImagesButton, &QPushButton::clicked, this, &MainWindow::clearAllImagesButtonClicked);
+    QObject::connect(settingsButton, &QPushButton::clicked, this, &MainWindow::settingsButtonClicked);
+    QObject::connect(helpButton, &QPushButton::clicked, this, &MainWindow::helpButtonClicked);
 }
 
 MainWindow::~MainWindow()
@@ -193,9 +188,10 @@ void MainWindow::closeEvent(QCloseEvent* event)
 {
     //emit exitSignal();
     //event->ignore();
+    // todo
 }
 
-void MainWindow::_setInitialSetup()
+void MainWindow::setInitialSetup()
 {
     for (int i = 0; i < 8; i++)
     {
@@ -227,7 +223,7 @@ void MainWindow::_setInitialSetup()
     pieceLabels[7][7]->setPiece("WR", nameToPixmap["WR"]);
 }
 
-QString MainWindow::_extractComboBoxes()
+QString MainWindow::getBoardFromChessGUI()
 {
     QString board;
     board.resize(64);
@@ -246,184 +242,219 @@ QString MainWindow::_extractComboBoxes()
 }
 
 
-// ---------- right buttons, clicked slots ---------- //
+// ---------- clicked/changed slots ---------- //
 
-void MainWindow::sendToTrainButtonClicked()
+void MainWindow::validateMoveButtonClicked()
 {
-    QString board = _extractComboBoxes();
-    messageLabel->setText(board);
-    emit sendToTrainSignal(board);
+    QString board = getBoardFromChessGUI();
+    SPDLOG_TRACE("Emitting validateMoveSignal with {}", board);
+    emit validateMoveSignal(board);
 }
 
-void MainWindow::sendToTestButtonClicked()
+void MainWindow::discardMoveButtonClicked()
 {
-    QString board = _extractComboBoxes();
-    messageLabel->setText(board);
-    emit sendToTestSignal(board);
-}
-
-void MainWindow::runTrainButtonClicked()
-{
-    messageLabel->setText("runTrainButtonClicked");
-    emit runTrainSignal();
-}
-
-void MainWindow::runTestButtonClicked()
-{
-    messageLabel->setText("runTestButtonClicked");
-    emit runTestSignal();
-}
-
-void MainWindow::resetTrainButtonClicked()
-{
-    messageLabel->setText("resetTrainButtonClicked");
-    emit resetTrainSignal();
-}
-
-void MainWindow::resetTestButtonClicked()
-{
-    messageLabel->setText("resetTestButtonClicked");
-    emit resetTestSignal();
-}
-
-
-// ---------- bottom buttons, clicked slots ---------- //
-
-void MainWindow::configureButtonClicked()
-{
-    messageLabel->setText("configureButtonClicked");
-    emit configureSignal();
-}
-
-void MainWindow::getImageButtonClicked()
-{
-    messageLabel->setText("getImageButtonClicked");
-    emit getImageSignal(classifyWhenGettingImageCheckbox->isChecked());
-}
-
-void MainWindow::sendToVARButtonClicked()
-{
-    QString board = _extractComboBoxes();
-    messageLabel->setText(board);
-    emit sendToVARSignal(board);
-}
-
-void MainWindow::getFromVARButtonClicked()
-{
-    messageLabel->setText("getFromVARButtonClicked");
-    emit getFromVARSignal();
+    SPDLOG_TRACE("Emitting discardMoveSignal");
+    emit discardMoveSignal();
 }
 
 void MainWindow::newGameButtonClicked()
 {
-    messageLabel->setText("newGameButtonClicked");
+    SPDLOG_TRACE("Emitting newGameSignal");
     emit newGameSignal();
+}
+
+
+void MainWindow::classifierComboBoxChanged()
+{
+    QString classifierName = classifierComboBox->currentText();
+    SPDLOG_TRACE("Emitting changeClassifierSignal with {}", classifierName);
+    emit changeClassifierSignal(classifierName);
+}
+
+void MainWindow::saveClassifierButtonClicked()
+{
+    QString path = "DUMMYPATH";
+    SPDLOG_TRACE("Emitting saveClassifierSignal with {}", path);
+    emit saveClassifierSignal(path);
+}
+
+void MainWindow::loadClassifierButtonClicked()
+{
+    QString path = "DUMMYPATH";
+    SPDLOG_TRACE("Emitting loadClassifierSignal with {}", path);
+    emit loadClassifierSignal(path);
+}
+
+void MainWindow::trainClassifierButtonClicked()
+{
+    SPDLOG_TRACE("Emitting trainClassifierSignal");
+    emit trainClassifierSignal();
+}
+
+void MainWindow::testClassifierButtonClicked()
+{
+    SPDLOG_TRACE("Emitting testClassifierSignal");
+    emit testClassifierSignal();
+}
+
+void MainWindow::classifyBoardButtonClicked()
+{
+    SPDLOG_TRACE("Emitting classifyBoardSignal");
+    emit classifyBoardSignal();
+}
+
+
+void MainWindow::testConfigureButtonClicked()
+{
+    SPDLOG_TRACE("Emitting testConfigureSignal");
+    emit testConfigureSignal();
+}
+
+void MainWindow::configureButtonClicked()
+{
+    SPDLOG_TRACE("Emitting configureSignal");
+    emit configureSignal();
+}
+
+void MainWindow::testCropAndLabelButtonClicked()
+{
+    QString board = getBoardFromChessGUI();
+    SPDLOG_TRACE("Emitting testCropAndLabelSignal");
+    emit testCropAndLabelSignal(board);
+}
+
+void MainWindow::cropAndLabelButtonClicked()
+{
+    QString board = getBoardFromChessGUI();
+    SPDLOG_TRACE("Emitting cropAndLabelSignal");
+    emit cropAndLabelSignal(board);
+}
+
+void MainWindow::shuffleAndSplitButtonClicked()
+{
+    SPDLOG_TRACE("Emitting shuffleAndSplitSignal");
+    emit shuffleAndSplitSignal();
+}
+
+void MainWindow::clearAllImagesButtonClicked()
+{
+    SPDLOG_TRACE("Emitting clearAllImagesSignal");
+    emit clearAllImagesSignal();
+}
+
+void MainWindow::settingsButtonClicked()
+{
+    SPDLOG_TRACE("TODO - settings");
 }
 
 void MainWindow::helpButtonClicked()
 {
-    messageLabel->setText("Help not implemented");
-}
-
-void MainWindow::exitButtonClicked()
-{
-    messageLabel->setText("exitButtonClicked");
-    emit exitSignal();
+    SPDLOG_TRACE("TODO - help");
 }
 
 
-// ---------- right buttons, IP -> UA ---------- //
+// ---------- reply slots ---------- //
 
-void MainWindow::sendToTrainReplySlot(bool succeeded, QString message)
+void MainWindow::validateMoveReplySlot(bool succeeded, QString message)
 {
     messageLabel->setText(message);
 }
 
-void MainWindow::sendToTestReplySlot(bool succeeded, QString message)
+void MainWindow::discardMoveReplySlot(bool succeeded, QString message)
+{
+    messageLabel->setText("Got board: " + message);
+
+    for (int i = 0; i < 64; i++)
+    {
+        std::string encoding;
+        EncodingMapper::map(message.at(i), encoding);
+        pieceLabels[i / 8][i % 8]->setPiece(encoding, nameToPixmap[encoding]);
+    }
+}
+
+void MainWindow::newGameReplySlot(bool succeeded, QString message)
+{
+    messageLabel->setText(message);
+    if (succeeded)
+    {
+        setInitialSetup();
+    }
+}
+
+
+void MainWindow::changeClassifierReplySlot(bool succeeded, QString message)
 {
     messageLabel->setText(message);
 }
 
-void MainWindow::runTrainReplySlot(bool succeeded, QString message)
+void MainWindow::saveClassifierReplySlot(bool succeeded, QString message)
 {
     messageLabel->setText(message);
 }
 
-void MainWindow::runTestReplySlot(bool succeeded, QString message)
+void MainWindow::loadClassifierReplySlot(bool succeeded, QString message)
 {
     messageLabel->setText(message);
 }
 
-void MainWindow::resetTrainReplySlot(bool succeeded, QString message)
+void MainWindow::trainClassifierReplySlot(bool succeeded, QString message)
 {
     messageLabel->setText(message);
 }
 
-void MainWindow::resetTestReplySlot(bool succeeded, QString message)
+void MainWindow::testClassifierReplySlot(bool succeeded, QString message)
 {
     messageLabel->setText(message);
 }
 
+void MainWindow::classifyBoardReplySlot(bool succeeded, QString message)
+{
+    messageLabel->setText("Got board: " + message);
 
-// ---------- bottom buttons, IP/VAR -> UA ---------- //
-#define PATH_IMG_CAM_ONE "preview\\cam1.jpeg"
-#define PATH_IMG_CAM_TWO "preview\\cam2.jpeg"
+    for (int i = 0; i < 64; i++)
+    {
+        std::string encoding;
+        EncodingMapper::map(message.at(i), encoding);
+        pieceLabels[i / 8][i % 8]->setPiece(encoding, nameToPixmap[encoding]);
+    }
+}
+
+
+void MainWindow::testConfigureReplySlot(bool succeeded, QString message)
+{
+    messageLabel->setText(message);
+}
 
 void MainWindow::configureReplySlot(bool succeeded, QString message)
 {
     messageLabel->setText(message);
 }
 
-void MainWindow::getImageReplySlot(bool succeeded, QString message)
-{
-    if (succeeded && message.at(0) == '$')  // we are getting a board
-    {
-        messageLabel->setText("Got board: " + message);
-
-        for (int i = 1; i < 65; i++)
-        {
-            std::string encoding;
-            EncodingMapper::map(message.at(i), encoding);
-            pieceLabels[i / 8][i % 8]->setPiece(encoding, nameToPixmap[encoding]);
-        }
-        return;
-    }
-
-    messageLabel->setText(message);
-}
-
-void MainWindow::sendToVARReplySlot(QString message)
+void MainWindow::testCropAndLabelReplySlot(bool succeeded, QString message)
 {
     messageLabel->setText(message);
 }
 
-void MainWindow::getFromVARReplySlot(QString board)
+void MainWindow::cropAndLabelReplySlot(bool succeeded, QString message)
 {
-    for (int i = 0; i < 8; i++)
-    {
-        for (int j = 0; j < 8; j++)
-        {
-            std::string encoding;
-            EncodingMapper::map(board[i * 8 + j], encoding);
-            pieceLabels[i][j]->setPiece(encoding, nameToPixmap[encoding]);
-        }
-    }
-}
-
-void MainWindow::newGameReplySlot(bool succeeded)
-{
-    QString message = (succeeded) ? "Succeeded" : "Failed";
     messageLabel->setText(message);
-
-    _setInitialSetup();
 }
 
-void MainWindow::exitReplySlot(bool succeeded)
+void MainWindow::shuffleAndSplitReplySlot(bool succeeded, QString message)
 {
-    QString message = (succeeded) ? "Succeeded" : "Failed";
     messageLabel->setText(message);
-    close();
 }
+
+void MainWindow::clearAllImagesReplySlot(bool succeeded, QString message)
+{
+    messageLabel->setText(message);
+}
+
+void MainWindow::changeSettingsReplySlot(bool succeeded, QString message)
+{
+    messageLabel->setText(message);
+}
+
 
 // ---------- clicks on chess GUI ---------- //
 void MainWindow::leftClickedSlot(int row, int col, std::string pieceName)
@@ -475,15 +506,15 @@ void MainWindow::rightClickedSlot(int row, int col, std::string pieceName)
 
 
 // ---------- getting a new frame ---------- // 
-void MainWindow::imageUpdateSlotOne(QImage image)
+void MainWindow::previewImageReadySlotLeft(QImage previewImage)
 {   
-    QPixmap pixmap = QPixmap::fromImage(image);
+    QPixmap pixmap = QPixmap::fromImage(previewImage);
     //cameraOneImageLabel->setPixmap(pixmap.scaled(cameraOneImageLabel->width(), cameraOneImageLabel->height(), Qt::KeepAspectRatio));
     cameraOneImageLabel->setPixmap(pixmap);
 }
 
-void MainWindow::imageUpdateSlotTwo(QImage image)
+void MainWindow::previewImageReadySlotRight(QImage previewImage)
 {
-    QPixmap pixmap = QPixmap::fromImage(image);
+    QPixmap pixmap = QPixmap::fromImage(previewImage);
     cameraTwoImageLabel->setPixmap(pixmap.scaled(cameraTwoImageLabel->width(), cameraTwoImageLabel->height(), Qt::KeepAspectRatio));
 }
