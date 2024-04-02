@@ -17,6 +17,14 @@ public:
 private:
 	// all static
 
+	// struct to hold information needed when moving a labeled image. to avoid parsing
+	struct PathInfo
+	{
+		std::string wholePath;		// needed to call rename, as old path
+		std::string labelFolder;	// needed to but in corresponding labelFolder (remains the same)
+		std::string imageName;		// needed to keep name (remains the same)
+	};
+
 public:
 	// ---------- functions implementing direct functionalities ---------- //
 
@@ -34,20 +42,25 @@ public:
 
 	static int readLabelFolderImages(
 		std::string labelFolderBasePath,						    // TEMPORARY/TRAIN/VALIDATION/TEST_FOLDER_PATH
-		std::vector<std::pair<Mat_<Vec3b>, uchar>> imagesAndLabels	// <image, label> pairs
+		std::vector<std::pair<Mat_<Vec3b>, uchar>>& imagesAndLabels	// <image, label> pairs
 	);
 
 	// get all cell images of the board saved beforehand, using boardImageName
 	static int readBoardImages(
-		std::array<std::array<Mat_<Vec3b>, 8>, 8> boardImages
+		std::array<std::array<Mat_<Vec3b>, 8>, 8>& boardImages
 	);
 
-	static int readLabelFolderPaths(
-		std::string labelFolderBasePath,										// TEMPORARY/TRAIN/VALIDATION/TEST_FOLDER_PATH
-		std::vector<std::pair<std::string, std::string>> pathsAndLabelFolders   // <path, label_folder> pairs
-	);
-
+private:
 	static int clearLabeledFolder(
 		std::string labelFolderBasePath  // TEMPORARY/TRAIN/VALIDATION/TEST_FOLDER_PATH
+	);
+
+	static int clearSimpleFolder(
+		std::string simpleFolderBasePath  // BOARD_FOLDER_PATH
+	);
+
+	static int readLabelFolderPathInfos(
+		std::string labelFolderBasePath,  // TEMPORARY/TRAIN/VALIDATION/TEST_FOLDER_PATH
+		std::vector<PathInfo>& pathInfos
 	);
 };

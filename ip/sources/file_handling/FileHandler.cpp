@@ -10,64 +10,68 @@ int FileHandler::shuffleAndSplit(double trainSplit, double validationSplit, doub
 	//   is the old path. when renamed, the subfolder and image name shall remain the same.
 
 	// get paths and label folders of all images
-	std::vector<std::pair<std::string, std::string>> temporaryPALFOld, trainPALFOld, validationPALFOld, testPALFOld;
-	if (readLabelFolderPaths(TEMPORARY_FOLDER_PATH, temporaryPALFOld) +
-		readLabelFolderPaths(TRAIN_FOLDER_PATH, trainPALFOld) +
-		readLabelFolderPaths(VALIDATION_FOLDER_PATH, validationPALFOld) +
-		readLabelFolderPaths(TEST_FOLDER_PATH, testPALFOld) != 0)
+	std::vector<PathInfo> temporaryPathInfosOld, trainPathInfosOld, validationPathInfosOld, testPathInfosOld;
+	if (readLabelFolderPathInfos(TEMPORARY_FOLDER_PATH, temporaryPathInfosOld) +
+		readLabelFolderPathInfos(TRAIN_FOLDER_PATH, trainPathInfosOld) +
+		readLabelFolderPathInfos(VALIDATION_FOLDER_PATH, validationPathInfosOld) +
+		readLabelFolderPathInfos(TEST_FOLDER_PATH, testPathInfosOld) != 0)
 	{
 		return 1;
 	}
 
 	// unite all paths
-	std::vector<std::pair<std::string, std::string>> PALFOld{};
-	PALFOld.insert(PALFOld.end(), temporaryPALFOld.begin(), temporaryPALFOld.end());
-	PALFOld.insert(PALFOld.end(), trainPALFOld.begin(), trainPALFOld.end());
-	PALFOld.insert(PALFOld.end(), validationPALFOld.begin(), validationPALFOld.end());
-	PALFOld.insert(PALFOld.end(), testPALFOld.begin(), testPALFOld.end());
-	SPDLOG_TRACE("{} image paths loaded", PALFOld.size());
+	std::vector<PathInfo> pathInfosOld{};
+	pathInfosOld.insert(pathInfosOld.end(), temporaryPathInfosOld.begin(), temporaryPathInfosOld.end());
+	pathInfosOld.insert(pathInfosOld.end(), trainPathInfosOld.begin(), trainPathInfosOld.end());
+	pathInfosOld.insert(pathInfosOld.end(), validationPathInfosOld.begin(), validationPathInfosOld.end());
+	pathInfosOld.insert(pathInfosOld.end(), testPathInfosOld.begin(), testPathInfosOld.end());
+	SPDLOG_TRACE("{} image paths loaded", pathInfosOld.size());
 
 	// we must not delete the old images, since we shuffle by moving (renaming)
 
 	// shuffle
 	// https://cplusplus.com/reference/algorithm/shuffle/
 	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-	std::shuffle(PALFOld.begin(), PALFOld.end(), std::default_random_engine(seed));
+	std::shuffle(pathInfosOld.begin(), pathInfosOld.end(), std::default_random_engine(seed));
 
 	// split into three (enough to have indices)
-	const int splitOne = PALFOld.size() * trainSplit;
-	const int splitTwo = splitOne + PALFOld.size() * validationSplit;
-	SPDLOG_TRACE("New split: {}-{}, {}-{}, {}-{}",
-		0, splitOne - 1,
-		splitOne, splitTwo - 1,
-		splitTwo, PALFOld.size()
-	);
+	const int splitOne = pathInfosOld.size() * trainSplit;
+	const int splitTwo = splitOne + pathInfosOld.size() * validationSplit;
+	SPDLOG_TRACE("New split:");
+	SPDLOG_TRACE("Train:		{} images ({}-{})", splitOne, 0, splitOne-1);
+	SPDLOG_TRACE("Validation:	{} images ({}-{})", splitTwo - splitOne, splitOne, splitTwo - 1);
+	SPDLOG_TRACE("Test:			{} images ({}-{})", pathInfosOld.size() - splitTwo, splitTwo, pathInfosOld.size() - 1);
+
 
 	// move files by renaming
-	for (int i = 0; i < PALFOld.size(); i++)
+	for (int i = 0; i < pathInfosOld.size(); i++)
 	{
-		std::string labelFolder = PALFOld[i].second; // remains the same
-
-		std::string oldPath = PALFOld[i].first;
-		std::string newPath;
-
+		std::string labelFolderBasePathNew;
 		if (i < splitOne)
 		{
-			newPath = TRAIN_FOLDER_PATH + std::string("\\") + labelFolder;
+			labelFolderBasePathNew = TRAIN_FOLDER_PATH;
 		}
 		else if (i < splitTwo)
 		{
-			newPath = VALIDATION_FOLDER_PATH + std::string("\\") + labelFolder;
+			labelFolderBasePathNew = VALIDATION_FOLDER_PATH;
 		}
 		else
 		{
-			newPath = TEST_FOLDER_PATH + std::string("\\") + labelFolder;
+			labelFolderBasePathNew = TEST_FOLDER_PATH;
 		}
 
-		try {
+		std::string oldPath = pathInfosOld[i].wholePath;
+		std::string newPath = 
+			labelFolderBasePathNew + std::string("\\") + 
+			pathInfosOld[i].labelFolder + std::string("\\") +
+			pathInfosOld[i].imageName;
+
+		try
+		{
 			fs::rename(oldPath, newPath);
 		}
-		catch (fs::filesystem_error& e) {
+		catch (fs::filesystem_error& e)
+		{
 			SPDLOG_ERROR("Exception when moving file from {} to {}: {}", oldPath, newPath, e.what());
 			return 2;
 		}
@@ -83,7 +87,7 @@ int FileHandler::clearAllImages()
 		clearLabeledFolder(TRAIN_FOLDER_PATH) +
 		clearLabeledFolder(VALIDATION_FOLDER_PATH) +
 		clearLabeledFolder(TEST_FOLDER_PATH) +
-		clearLabeledFolder(BOARD_FOLDER_PATH) != 0)
+		clearSimpleFolder(BOARD_FOLDER_PATH) != 0)
 	{
 		return 1;
 	}
@@ -92,7 +96,7 @@ int FileHandler::clearAllImages()
 }
 
 
-int FileHandler::readLabelFolderImages(std::string labelFolderBasePath, std::vector<std::pair<Mat_<Vec3b>, uchar>> imagesAndLabels)
+int FileHandler::readLabelFolderImages(std::string labelFolderBasePath, std::vector<std::pair<Mat_<Vec3b>, uchar>>& imagesAndLabels)
 {
 	for (std::string labelFolder : labelFolders)
 	{
@@ -120,7 +124,7 @@ int FileHandler::readLabelFolderImages(std::string labelFolderBasePath, std::vec
 }
 
 
-int FileHandler::readBoardImages(std::array<std::array<Mat_<Vec3b>, 8>, 8> boardImages)
+int FileHandler::readBoardImages(std::array<std::array<Mat_<Vec3b>, 8>, 8>& boardImages)
 {
 	for (int i = 0; i < 8; i++)
 	{
@@ -143,14 +147,29 @@ int FileHandler::readBoardImages(std::array<std::array<Mat_<Vec3b>, 8>, 8> board
 }
 
 
-int FileHandler::readLabelFolderPaths(std::string labelFolderBasePath, std::vector<std::pair<std::string, std::string>> pathsAndLabelFolders )
+int FileHandler::readLabelFolderPathInfos(std::string labelFolderBasePath, std::vector<PathInfo>& pathInfos)
 {
+	if (!fs::exists(labelFolderBasePath))
+	{
+		if (clearLabeledFolder(labelFolderBasePath) != 0)
+		{
+			return 1;
+		}
+
+		SPDLOG_WARN("Folder {} did not exist, created", labelFolderBasePath);
+		return 0;  // not much to iterate if base folder was not even there
+	}
+
 	for (std::string labelFolder : labelFolders)
 	{
 		std::string labelFolderPath = labelFolderBasePath + std::string("\\") + labelFolder;
 		for (const auto& dirEntry : fs::directory_iterator(labelFolderPath))
 		{
-			pathsAndLabelFolders.push_back(std::pair<std::string, std::string>(dirEntry.path().string(), labelFolder));
+			pathInfos.push_back(PathInfo {
+				dirEntry.path().string(),
+				labelFolder,
+				dirEntry.path().filename().string() }
+			);
 		}
 	}
 
@@ -183,6 +202,26 @@ int FileHandler::clearLabeledFolder(std::string labelFolderBasePath)
 			SPDLOG_ERROR("Error when creating folder {}", labelFolderPath);
 			return 3;
 		}
+	}
+
+	return 0;
+}
+
+
+int FileHandler::clearSimpleFolder(std::string simpleFolderBasePath)
+{
+	// delete folder
+	if (fs::remove_all(simpleFolderBasePath) == -1)
+	{
+		SPDLOG_ERROR("Error when removing folder {}", simpleFolderBasePath);
+		return 1;
+	}
+
+	// re-create folder
+	if (fs::create_directory(simpleFolderBasePath) == false)
+	{
+		SPDLOG_ERROR("Error when creating folder {}", simpleFolderBasePath);
+		return 2;
 	}
 
 	return 0;
