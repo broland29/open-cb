@@ -104,6 +104,8 @@ void ImageProcessing::testClassifierSlot()
 
 void ImageProcessing::classifyBoardSlot()
 {
+	// todo - should map. from classifyBoard() it gets a string 
+
 	// get images
 	Mat_<Vec3b> imgLeft, imgRight;
 	if (getImage(new SignalWaiter(cameraHandlerLeft, "clas", "classifyLeft"), imgLeft) != 0)
@@ -226,12 +228,22 @@ void ImageProcessing::cropAndLabelSlot(QString board)
 
 void ImageProcessing::shuffleAndSplitSlot()
 {
-	FileHandler::shuffleAndSplit();
+	if (FileHandler::shuffleAndSplit() != 0)
+	{
+		emit shuffleAndSplitReplySignal(false, "Error shuffling and splitting!");
+		return;
+	}
+	emit shuffleAndSplitReplySignal(true, "Shuffled and splitted successfully!");
 }
 
 void ImageProcessing::clearAllImagesSlot()
 {
-	FileHandler::clearAllImages();
+	if (FileHandler::clearAllImages() != 0)
+	{
+		emit clearAllImagesReplySignal(false, "Clearing all images failed!");
+		return;
+	}
+	emit clearAllImagesReplySignal(true, "Cleared all images successfully!");
 }
 
 void ImageProcessing::changeSettingsSlot()
