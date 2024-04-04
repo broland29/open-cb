@@ -1,5 +1,5 @@
 #include "../../headers/classification/ConvolutionalNeuralNetwork.h"
-
+#include <thread>
 
 ConvolutionalNeuralNetwork::ConvolutionalNeuralNetwork()
 {
@@ -9,8 +9,15 @@ ConvolutionalNeuralNetwork::ConvolutionalNeuralNetwork()
 
 int ConvolutionalNeuralNetwork::train()
 {
-	// todo
-	return 404;
+	// example: conda run -n rolienv2 python train.py C:\open-cb\mem\img\trn
+	std::string command = "conda run -n rolienv2 python " + std::string(TRAIN_SCRIPT_PATH) +
+		std::string(" ") + std::string(TRAIN_FOLDER_PATH) +				// argv[1]
+		std::string(" ") + std::string(VALIDATION_FOLDER_PATH);			// argv[2]
+	SPDLOG_TRACE("Executing command {}", command);
+
+	int ret = system(command.c_str());
+	SPDLOG_TRACE("Command returned {}", ret);
+	return ret;
 }
 
 
