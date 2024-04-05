@@ -27,6 +27,7 @@ using namespace cv;
 #define TEST_FOLDER_PATH            "C:\\open-cb\\mem\\img\\tst"  // images for testing
 #define BOARD_FOLDER_PATH           "C:\\open-cb\\mem\\img\\brd"  // images for actual classification (cells from one image)
 
+#define CNN_FOLDER_PATH             "C:\\open-cb\\mem\\cnn"
 
 #define CLASS_COUNT 14
 

@@ -10,10 +10,11 @@ ConvolutionalNeuralNetwork::ConvolutionalNeuralNetwork()
 int ConvolutionalNeuralNetwork::train()
 {
 	// --no-capture-output for avoiding stdout buffering - https://github.com/conda/conda/issues/9412#issuecomment-719759077
-	// example: conda run -n rolienv2 python train.py C:\open-cb\mem\img\trn
+	// example: ...
 	std::string command = "conda run --no-capture-output -n rolienv2 python " + std::string(TRAIN_SCRIPT_PATH) +
-		std::string(" ") + std::string(TRAIN_FOLDER_PATH) +				// argv[1]
-		std::string(" ") + std::string(VALIDATION_FOLDER_PATH);			// argv[2]
+		std::string(" ") + std::string(TRAIN_FOLDER_PATH) +			// argv[1]
+		std::string(" ") + std::string(VALIDATION_FOLDER_PATH) +	// argv[2]
+		std::string(" ") + std::string(CNN_FOLDER_PATH);			// argv[3]
 	SPDLOG_TRACE("Executing command {}", command);
 
 	int ret = system(command.c_str());
@@ -24,8 +25,15 @@ int ConvolutionalNeuralNetwork::train()
 
 int ConvolutionalNeuralNetwork::test()
 {
-	// todo
-	return 404;
+	// example: 
+	std::string command = "conda run --no-capture-output -n rolienv2 python " + std::string(TEST_SCRIPT_PATH) +
+		std::string(" ") + std::string(TEST_FOLDER_PATH) +			// argv[1]
+		std::string(" ") + std::string(CNN_FOLDER_PATH);			// argv[2]
+	SPDLOG_TRACE("Executing command {}", command);
+
+	int ret = system(command.c_str());
+	SPDLOG_TRACE("Command returned {}", ret);
+	return ret;
 }
 
 

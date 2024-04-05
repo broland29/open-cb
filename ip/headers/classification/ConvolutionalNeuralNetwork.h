@@ -3,7 +3,8 @@
 #include "AbstractClassifier.h"
 #include "../Common.h"
 
-#define TRAIN_SCRIPT_PATH "C:\\open-cb\\ip\\sources\\classification\\train.py"
+#define TRAIN_SCRIPT_PATH "C:\\open-cb\\ip\\sources\\classification\\cnn_train.py"
+#define TEST_SCRIPT_PATH "C:\\open-cb\\ip\\sources\\classification\\cnn_test.py"
 
 class ConvolutionalNeuralNetwork : public AbstractClassifier
 {
