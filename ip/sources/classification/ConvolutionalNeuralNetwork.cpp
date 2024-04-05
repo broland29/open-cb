@@ -1,5 +1,4 @@
 #include "../../headers/classification/ConvolutionalNeuralNetwork.h"
-#include <thread>
 
 ConvolutionalNeuralNetwork::ConvolutionalNeuralNetwork()
 {
@@ -7,10 +6,12 @@ ConvolutionalNeuralNetwork::ConvolutionalNeuralNetwork()
 }
 
 
+
 int ConvolutionalNeuralNetwork::train()
 {
+	// --no-capture-output for avoiding stdout buffering - https://github.com/conda/conda/issues/9412#issuecomment-719759077
 	// example: conda run -n rolienv2 python train.py C:\open-cb\mem\img\trn
-	std::string command = "conda run -n rolienv2 python " + std::string(TRAIN_SCRIPT_PATH) +
+	std::string command = "conda run --no-capture-output -n rolienv2 python " + std::string(TRAIN_SCRIPT_PATH) +
 		std::string(" ") + std::string(TRAIN_FOLDER_PATH) +				// argv[1]
 		std::string(" ") + std::string(VALIDATION_FOLDER_PATH);			// argv[2]
 	SPDLOG_TRACE("Executing command {}", command);

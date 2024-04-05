@@ -29,6 +29,8 @@ int main(int argc, char* argv[])
 	MainWindow* mainWindow = userApplication->mainWindow;
 
 	// create worker threads
+	QThread* imageProcessingThread = new QThread;
+
 	QThread* cameraHandlerLeftThread = new QThread;
 	QObject::connect(cameraHandlerLeftThread, &QThread::started, cameraHandlerLeft, &CameraHandler::doWork);
 	QObject::connect(cameraHandlerLeft, &CameraHandler::stop, cameraHandlerLeftThread, &QThread::quit);
@@ -38,7 +40,6 @@ int main(int argc, char* argv[])
 	QObject::connect(cameraHandlerRightThread, &QThread::started, cameraHandlerRight, &CameraHandler::doWork);
 	QObject::connect(cameraHandlerRight, &CameraHandler::stop, cameraHandlerRightThread, &QThread::quit);
 	QObject::connect(cameraHandlerRightThread, &QThread::finished, cameraHandlerRight, &CameraHandler::deleteLater);
-
 
 	// cross - thread communication
 	QObject::connect(cameraHandlerLeft, &CameraHandler::previewImageReadySignal, mainWindow, &MainWindow::previewImageReadySlotLeft);
@@ -83,9 +84,12 @@ int main(int argc, char* argv[])
 	QObject::connect(imageProcessing, &ImageProcessing::changeSettingsReplySignal, mainWindow, &MainWindow::changeSettingsReplySlot);
 
 	// start thread
+	imageProcessing->moveToThread(imageProcessingThread);
+
 	cameraHandlerLeft->moveToThread(cameraHandlerLeftThread);
 	cameraHandlerRight->moveToThread(cameraHandlerRightThread);
 	
+	imageProcessingThread->start();
 	cameraHandlerLeftThread->start();
 	cameraHandlerRightThread->start();
 
