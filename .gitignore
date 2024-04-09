@@ -2,3 +2,7 @@
 out/*
 mem/*
 *.png
+*.pyc
+
+doc/*
+!doc/*.tex
