@@ -14,6 +14,9 @@
 class FileHandler
 {
 public:
+	// https://stackoverflow.com/questions/7571278/how-do-i-define-string-constants-in-c
+	static const std::string EXTENSION;
+
 private:
 	// all static
 
@@ -49,6 +52,21 @@ public:
 	static int readBoardImages(
 		std::array<std::array<Mat_<Vec3b>, 8>, 8>& boardImages
 	);
+
+
+	// ---------- other file handling utilities ---------- //
+
+	// wrapper for imwrite to handle errors and use one naming convention over the whole project
+	static int saveImage(
+		Mat image,						// the image itself
+		std::string folder,				// the folder to put the image into
+		std::string& path,				// full path where image will be saved (output)
+		bool avoidOverwrite,			// add current date to image name, to avoid duplicates. set false for board images
+		std::string name = "image"		// actually part of image name, can be used for debug/ identification purposes
+	);
+
+	// convention for name parameter of saveImage for BOARD_FOLDER_PATH images
+	static std::string boardImageName(int row, int col);
 
 private:
 	static int clearLabeledFolder(

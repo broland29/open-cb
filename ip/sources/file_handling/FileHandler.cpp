@@ -3,6 +3,9 @@
 namespace fs = std::experimental::filesystem;
 
 
+const std::string FileHandler::EXTENSION = ".jpeg";
+
+
 int FileHandler::shuffleAndSplit(double trainSplit, double validationSplit, double testSplit)
 {
 	// don't need to open images to move them! instead std::vector<std::pair<Mat_<Vec3b>, uchar>>,
@@ -87,7 +90,8 @@ int FileHandler::clearAllImages()
 		clearLabeledFolder(TRAIN_FOLDER_PATH) +
 		clearLabeledFolder(VALIDATION_FOLDER_PATH) +
 		clearLabeledFolder(TEST_FOLDER_PATH) +
-		clearSimpleFolder(BOARD_FOLDER_PATH) != 0)
+		clearSimpleFolder(BOARD_FOLDER_PATH) + 
+		clearSimpleFolder(GRAB_FOLDER_PATH) != 0)
 	{
 		return 1;
 	}
@@ -130,7 +134,7 @@ int FileHandler::readBoardImages(std::array<std::array<Mat_<Vec3b>, 8>, 8>& boar
 	{
 		for (int j = 0; j < 8; j++)
 		{
-			std::string imagePath = BOARD_FOLDER_PATH + std::string("\\") + cellImageName(i, j);
+			std::string imagePath = BOARD_FOLDER_PATH + std::string("\\") + boardImageName(i, j) + EXTENSION;
 
 			Mat_<Vec3b> img = imread(imagePath, IMREAD_COLOR);
 			if (img.empty())
@@ -227,4 +231,44 @@ int FileHandler::clearSimpleFolder(std::string simpleFolderBasePath)
 	return 0;
 }
 
+
+int FileHandler::saveImage(Mat image, std::string folder, std::string& path, bool avoidDuplicates, std::string name)
+{
+	std::string now = "";
+	if (avoidDuplicates)  // acceptable to assume that no two saveImage operations will happen in the same millisecond
+	{
+		// https://stackoverflow.com/questions/9089842/c-chrono-system-time-in-milliseconds-time-operations
+		now = std::string("_") + std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+	}
+
+	path = folder + std::string("\\") + name + now + ".jpeg";
+	SPDLOG_TRACE("Composed path {}", path);
+
+	// imwrite and error handling
+	// https://docs.opencv.org/3.4/d4/da8/group__imgcodecs.html#gabbc7ef1aa2edfaa87772f1202d67e0ce
+	int result = false;
+	try
+	{
+		result = imwrite(path, image);
+	}
+	catch (const cv::Exception& ex)
+	{
+		SPDLOG_ERROR("Conversion for {} failed: exception {}!", path, ex.what());
+		return 1;
+	}
+
+	if (!result)
+	{
+		SPDLOG_ERROR("Saving for {} failed!", path);
+		return 2;
+	}
+
+	return 0;
+}
+
+
+std::string FileHandler::boardImageName(int row, int col)
+{
+	return "board" + std::to_string(row) + std::to_string(col);
+}
 

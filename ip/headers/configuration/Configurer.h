@@ -7,6 +7,7 @@
 #include "Filter.h"
 #include "Hough.h"
 #include "Morphological.h"
+#include "../file_handling/FileHandler.h"
 
 #include <QObject>
 #include <QMutex>
@@ -55,7 +56,7 @@ private:
 	std::shared_ptr<QMutex> imshowMutex;
 
 public:
-	Configurer(CameraSide cameraSide);
+	Configurer(CameraSide cameraSide, std::shared_ptr<QMutex> imshowMutex);
 
 	// gets the corners of the chessboard
 	int configure(

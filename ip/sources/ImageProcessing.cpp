@@ -10,8 +10,8 @@ ImageProcessing::ImageProcessing()
 	cameraHandlerLeft = new CameraHandler(leftCameraIndex);
 	cameraHandlerRight = new CameraHandler(rightCameraIndex);
 	classifier = new Classifier();
-	configurerLeft = new Configurer(CameraSide::LEFT);
-	configurerRight = new Configurer(CameraSide::RIGHT);
+	configurerLeft = new Configurer(CameraSide::LEFT, imshowMutex);
+	configurerRight = new Configurer(CameraSide::RIGHT, imshowMutex);
 }
 
 

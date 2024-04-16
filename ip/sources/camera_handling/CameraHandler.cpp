@@ -36,39 +36,13 @@ void CameraHandler::doWork()
 		isImageRequestedMutex.lock();
 		if (isImageRequested)
 		{
-			std::string path =
-				"C:\\open-cb\\mem\\get\\" +				// main folder
-				requestImagePathPrefix +				// whatever the requester wants to add to the name
-				"_cam" + std::to_string(index) +		// the camera's index
-				"_cnt" + std::to_string(count) +		// the number of image
-				".jpeg";								// extension
-			
-			// imwrite and error handling - https://docs.opencv.org/3.4/d4/da8/group__imgcodecs.html#gabbc7ef1aa2edfaa87772f1202d67e0ce
-			int result = false;
-			try
+			std::string path;
+			int ret = FileHandler::saveImage(frame, GRAB_FOLDER_PATH, path, true);  // don't care about naming, temporary anyways
+			if (ret != 0)
 			{
-				result = imwrite(path, frame);
-			}
-			catch (const cv::Exception& ex)
-			{
-				SPDLOG_ERROR("Conversion for {} failed: exception {}, camera {}!", path, ex.what(), index);
-				isImageRequested = false;
-				requestImagePathPrefix = "";
-				emit requestImageReplySignal(false, "Conversion failed!");
-				isImageRequestedMutex.unlock();
+				emit requestImageReplySignal(false, "Grabbing image failed!");
 				continue;
 			}
-
-			if (!result)
-			{
-				SPDLOG_ERROR("Saving for {} failed, camera {}!", path, index);
-				isImageRequested = false;
-				requestImagePathPrefix = "";
-				emit requestImageReplySignal(false, "Saving failed!");
-				isImageRequestedMutex.unlock();
-				continue;
-			}
-			
 			emit requestImageReplySignal(true, QString::fromLatin1(path));
 			
 			// "used up"

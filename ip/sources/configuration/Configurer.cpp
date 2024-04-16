@@ -1,9 +1,10 @@
 #include "../../headers/configuration/Configurer.h"
 
 
-Configurer::Configurer(CameraSide cameraSide)
+Configurer::Configurer(CameraSide cameraSide, std::shared_ptr<QMutex> imshowMutex)
 {
 	this->cameraSide = cameraSide;
+	this->imshowMutex = imshowMutex;
 }
 
 
@@ -224,37 +225,25 @@ int Configurer::cropAndLabel(Mat_<Vec3b> imgOriginal, std::string board[64], boo
 				rightToMain(i, j, row, col);
 			}
 
-			std::string pathCell =
-				TEMPORARY_FOLDER_PATH + std::string("\\") +		// initially put in tmp
-				board[row * 8 + col] + std::string("\\") +		// label folder
-				cellImageName(row, col);							// storage based on main coord system
-			Mat_<Vec3b> imgCell = extractCell(i, j, imgNoBorder);	// extraction based on camera's coord system
-
+			// extract based on camera's coord system (i,j), save with name based on main coord system (row,col)
+			Mat_<Vec3b> imgCell = extractCell(i, j, imgNoBorder);
 			if (isTest)
 			{
 				// corner images usually provide better overview
 				if (i == 4 && j == 0 || i == 4 && j == 7 || i == 7 && j == 0 || i == 7 && j == 7)
 				{
-					imagesAndPathsToShowIfTest.push_back(std::pair<Mat_<Vec3b>, std::string>(imgCell, pathCell));
+					imagesAndPathsToShowIfTest.push_back(std::pair<Mat_<Vec3b>, std::string>(imgCell, FileHandler::boardImageName(row, col)));
 				}
 			}
 			else
 			{
-				// imwrite and error handling - https://docs.opencv.org/3.4/d4/da8/group__imgcodecs.html#gabbc7ef1aa2edfaa87772f1202d67e0ce
-				int result = false;
-				try
+				std::string folder = TEMPORARY_FOLDER_PATH + std::string("\\") + board[row * 8 + col];
+				std::string path;
+				int ret = FileHandler::saveImage(imgCell, folder, path, true, FileHandler::boardImageName(row, col));
+				if (ret != 0)
 				{
-					result = imwrite(pathCell, imgCell);
-				}
-				catch (const cv::Exception& ex)
-				{
-					SPDLOG_ERROR("Conversion for {} failed: exception {}!", pathCell, ex.what());
+					SPDLOG_ERROR("Saving cell image {} failed!", path);
 					return 2;
-				}
-				if (!result)
-				{
-					SPDLOG_ERROR("Saving for {} failed!", pathCell);
-					return 3;
 				}
 			}
 		}
@@ -327,24 +316,15 @@ int Configurer::prepareCellImages(Mat_<Vec3b> imgOriginal)
 				rightToMain(i, j, row, col);
 			}
 
-			std::string pathCell = BOARD_FOLDER_PATH + std::string("\\") + cellImageName(row, col);		// storage based on main coord system
-			Mat_<Vec3b> imgCell = extractCell(i, j, imgNoBorder);										// extraction based on camera's coord system
 
-			// imwrite and error handling - https://docs.opencv.org/3.4/d4/da8/group__imgcodecs.html#gabbc7ef1aa2edfaa87772f1202d67e0ce
-			int result = false;
-			try
+			// extract based on camera's coord system (i,j), save with name based on main coord system (row,col)
+			Mat_<Vec3b> imgCell = extractCell(i, j, imgNoBorder);
+			std::string path;
+			int ret = FileHandler::saveImage(imgCell, BOARD_FOLDER_PATH, path, false, FileHandler::boardImageName(row, col));
+			if (ret != 0)
 			{
-				result = imwrite(pathCell, imgCell);
-			}
-			catch (const cv::Exception& ex)
-			{
-				SPDLOG_ERROR("Conversion for {} failed: exception {}!", pathCell, ex.what());
+				SPDLOG_ERROR("Saving cell image {} failed!", path);
 				return 2;
-			}
-			if (!result)
-			{
-				SPDLOG_ERROR("Saving for {} failed!", pathCell);
-				return 3;
 			}
 		}
 	}
@@ -400,10 +380,10 @@ int Configurer::warpAndRemoveBorder(Mat_<Vec3b> imgOriginal, Mat_<Vec3b>& imgWar
 	warpPerspective(imgResizedColor, imgWarped, M, Size(500, 500));
 
 	imgNoBorder = imgWarped(Rect{
-		BORDER_SIZE,						// x
-		BORDER_SIZE,						// y
-		IMAGE_WIDTH - 2 * BORDER_SIZE,		// width
-		IMAGE_HEIGHT - 2 * BORDER_SIZE		// height
+		BORDER_LEFT,								// x
+		BORDER_TOP,									// y
+		IMAGE_WIDTH - BORDER_LEFT - BORDER_RIGHT,	// width
+		IMAGE_HEIGHT - BORDER_TOP - BORDER_BOTTOM	// height
 		});
 
 	return 0;

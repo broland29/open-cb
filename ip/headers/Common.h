@@ -9,9 +9,12 @@ using namespace cv;
 
 #define IMAGE_WIDTH			500
 #define IMAGE_HEIGHT		500
-#define BORDER_SIZE         25      // 500 / 8 = 62.5 one cell (2.5 cm) -> border (1 cm) = 62.5 / 2.5 = 25
-#define CELL_WIDTH          (IMAGE_WIDTH - 2 * BORDER_SIZE) / 8
-#define CELL_HEIGHT         (IMAGE_HEIGHT - 2 * BORDER_SIZE) / 8
+#define BORDER_LEFT         53
+#define BORDER_RIGHT        50
+#define BORDER_TOP          55
+#define BORDER_BOTTOM       70
+#define CELL_WIDTH          (IMAGE_WIDTH - BORDER_RIGHT - BORDER_LEFT) / 8
+#define CELL_HEIGHT         (IMAGE_HEIGHT - BORDER_TOP - BORDER_BOTTOM) / 8
 
 
 #define PREVIEW_LEFT_PATH       "C:\\open-cb\\mem\\img\\pre\\cam_left.jpeg"
@@ -26,6 +29,7 @@ using namespace cv;
 #define VALIDATION_FOLDER_PATH      "C:\\open-cb\\mem\\img\\val"  // images for validation
 #define TEST_FOLDER_PATH            "C:\\open-cb\\mem\\img\\tst"  // images for testing
 #define BOARD_FOLDER_PATH           "C:\\open-cb\\mem\\img\\brd"  // images for actual classification (cells from one image)
+#define GRAB_FOLDER_PATH             "C:\\open-cb\\mem\\img\\grb" // images grabbed by CameraReader, but not yet used
 
 #define CNN_FOLDER_PATH             "C:\\open-cb\\mem\\cnn"
 
@@ -46,7 +50,4 @@ bool inline isInside(Mat img, int i, int j)
 }
 
 
-std::string inline cellImageName(int row, int col)
-{
-    return std::string("board") + std::to_string(row) + std::to_string(col) + std::string(".jpeg");
-}
+

@@ -1,11 +1,14 @@
 #pragma once
 
 #include "../Common.h"
+#include "../file_handling/FileHandler.h"
 
 #include <QThread>
 #include <QImage>
 #include <QMutex>
 #include <QObject>
+#include <chrono>
+#include <ctime>
 
 
 class CameraHandler : public QObject

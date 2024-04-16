@@ -23,6 +23,8 @@ find_package(GTest REQUIRED)
 
 find_package(spdlog REQUIRED)
 
+find_package(nlohmann_json REQUIRED)
+
 
 # include files
 set(IP_DIR "${CMAKE_SOURCE_DIR}/ip")
@@ -73,3 +75,5 @@ target_link_libraries(OpenCB ${OpenCV_LIBS})
 
 target_link_libraries(OpenCB spdlog::spdlog)
 #target_link_libraries(Tests spdlog::spdlog)  # since tests also contain var, dependent on spdlog
+
+target_link_libraries(OpenCB nlohmann_json::nlohmann_json)
