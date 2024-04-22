@@ -11,6 +11,6 @@ private:
 
 public:
 	LineEditParameter(std::string name);
-	std::string getValue();
+	QString getValue();
 	QWidget* getWidget();
 };

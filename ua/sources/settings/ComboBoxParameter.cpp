@@ -19,7 +19,7 @@ QWidget* ComboBoxParameter::getWidget()
 }
 
 
-std::string ComboBoxParameter::getValue()
+QString ComboBoxParameter::getValue()
 {
-	return "0";
+	return comboBox->currentText();
 }

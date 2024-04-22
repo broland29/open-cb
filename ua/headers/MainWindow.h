@@ -124,6 +124,10 @@ public slots:
     void previewImageReadySlotLeft(QImage previewImage);
     void previewImageReadySlotRight(QImage previewImage);
 
+    // delegating to dialog since inexistent at the beginning
+    void parametersChangedSlot(QVector<QString> changedSignalNames, QVector<QString> changedSignalValues);
+    void parametersChangedReplySlot(bool succeeded, QString message);
+
 signals:
     void validateMoveSignal(QString board);
     void discardMoveSignal();
@@ -143,4 +147,8 @@ signals:
     void shuffleAndSplitSignal();
     void clearAllImagesSignal();
     void changeSettingsSignal();
+
+    // delegating from dialog since inexistent at the beginning
+    void parametersChangedSignal(QVector<QString> changedSignalNames, QVector<QString> changedSignalValues);
+    void parametersChangedReplySignal(bool succeeded, QString message);
 };

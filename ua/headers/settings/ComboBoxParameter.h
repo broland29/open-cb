@@ -10,6 +10,6 @@ private:
 
 public:
 	ComboBoxParameter(std::string name, std::vector<std::string> options);
-	std::string getValue();
+	QString getValue();
 	QWidget* getWidget();
 };

@@ -9,11 +9,15 @@
 class UserApplication
 {
 public:
+	QApplication* application;
+	MainWindow* mainWindow;
+
+private:
+
+public:
 	UserApplication(int argc, char* argv[]);
 	int run();
 	static int test(int argc, char* argv[]);
 	
-	MainWindow* mainWindow;
-private:
-	QApplication* application;
+private:	
 };

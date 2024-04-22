@@ -5,6 +5,10 @@ ImageProcessing::ImageProcessing()
 {
 	utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_SILENT);
 
+	persistence = new Persistence();
+	leftCameraIndex = persistence->parameters.leftCameraIndex;
+	rightCameraIndex = persistence->parameters.rightCameraIndex;
+
 	imshowMutex = std::make_shared<QMutex>();
 
 	cameraHandlerLeft = new CameraHandler(leftCameraIndex);
@@ -265,4 +269,24 @@ void ImageProcessing::test()
 
 	imshow("img.png", img);
 	waitKey();
+}
+
+
+void ImageProcessing::parametersChangedSlot(QVector<QString> changedSignalNames, QVector<QString> changedSignalValues)
+{
+	for (int i = 0; i < changedSignalNames.size(); i++)
+	{
+		SPDLOG_TRACE("Got that {} changed to {}", changedSignalNames[i].toStdString(), changedSignalValues[i].toStdString());
+	}
+
+	emit changeClassifierReplySignal(true, "Modifications saved");
+}
+
+
+// https://stackoverflow.com/questions/8165487/how-to-do-cleaning-up-on-exit-in-qt
+void ImageProcessing::beforeQuit()
+{
+	SPDLOG_TRACE("Saving parameters");
+	persistence->save();
+	SPDLOG_TRACE("Parameters saved");
 }

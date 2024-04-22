@@ -27,6 +27,7 @@ int main(int argc, char* argv[])
 	CameraHandler* cameraHandlerLeft = imageProcessing->cameraHandlerLeft;
 	CameraHandler* cameraHandlerRight = imageProcessing->cameraHandlerRight;
 	MainWindow* mainWindow = userApplication->mainWindow;
+	QApplication* application = userApplication->application;
 
 	// create worker threads
 	QThread* imageProcessingThread = new QThread;
@@ -66,7 +67,9 @@ int main(int argc, char* argv[])
 	QObject::connect(mainWindow, &MainWindow::cropAndLabelSignal, imageProcessing, &ImageProcessing::cropAndLabelSlot);
 	QObject::connect(mainWindow, &MainWindow::shuffleAndSplitSignal, imageProcessing, &ImageProcessing::shuffleAndSplitSlot);
 	QObject::connect(mainWindow, &MainWindow::clearAllImagesSignal, imageProcessing, &ImageProcessing::clearAllImagesSlot);
-	QObject::connect(mainWindow, &MainWindow::changeSettingsSignal, imageProcessing, &ImageProcessing::changeSettingsSlot);
+	
+	QObject::connect(mainWindow, &MainWindow::parametersChangedSignal, imageProcessing, &ImageProcessing::parametersChangedSlot);
+
 
 	QObject::connect(imageProcessing, &ImageProcessing::changeClassifierReplySignal, mainWindow, &MainWindow::changeClassifierReplySlot);
 	QObject::connect(imageProcessing, &ImageProcessing::saveClassifierReplySignal, mainWindow, &MainWindow::saveClassifierReplySlot);
@@ -81,7 +84,11 @@ int main(int argc, char* argv[])
 	QObject::connect(imageProcessing, &ImageProcessing::cropAndLabelReplySignal, mainWindow, &MainWindow::cropAndLabelReplySlot);
 	QObject::connect(imageProcessing, &ImageProcessing::shuffleAndSplitReplySignal, mainWindow, &MainWindow::shuffleAndSplitReplySlot);
 	QObject::connect(imageProcessing, &ImageProcessing::clearAllImagesReplySignal, mainWindow, &MainWindow::clearAllImagesReplySlot);
-	QObject::connect(imageProcessing, &ImageProcessing::changeSettingsReplySignal, mainWindow, &MainWindow::changeSettingsReplySlot);
+	
+	QObject::connect(imageProcessing, &ImageProcessing::parametersChangedReplySignal, mainWindow, &MainWindow::parametersChangedReplySlot);
+
+
+	QObject::connect(application, &QApplication::aboutToQuit, imageProcessing, &ImageProcessing::beforeQuit, Qt::DirectConnection);  // with default Qt::QueuedConnection exits before done
 
 	// start thread
 	imageProcessing->moveToThread(imageProcessingThread);

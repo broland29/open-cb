@@ -344,8 +344,10 @@ void MainWindow::clearAllImagesButtonClicked()
 
 void MainWindow::settingsButtonClicked()
 {
-    SettingsDialog settingsDialog(this);
-    int ret = settingsDialog.exec();
+    SettingsDialog* settingsDialog = new SettingsDialog(this);
+    QObject::connect(settingsDialog, &SettingsDialog::parametersChangedSignal, this, &MainWindow::parametersChangedSlot);
+    QObject::connect(this, &MainWindow::parametersChangedReplySignal, settingsDialog, &SettingsDialog::parametersChangedReplySlot);
+    int ret = settingsDialog->exec();
     SPDLOG_TRACE("Got return value {} from settingDialog.exec()", ret);
 }
 
@@ -519,4 +521,16 @@ void MainWindow::previewImageReadySlotRight(QImage previewImage)
 {
     QPixmap pixmap = QPixmap::fromImage(previewImage);
     cameraTwoImageLabel->setPixmap(pixmap.scaled(cameraTwoImageLabel->width(), cameraTwoImageLabel->height(), Qt::KeepAspectRatio));
+}
+
+
+// ---------- delegating to dialog since inexistent at the beginning ---------- //
+void MainWindow::parametersChangedSlot(QVector<QString> changedSignalNames, QVector<QString> changedSignalValues)
+{
+    emit parametersChangedSignal(changedSignalNames, changedSignalValues);
+}
+
+void MainWindow::parametersChangedReplySlot(bool succeeded, QString message)
+{
+    emit parametersChangedReplySignal(succeeded, message);
 }

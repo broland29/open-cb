@@ -15,7 +15,7 @@ QWidget* LineEditParameter::getWidget()
 }
 
 
-std::string LineEditParameter::getValue()
+QString LineEditParameter::getValue()
 {
-	return "123";
+	return lineEdit->text();
 }

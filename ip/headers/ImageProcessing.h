@@ -1,5 +1,6 @@
 #pragma once
 
+#include "file_handling/Persistence.h"
 #include "camera_handling/CameraHandler.h"
 #include "camera_handling/SignalWaiter.h"
 #include "classification/Classifier.h"
@@ -15,9 +16,10 @@
 #include <QEventLoop>
 #include <QObject>
 #include <QVariant>
+#include <QVector>
+#include <QString>
 
-#define DEFAULT_LEFT_CAMERA_INDEX 0
-#define DEFAULT_RIGHT_CAMERA_INDEX 1
+
 
 
 class ImageProcessing : public QObject
@@ -25,12 +27,15 @@ class ImageProcessing : public QObject
 	Q_OBJECT
 
 public:
-	int leftCameraIndex = DEFAULT_LEFT_CAMERA_INDEX;
-	int rightCameraIndex = DEFAULT_RIGHT_CAMERA_INDEX;
 	CameraHandler* cameraHandlerLeft;
 	CameraHandler* cameraHandlerRight;
 
+	// parameters
+	int leftCameraIndex;
+	int rightCameraIndex;
+
 private:
+	Persistence* persistence;
 	Classifier* classifier;
 	Configurer* configurerLeft;
 	Configurer* configurerRight;
@@ -66,6 +71,8 @@ signals:
 	void clearAllImagesReplySignal(bool succeeded, QString message);
 	void changeSettingsReplySignal(bool succeeded, QString message);
 
+	void parametersChangedReplySignal(bool succeeded, QString message);
+
 public slots:
 	void changeClassifierSlot(QString newClassifierName);
 	void saveClassifierSlot(QString folderPath);
@@ -81,4 +88,8 @@ public slots:
 	void shuffleAndSplitSlot();
 	void clearAllImagesSlot();
 	void changeSettingsSlot();
+
+	void parametersChangedSlot(QVector<QString> changedSignalNames, QVector<QString> changedSignalValues);
+
+	void beforeQuit();
 };
