@@ -344,7 +344,9 @@ void MainWindow::clearAllImagesButtonClicked()
 
 void MainWindow::settingsButtonClicked()
 {
-    SPDLOG_TRACE("TODO - settings");
+    SettingsDialog settingsDialog(this);
+    int ret = settingsDialog.exec();
+    SPDLOG_TRACE("Got return value {} from settingDialog.exec()", ret);
 }
 
 void MainWindow::helpButtonClicked()

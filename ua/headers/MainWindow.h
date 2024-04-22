@@ -11,6 +11,7 @@
 #include <QCheckBox>
 #include "ClickableLabel.h"
 #include "EncodingMapper.h"
+#include "settings/SettingsDialog.h"
 
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>

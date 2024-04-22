@@ -24,8 +24,6 @@
 
 #define DEFAULT_SHOW_IMAGES				true
 #define DEFAULT_CONCAT_IMAGES			true
-#define DEFAULT_GENERATE_IMAGES			false
-#define DEFAULT_CLASSIFY				false
 
 
 

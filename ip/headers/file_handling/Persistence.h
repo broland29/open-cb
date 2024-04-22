@@ -4,8 +4,9 @@
 #include <nlohmann/json.hpp>
 
 
-struct Persistence
+class Persistence
 {
-	//int leftCameraIndex;
-	//int rightCameraIndex;
+public:
+	int leftCameraIndex;
+	int rightCameraIndex;
 };
