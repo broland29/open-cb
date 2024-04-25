@@ -342,11 +342,17 @@ void MainWindow::clearAllImagesButtonClicked()
     emit clearAllImagesSignal();
 }
 
+
 void MainWindow::settingsButtonClicked()
 {
     SettingsDialog* settingsDialog = new SettingsDialog(this);
-    QObject::connect(settingsDialog, &SettingsDialog::parametersChangedSignal, this, &MainWindow::parametersChangedSlot);
-    QObject::connect(this, &MainWindow::parametersChangedReplySignal, settingsDialog, &SettingsDialog::parametersChangedReplySlot);
+
+    // establish connections to new dialog
+    QObject::connect(settingsDialog, &SettingsDialog::setParametersSignal, this, &MainWindow::setParametersSlot);
+    QObject::connect(settingsDialog, &SettingsDialog::getParametersSignal, this, &MainWindow::getParametersSlot);
+    QObject::connect(this, &MainWindow::setParametersReplySignal, settingsDialog, &SettingsDialog::setParametersReplySlot);
+    QObject::connect(this, &MainWindow::getParametersReplySignal, settingsDialog, &SettingsDialog::getParametersReplySlot);
+
     int ret = settingsDialog->exec();
     SPDLOG_TRACE("Got return value {} from settingDialog.exec()", ret);
 }
@@ -525,12 +531,23 @@ void MainWindow::previewImageReadySlotRight(QImage previewImage)
 
 
 // ---------- delegating to dialog since inexistent at the beginning ---------- //
-void MainWindow::parametersChangedSlot(QVector<QString> changedSignalNames, QVector<QString> changedSignalValues)
+void MainWindow::setParametersReplySlot(bool succeeded, QString message)
 {
-    emit parametersChangedSignal(changedSignalNames, changedSignalValues);
+    emit setParametersReplySignal(succeeded, message);
 }
 
-void MainWindow::parametersChangedReplySlot(bool succeeded, QString message)
+void MainWindow::getParametersReplySlot(QVector<QString> names, QVector<QString> values)
 {
-    emit parametersChangedReplySignal(succeeded, message);
+    emit getParametersReplySignal(names, values);
+}
+
+void MainWindow::setParametersSlot(QVector<QString> names, QVector<QString> values)
+{
+    emit setParametersSignal(names, values);
+}
+
+void MainWindow::getParametersSlot(QVector<QString> names)
+{
+    SPDLOG_INFO("here");
+    emit getParametersSignal(names);
 }

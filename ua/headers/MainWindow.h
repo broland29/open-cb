@@ -125,8 +125,10 @@ public slots:
     void previewImageReadySlotRight(QImage previewImage);
 
     // delegating to dialog since inexistent at the beginning
-    void parametersChangedSlot(QVector<QString> changedSignalNames, QVector<QString> changedSignalValues);
-    void parametersChangedReplySlot(bool succeeded, QString message);
+    void setParametersReplySlot(bool succeeded, QString message);
+    void getParametersReplySlot(QVector<QString> names, QVector<QString> values);
+    void setParametersSlot(QVector<QString> names, QVector<QString> values);
+    void getParametersSlot(QVector<QString> names);
 
 signals:
     void validateMoveSignal(QString board);
@@ -149,6 +151,8 @@ signals:
     void changeSettingsSignal();
 
     // delegating from dialog since inexistent at the beginning
-    void parametersChangedSignal(QVector<QString> changedSignalNames, QVector<QString> changedSignalValues);
-    void parametersChangedReplySignal(bool succeeded, QString message);
+    void setParametersSignal(QVector<QString> names, QVector<QString> values);
+    void getParametersSignal(QVector<QString> names);
+    void setParametersReplySignal(bool succeeded, QString message);
+    void getParametersReplySignal(QVector<QString> names, QVector<QString> values);
 };

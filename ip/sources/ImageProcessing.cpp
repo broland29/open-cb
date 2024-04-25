@@ -5,9 +5,8 @@ ImageProcessing::ImageProcessing()
 {
 	utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_SILENT);
 
-	persistence = new Persistence();
-	leftCameraIndex = persistence->parameters.leftCameraIndex;
-	rightCameraIndex = persistence->parameters.rightCameraIndex;
+	ParametersHandler::loadFromJSON(parameters);
+	setParameters();  // important, to fill with valid values
 
 	imshowMutex = std::make_shared<QMutex>();
 
@@ -16,6 +15,14 @@ ImageProcessing::ImageProcessing()
 	classifier = new Classifier();
 	configurerLeft = new Configurer(CameraSide::LEFT, imshowMutex);
 	configurerRight = new Configurer(CameraSide::RIGHT, imshowMutex);
+}
+
+
+void ImageProcessing::setParameters()
+{
+	leftCameraIndex = get<int>(parameters.parameters["leftCameraIndex"]);
+	rightCameraIndex = get<int>(parameters.parameters["rightCameraIndex"]);
+	// TODO cont
 }
 
 
@@ -272,14 +279,29 @@ void ImageProcessing::test()
 }
 
 
-void ImageProcessing::parametersChangedSlot(QVector<QString> changedSignalNames, QVector<QString> changedSignalValues)
+void ImageProcessing::setParametersSlot(QVector<QString> names, QVector<QString> values)
 {
-	for (int i = 0; i < changedSignalNames.size(); i++)
+	if (names.length() != values.length())
 	{
-		SPDLOG_TRACE("Got that {} changed to {}", changedSignalNames[i].toStdString(), changedSignalValues[i].toStdString());
+		SPDLOG_ERROR("Size mismatch");
+		return;
 	}
 
-	emit changeClassifierReplySignal(true, "Modifications saved");
+	parameters.setValues(names, values);
+	// todo - make it have effect on program
+
+	emit setParametersReplySignal(true, "Modifications saved");
+}
+
+
+void ImageProcessing::getParametersSlot(QVector<QString> names)
+{
+	ParametersHandler::loadFromJSON(parameters);
+
+	QVector<QString> values(names.size());
+	parameters.getValues(names, values);
+	
+	emit getParametersReplySignal(names, values);
 }
 
 
@@ -287,6 +309,6 @@ void ImageProcessing::parametersChangedSlot(QVector<QString> changedSignalNames,
 void ImageProcessing::beforeQuit()
 {
 	SPDLOG_TRACE("Saving parameters");
-	persistence->save();
+	ParametersHandler::saveToJSON(parameters);
 	SPDLOG_TRACE("Parameters saved");
 }

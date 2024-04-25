@@ -35,6 +35,9 @@ using namespace cv;
 
 #define CLASS_COUNT 14
 
+#define JSON_PATH                   "C:\\open-cb\\mem\\per\\persistence.json"              
+
+
 // "Standard behavior: Windows file system treats file and directory names as case-insensitive"
 //  so, unfortunately, cannot use P and p, must use WP and BP
 static inline std::string labelFolders[] =

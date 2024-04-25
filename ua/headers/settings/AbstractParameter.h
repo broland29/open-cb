@@ -2,14 +2,16 @@
 #include <string>
 #include <QWidget>
 #include <QString>
+#include <spdlog/spdlog.h>
 
 
 class AbstractParameter
 {
 public:
-	std::string name;
+	QString labelText;
 
 public:
 	virtual QString getValue() = 0;
+	virtual void setValue(QString value) = 0;
 	virtual QWidget* getWidget() = 0;
 };

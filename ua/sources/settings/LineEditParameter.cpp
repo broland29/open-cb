@@ -1,9 +1,9 @@
 #include "../../headers/settings/LineEditParameter.h"
 
 
-LineEditParameter::LineEditParameter(std::string name)
+LineEditParameter::LineEditParameter(QString labelText)
 {
-	this->name = name;
+	this->labelText = labelText;
 
 	lineEdit = new QLineEdit();
 }
@@ -18,4 +18,10 @@ QWidget* LineEditParameter::getWidget()
 QString LineEditParameter::getValue()
 {
 	return lineEdit->text();
+}
+
+
+void LineEditParameter::setValue(QString value)
+{
+	lineEdit->setText(value);
 }

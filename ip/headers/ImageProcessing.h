@@ -1,6 +1,6 @@
 #pragma once
 
-#include "file_handling/Persistence.h"
+#include "file_handling/ParametersHandler.h"
 #include "camera_handling/CameraHandler.h"
 #include "camera_handling/SignalWaiter.h"
 #include "classification/Classifier.h"
@@ -35,7 +35,7 @@ public:
 	int rightCameraIndex;
 
 private:
-	Persistence* persistence;
+	Parameters parameters;
 	Classifier* classifier;
 	Configurer* configurerLeft;
 	Configurer* configurerRight;
@@ -54,6 +54,7 @@ private:
 	int getImage(SignalWaiter* signalWaiter, Mat_<Vec3b>& img);
 	void configure(bool isTest);
 	void cropAndLabel(std::string board[64], bool isTest);
+	void setParameters();
 
 signals:
 	void changeClassifierReplySignal(bool succeeded, QString message);
@@ -71,7 +72,8 @@ signals:
 	void clearAllImagesReplySignal(bool succeeded, QString message);
 	void changeSettingsReplySignal(bool succeeded, QString message);
 
-	void parametersChangedReplySignal(bool succeeded, QString message);
+	void setParametersReplySignal(bool succeeded, QString message);
+	void getParametersReplySignal(QVector<QString> names, QVector<QString> values);
 
 public slots:
 	void changeClassifierSlot(QString newClassifierName);
@@ -89,7 +91,8 @@ public slots:
 	void clearAllImagesSlot();
 	void changeSettingsSlot();
 
-	void parametersChangedSlot(QVector<QString> changedSignalNames, QVector<QString> changedSignalValues);
+	void setParametersSlot(QVector<QString> names, QVector<QString> values);
+	void getParametersSlot(QVector<QString> names);
 
 	void beforeQuit();
 };

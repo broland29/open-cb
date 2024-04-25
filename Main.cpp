@@ -68,7 +68,8 @@ int main(int argc, char* argv[])
 	QObject::connect(mainWindow, &MainWindow::shuffleAndSplitSignal, imageProcessing, &ImageProcessing::shuffleAndSplitSlot);
 	QObject::connect(mainWindow, &MainWindow::clearAllImagesSignal, imageProcessing, &ImageProcessing::clearAllImagesSlot);
 	
-	QObject::connect(mainWindow, &MainWindow::parametersChangedSignal, imageProcessing, &ImageProcessing::parametersChangedSlot);
+	QObject::connect(mainWindow, &MainWindow::setParametersSignal, imageProcessing, &ImageProcessing::setParametersSlot);
+	QObject::connect(mainWindow, &MainWindow::getParametersSignal, imageProcessing, &ImageProcessing::getParametersSlot);
 
 
 	QObject::connect(imageProcessing, &ImageProcessing::changeClassifierReplySignal, mainWindow, &MainWindow::changeClassifierReplySlot);
@@ -85,7 +86,8 @@ int main(int argc, char* argv[])
 	QObject::connect(imageProcessing, &ImageProcessing::shuffleAndSplitReplySignal, mainWindow, &MainWindow::shuffleAndSplitReplySlot);
 	QObject::connect(imageProcessing, &ImageProcessing::clearAllImagesReplySignal, mainWindow, &MainWindow::clearAllImagesReplySlot);
 	
-	QObject::connect(imageProcessing, &ImageProcessing::parametersChangedReplySignal, mainWindow, &MainWindow::parametersChangedReplySlot);
+	QObject::connect(imageProcessing, &ImageProcessing::setParametersReplySignal, mainWindow, &MainWindow::setParametersReplySlot);
+	QObject::connect(imageProcessing, &ImageProcessing::getParametersReplySignal, mainWindow, &MainWindow::getParametersReplySlot);
 
 
 	QObject::connect(application, &QApplication::aboutToQuit, imageProcessing, &ImageProcessing::beforeQuit, Qt::DirectConnection);  // with default Qt::QueuedConnection exits before done

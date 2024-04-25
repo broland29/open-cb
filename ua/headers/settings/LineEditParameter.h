@@ -10,7 +10,8 @@ private:
 	QLineEdit* lineEdit;
 
 public:
-	LineEditParameter(std::string name);
+	LineEditParameter(QString labelText);
 	QString getValue();
+	void setValue(QString value);
 	QWidget* getWidget();
 };

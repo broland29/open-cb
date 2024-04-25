@@ -11,6 +11,7 @@
 #include "AbstractParameter.h"
 #include "ComboBoxParameter.h"
 #include "LineEditParameter.h"
+#include <iterator>
 
 #include <spdlog/spdlog.h>
 
@@ -26,32 +27,29 @@ class SettingsDialog : public QDialog
 
 public:
 
-private:
-	const int columns = 3;
-	
-	std::vector<AbstractParameter*> visualizationParameters;
-	std::vector<AbstractParameter*> cameraParameters;
-	std::vector<AbstractParameter*> configurationParameters;
-	std::vector<AbstractParameter*> classificationParameters;
-	std::vector<AbstractParameter*> pathParameters;
+private:	
+	std::map<QString, AbstractParameter*> parameterWidgets;
 
 	QLabel* messageLabel;
 
 	QPushButton* saveButton;
+	QPushButton* refreshButton;
 	QPushButton* cancelButton;
 
 public:
 	SettingsDialog(QWidget* patent);
 
 private:
-	QWidget* wrapParameters(std::vector<AbstractParameter*> parameters);
+	QWidget* wrapParameters(std::vector<AbstractParameter*> parameters, int columns = 3);
 
 public slots:
 	void saveButtonClicked();
+	void refreshButtonClicked();
 	void cancelButtonClicked();
 
-	void parametersChangedReplySlot(bool succeeded, QString message);
-
+	void setParametersReplySlot(bool succeeded, QString message);
+	void getParametersReplySlot(QVector<QString> names, QVector<QString> values);
 signals:
-	void parametersChangedSignal(QVector<QString> changedSignalNames, QVector<QString> changedSignalValues);
+	void setParametersSignal(QVector<QString> names, QVector<QString> values);
+	void getParametersSignal(QVector<QString> names);
 };

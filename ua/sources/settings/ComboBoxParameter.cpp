@@ -1,14 +1,14 @@
 #include "../../headers/settings/ComboBoxParameter.h"
 
 
-ComboBoxParameter::ComboBoxParameter(std::string name, std::vector<std::string> options)
+ComboBoxParameter::ComboBoxParameter(QString labelText, std::vector<QString> options)
 {
-	this->name = name;
+	this->labelText = labelText;
 
 	comboBox = new QComboBox();
-	for (std::string option : options)
+	for (QString option : options)
 	{
-		comboBox->addItem(option.c_str());
+		comboBox->addItem(option);
 	}
 }
 
@@ -22,4 +22,15 @@ QWidget* ComboBoxParameter::getWidget()
 QString ComboBoxParameter::getValue()
 {
 	return comboBox->currentText();
+}
+
+
+void ComboBoxParameter::setValue(QString value)
+{
+	if (comboBox->findText(value) == -1)
+	{
+		SPDLOG_ERROR("Value {} is not a valid option for {}", value.toStdString(), labelText.toStdString());
+		return;
+	}
+	comboBox->setCurrentText(value);
 }

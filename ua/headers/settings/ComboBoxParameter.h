@@ -9,7 +9,8 @@ private:
 	QComboBox* comboBox;
 
 public:
-	ComboBoxParameter(std::string name, std::vector<std::string> options);
+	ComboBoxParameter(QString labelText, std::vector<QString> options);
 	QString getValue();
+	void setValue(QString value);
 	QWidget* getWidget();
 };

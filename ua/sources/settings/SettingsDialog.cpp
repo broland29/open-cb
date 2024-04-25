@@ -3,37 +3,58 @@
 
 SettingsDialog::SettingsDialog(QWidget* parent)
 {
-	// define parameters
-	visualizationParameters = std::vector<AbstractParameter*>{
-		new ComboBoxParameter("Show images", std::vector<std::string>{"True", "False"}),
-		new ComboBoxParameter("Concat images", std::vector<std::string>{"True", "False"}),
+	// define all widgets for parameters. key is internal/JSON name
+	parameterWidgets = std::map<QString, AbstractParameter*> {
+		{ "showImages", new ComboBoxParameter("Show images", std::vector<QString>{"True", "False"}) },
+		{ "concatImages", new ComboBoxParameter("Concat images", std::vector<QString>{"True", "False"}) },
+		{ "leftCameraIndex", new LineEditParameter("Left camera index") },
+		{ "rightCameraIndex", new LineEditParameter("Right camera index") },
+		{ "borderTop", new LineEditParameter("Border top") },
+		{ "borderRight", new LineEditParameter("Border right") },
+		{ "borderBottom", new LineEditParameter("Border bottom") },
+		{ "borderLeft", new LineEditParameter("Border left") },
+		{ "imageWidth", new LineEditParameter("Image width") },
+		{ "imageHeight", new LineEditParameter("Image height") },
+		{ "binaryThreshold", new LineEditParameter("Binary Threshold") },
+		{ "closingSize", new LineEditParameter("Closing size") },
+		{ "houghRo", new LineEditParameter("Hough ro") },
+		{ "houghTheta", new LineEditParameter("Hough theta") },
+		{ "houghWindowSize", new LineEditParameter("Hough window size") },
+		{ "houghNoOfLines", new LineEditParameter("Hough no of lines") },
+		{ "KNN", new LineEditParameter("KNN") },
+		{ "SVM", new LineEditParameter("SVM") },
+		{ "CNN", new LineEditParameter("CNN") },
 	};
-	cameraParameters = std::vector<AbstractParameter*>{
-		new LineEditParameter("Left camera index"),
-		new LineEditParameter("Right camera index")
+
+	// put widgets in separate containers to use utility function wrapParameters
+	std::vector<AbstractParameter*> visualizationParameters = {
+		parameterWidgets["showImages"],
+		parameterWidgets["concatImages"],
 	};
-	configurationParameters = std::vector<AbstractParameter*>{
-		new LineEditParameter("Border top"),
-		new LineEditParameter("Border right"),
-		new LineEditParameter("Border bottom"),
-		new LineEditParameter("Border left"),
-		new LineEditParameter("Image width"),
-		new LineEditParameter("Image height"),
-		new LineEditParameter("Binary Threshold"),
-		new LineEditParameter("Closing size"),
-		new LineEditParameter("Hough ro"),
-		new LineEditParameter("Hough theta"),
-		new LineEditParameter("Hough window size"),
-		new LineEditParameter("Hough no of lines")
+	std::vector<AbstractParameter*> cameraParameters = {
+		parameterWidgets["leftCameraIndex"],
+		parameterWidgets["rightCameraIndex"],
 	};
-	classificationParameters = std::vector<AbstractParameter*>{
-		new LineEditParameter("KNN"),
-		new LineEditParameter("SVM"),
-		new LineEditParameter("CNN")
+	std::vector<AbstractParameter*> configurationParameters = {
+		parameterWidgets["borderTop"],
+		parameterWidgets["borderRight"],
+		parameterWidgets["borderBottom"],
+		parameterWidgets["borderLeft"],
+		parameterWidgets["imageWidth"],
+		parameterWidgets["imageHeight"],
+		parameterWidgets["binaryThreshold"],
+		parameterWidgets["closingSize"],
+		parameterWidgets["houghRo"],
+		parameterWidgets["houghTheta"],
+		parameterWidgets["houghWindowSize"],
+		parameterWidgets["houghNoOfLines"],
 	};
-	pathParameters = std::vector<AbstractParameter*>{
-		new LineEditParameter("Images path")
+	std::vector<AbstractParameter*> classificationParameters = {
+		parameterWidgets["KNN"],
+		parameterWidgets["SVM"],
+		parameterWidgets["CNN"],
 	};
+
 
 	setWindowTitle("Settings");
 	QLayout* centralLayout = new QVBoxLayout(this);
@@ -46,8 +67,6 @@ SettingsDialog::SettingsDialog(QWidget* parent)
 	centralLayout->addWidget(wrapParameters(configurationParameters));
 	centralLayout->addWidget(new QLabel("Classification parameters:"));
 	centralLayout->addWidget(wrapParameters(classificationParameters));
-	centralLayout->addWidget(new QLabel("Path parameters:"));
-	centralLayout->addWidget(wrapParameters(pathParameters));
 
 	messageLabel = new QLabel("Message will appear here");
 	centralLayout->addWidget(messageLabel);
@@ -55,12 +74,15 @@ SettingsDialog::SettingsDialog(QWidget* parent)
 	QWidget* buttonWidget = new QWidget();
 	QHBoxLayout* buttonLayout = new QHBoxLayout(buttonWidget);
 	saveButton = new QPushButton("Save");
+	refreshButton = new QPushButton("Refresh");
 	cancelButton = new QPushButton("Cancel");
 	buttonLayout->addWidget(saveButton);
+	buttonLayout->addWidget(refreshButton);
 	buttonLayout->addWidget(cancelButton);
 	centralLayout->addWidget(buttonWidget);
 
 	QObject::connect(saveButton, &QPushButton::clicked, this, &SettingsDialog::saveButtonClicked);
+	QObject::connect(refreshButton, &QPushButton::clicked, this, &SettingsDialog::refreshButtonClicked);
 	QObject::connect(cancelButton, &QPushButton::clicked, this, &SettingsDialog::cancelButtonClicked);
 }
 
@@ -71,7 +93,7 @@ void loadParameters()
 }
 
 
-QWidget* SettingsDialog::wrapParameters(std::vector<AbstractParameter*> parameters)
+QWidget* SettingsDialog::wrapParameters(std::vector<AbstractParameter*> parameters, int columns)
 {
 	QWidget* widget = new QWidget();
 	QGridLayout* layout = new QGridLayout(widget);
@@ -81,7 +103,7 @@ QWidget* SettingsDialog::wrapParameters(std::vector<AbstractParameter*> paramete
 
 	for (int i = 0; i < parameters.size(); i++)
 	{
-		QLabel* label = new QLabel(parameters[i]->name.c_str());
+		QLabel* label = new QLabel(parameters[i]->labelText);
 
 		layout->addWidget(label, row, column * 2);
 		layout->addWidget(parameters[i]->getWidget(), row, column * 2 + 1);
@@ -98,41 +120,72 @@ QWidget* SettingsDialog::wrapParameters(std::vector<AbstractParameter*> paramete
 }
 
 
-void logParameters(std::vector<AbstractParameter*> parameters)
-{
-	for (AbstractParameter* parameter : parameters)
-	{
-		SPDLOG_TRACE("{}:{}", parameter->name, parameter->getValue().toStdString());
-	}
-	SPDLOG_TRACE("");
-}
-
 void SettingsDialog::saveButtonClicked()
 {
-	SPDLOG_TRACE("Parameters saved are:");
-	logParameters(visualizationParameters);
-	logParameters(cameraParameters);
-	logParameters(configurationParameters);
-	logParameters(classificationParameters);
-	logParameters(pathParameters);
+	QVector<QString> names;
+	QVector<QString> values;
 
-	QVector<QString> changedSignalNames;
-	QVector<QString> changedSignalValues;
-	changedSignalNames.push_back("leftCameraIndex");
-	changedSignalValues.push_back(cameraParameters[0]->getValue());
-	changedSignalNames.push_back("rightCameraIndex");
-	changedSignalValues.push_back(cameraParameters[1]->getValue());
+	names.push_back("leftCameraIndex");
+	values.push_back(parameterWidgets["leftCameraIndex"]->getValue());
+	names.push_back("rightCameraIndex");
+	values.push_back(parameterWidgets["rightCameraIndex"]->getValue());
 
-	emit parametersChangedSignal(changedSignalNames, changedSignalValues);
+	if (names.size() != values.size())
+	{
+		SPDLOG_ERROR("Size mismatch");
+		return;
+	}
+
+	SPDLOG_TRACE("Sending parameters:");
+	for (int i = 0; i < names.size(); i++)
+	{
+		SPDLOG_TRACE("{}:{}", names[i].toStdString(), values[i].toStdString());
+	}
+
+	emit setParametersSignal(names, values);
 }
 
-void SettingsDialog::parametersChangedReplySlot(bool succeeded, QString message)
+
+void SettingsDialog::refreshButtonClicked()
 {
-	messageLabel->setText(message);
+	QVector<QString> names;
+	names.push_back("leftCameraIndex");
+	names.push_back("rightCameraIndex");
+	emit getParametersSignal(names);
 }
 
 
 void SettingsDialog::cancelButtonClicked()
 {
-
+	done(0);
 }
+
+
+void SettingsDialog::setParametersReplySlot(bool succeeded, QString message)
+{
+	messageLabel->setText(message);
+}
+
+
+
+
+
+void SettingsDialog::getParametersReplySlot(QVector<QString> names, QVector<QString> values)
+{
+	if (names.length() != values.length())
+	{
+		SPDLOG_ERROR("Size mismatch");
+		return;
+	}
+
+	for (int i = 0; i < names.size(); i++)
+	{
+		if (parameterWidgets.find(names[i]) == parameterWidgets.end())
+		{
+			SPDLOG_ERROR("Widget with name {} not found", names[i].toStdString());
+			continue;
+		}
+		parameterWidgets[names[i]]->setValue(values[i]);
+	}
+}
+
