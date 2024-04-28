@@ -172,11 +172,12 @@ int getFeatureMatrixFromImages(std::vector<Mat_<Vec3b>> originalImages, Mat_<flo
 
 int SupportVectorMachine::train()
 {
+	/*
 	const bool visualizeOnly = true;  // only do steps on one image from each class, or on whole train set
 	const bool visualize = true;  // show images with steps
 
 	// get train images
-	std::vector<std::pair<Mat_<Vec3b>, uchar>> imagesAndLabels;
+	std::vector<std::pair<Mat_<Vec3b>, QString>> imagesAndLabels;
 	if (FileHandler::readLabelFolderImages(TRAIN_FOLDER_PATH, imagesAndLabels) != 0)
 	{
 		return 1;
@@ -240,13 +241,14 @@ int SupportVectorMachine::train()
 	{
 		waitKey();
 	}
-
+	*/
 	return 0;
 }
 
 
 int SupportVectorMachine::test()
 {
+	/*
 	const bool visualizeOnly = true;  // only do steps on one image from each class, or on whole train set
 	const bool visualize = true;  // show images with steps
 
@@ -301,25 +303,26 @@ int SupportVectorMachine::test()
 		std::cout << std::endl;
 		std::cout << "Precision: " << precision << std::endl;
 	}
-
+	*/
 	return 0;
 }
 
 
-std::string SupportVectorMachine::classifyBoard()
+int SupportVectorMachine::classifyBoard(QVector<QString>& encodings)
 {
+	/*
 	// check if valid call
 	if (!svm)
 	{
 		SPDLOG_ERROR("No SVM found, call train first");
-		return "";
+		return 1;
 	}
 
 	// read cell images
 	std::array<std::array<Mat_<Vec3b>, 8>, 8> boardImages;
 	if (FileHandler::readBoardImages(boardImages) != 0)
 	{
-		return "";
+		return 2;
 	}
 
 	// need a flattened version to pass to getFeatureMatrixFromImages
@@ -336,23 +339,23 @@ std::string SupportVectorMachine::classifyBoard()
 	if (getFeatureMatrixFromImages(originalImages, X, false) != 0)
 	{
 		SPDLOG_ERROR("Error getting features");
-		return "";
+		return 3;
 	}
 
 	Mat_<int> results;  // predicted labels
 	svm->predict(X, results);
 
 	// compose encoding by successive classifications
-	std::string boardEncodings(64, ' ');
+	encodings.resize(64);
 	for (int i = 0; i < 8; i++)
 	{
 		for (int j = 0; j < 8; j++)
 		{
-			boardEncodings[i * 8 + j] = static_cast<char>(results(i * 8 + j, 0));  // will change most probably
+			encodings[i * 8 + j] = QChar::fromLatin1(results(i * 8 + j, 0));  // will change most probably TODO
 		}
 	}
-
-	return boardEncodings;
+	*/
+	return 0;
 }
 
 

@@ -26,13 +26,13 @@ void ClickableLabel::mousePressEvent(QMouseEvent* event)
     }
 }
 
-void ClickableLabel::setPiece(std::string pieceName, QPixmap piecePixmap)
+void ClickableLabel::setPiece(QString pieceName, QPixmap piecePixmap)
 {
     this->pieceName = pieceName;
     this->setPixmap(piecePixmap);
 }
 
-std::string ClickableLabel::getPieceName()
+QString ClickableLabel::getPieceName()
 {
     return pieceName;
 }

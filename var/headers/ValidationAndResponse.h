@@ -2,6 +2,8 @@
 
 #include "Validator.h"
 #include <iostream>
+#include <QVector>
+#include <QString>
 
 
 // shall not contain pointer fields since shallow copy used in validateBoard
@@ -17,11 +19,11 @@ private:
 
 signals:
 	void validateMoveReplySignal(bool succeeded, QString message);
-	void discardMoveReplySignal(bool succeeded, QString message);
+	void discardMoveReplySignal(bool succeeded, QString message, QVector<QString> encodings);
 	void newGameReplySignal(bool succeeded, QString message);
 
 public slots:
-	void validateMoveSlot(QString board);
+	void validateMoveSlot(QVector<QString> encodings);
 	void discardMoveSlot();
 	void newGameSlot();
 };

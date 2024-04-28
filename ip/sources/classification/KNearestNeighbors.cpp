@@ -6,12 +6,13 @@
 KNearestNeighbors::KNearestNeighbors(int k)
 {
     this->k = k;
+    trained = false;
 }
 
 
 int KNearestNeighbors::train()
 {
-    std::vector<std::pair<Mat_<Vec3b>, uchar>> trainImages;
+    std::vector<std::pair<Mat_<Vec3b>, QString>> trainImages;
     if (FileHandler::readLabelFolderImages(TRAIN_FOLDER_PATH, trainImages) != 0)
     {
         return 1;
@@ -28,7 +29,7 @@ int KNearestNeighbors::train()
     for (auto const& pair : trainImages)
     {
         Mat_<Vec3b> image = pair.first;  // vector of images
-        uchar label = pair.second;
+        uchar label = externalToInternal(pair.second);
 
         Mat_<double> feature = getFeatureHistogram(image);
         X.push_back(feature);
@@ -44,25 +45,38 @@ int KNearestNeighbors::train()
 
     // --- train --- //
     // KNN does not require training
+
+    trained = true;
+    return 0;
 }
 
 
 int KNearestNeighbors::test()
 {
-    std::vector<std::pair<Mat_<Vec3b>, uchar>> testImages;
+    if (!trained)
+    {
+        SPDLOG_ERROR("Should train first");
+        return 1;
+    }
+
+    std::vector<std::pair<Mat_<Vec3b>, QString>> testImages;
     if (FileHandler::readLabelFolderImages(TEST_FOLDER_PATH, testImages) != 0)
     {
         return 1;
     }
 
     SPDLOG_TRACE("First five test labels: {} {} {} {} {}",
-        testImages[0].second, testImages[1].second, testImages[2].second, testImages[3].second, testImages[4].second);
+        testImages[0].second.toStdString(),
+        testImages[1].second.toStdString(),
+        testImages[2].second.toStdString(),
+        testImages[3].second.toStdString(),
+        testImages[4].second.toStdString());
 
     Mat_<double> confusionMatrix(CLASS_COUNT, CLASS_COUNT, 0.0);  // row: predicted class  col: actual class
     for (auto const& pair : testImages)
     {
         Mat_<Vec3b> img = pair.first;		// vector of images
-        uchar actualClass = pair.second;	// class
+        uchar actualClass = externalToInternal(pair.second);	// class
         uchar predictedClass = classify(img);
 
         confusionMatrix(actualClass, predictedClass)++;  // works since classes encoded 0-13
@@ -98,26 +112,32 @@ int KNearestNeighbors::test()
 }
 
 
-std::string KNearestNeighbors::classifyBoard()
+int KNearestNeighbors::classifyBoard(QVector<QString>& encodings)
 {
+    if (!trained)
+    {
+        SPDLOG_ERROR("Should train first");
+        return 1;
+    }
+
     // read cell images
     std::array<std::array<Mat_<Vec3b>, 8>, 8> boardImages;
     if (FileHandler::readBoardImages(boardImages) != 0)
     {
-        return "";
+        return 2;
     }
 
-    // compose encoding by successive classifications
-    std::string boardEncodings(64, ' ');
+    // compose encodings by successive classifications
+    encodings.resize(64);
     for (int i = 0; i < 8; i++)
     {
         for (int j = 0; j < 8; j++)
         {
-            boardEncodings[i * 8 + j] = classify(boardImages[i][j]);
+            encodings[i * 8 + j] = internalToExternal(classify(boardImages[i][j]));
         }
     }
 
-    return boardEncodings;
+    return 0;
 }
 
 
@@ -219,4 +239,30 @@ Mat_<double> KNearestNeighbors::getFeatureHistogram(Mat_<Vec3b> img)
     }
 
     return feature;
+}
+
+
+uchar KNearestNeighbors::externalToInternal(QString encoding)
+{
+    for (int i = 0; i < ENCODINGS.size(); i++)
+    {
+        if (encoding == ENCODINGS[i])
+        {
+            return i;
+        }
+    }
+
+    SPDLOG_ERROR("Could not convert {}", encoding.toStdString());
+    return 0;
+}
+
+
+QString KNearestNeighbors::internalToExternal(uchar encoding)
+{
+    if (encoding < 0 || encoding >= ENCODINGS.size())
+    {
+        SPDLOG_ERROR("Could not convert {}", encoding);
+        return ENCODINGS[0];
+    }
+    return ENCODINGS[encoding];
 }

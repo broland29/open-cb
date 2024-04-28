@@ -66,8 +66,7 @@ MainWindow::MainWindow(QWidget* parent) :
 
     for (auto pieceName : pieceNames)
     {
-        char resourcePath[256];
-        sprintf(resourcePath, ":pieceImages/%s.png", pieceName.c_str());
+        QString resourcePath = ":pieceImages/" + pieceName + ".png";
         QPixmap piecePixmap;
         if (!piecePixmap.load(resourcePath))
         {
@@ -223,22 +222,18 @@ void MainWindow::setInitialSetup()
     pieceLabels[7][7]->setPiece("WR", nameToPixmap["WR"]);
 }
 
-QString MainWindow::getBoardFromChessGUI()
+QVector<QString> MainWindow::getEncodingsFromChessGUI()
 {
-    QString board;
-    board.resize(64);
+    QVector<QString> encodings;
+    encodings.resize(64);
     for (int i = 0; i < 8; i++)
     {
         for (int j = 0; j < 8; j++)
         {
-            std::string enc = pieceLabels[i][j]->getPieceName();
-
-            char c;
-            EncodingMapper::map(enc, c);
-            board[i * 8 + j] = c;
+            encodings[i * 8 + j] = pieceLabels[i][j]->getPieceName();
         }
     }
-    return board;
+    return encodings;
 }
 
 
@@ -246,9 +241,9 @@ QString MainWindow::getBoardFromChessGUI()
 
 void MainWindow::validateMoveButtonClicked()
 {
-    QString board = getBoardFromChessGUI();
-    SPDLOG_TRACE("Emitting validateMoveSignal with {}", board);
-    emit validateMoveSignal(board);
+    QVector<QString> encodings = getEncodingsFromChessGUI();
+    SPDLOG_TRACE("Emitting validateMoveSignal");
+    emit validateMoveSignal(encodings);
 }
 
 void MainWindow::discardMoveButtonClicked()
@@ -318,14 +313,14 @@ void MainWindow::configureButtonClicked()
 
 void MainWindow::testCropAndLabelButtonClicked()
 {
-    QString board = getBoardFromChessGUI();
+    QVector<QString> board = getEncodingsFromChessGUI();
     SPDLOG_TRACE("Emitting testCropAndLabelSignal");
     emit testCropAndLabelSignal(board);
 }
 
 void MainWindow::cropAndLabelButtonClicked()
 {
-    QString board = getBoardFromChessGUI();
+    QVector<QString> board = getEncodingsFromChessGUI();
     SPDLOG_TRACE("Emitting cropAndLabelSignal");
     emit cropAndLabelSignal(board);
 }
@@ -353,6 +348,12 @@ void MainWindow::settingsButtonClicked()
     QObject::connect(this, &MainWindow::setParametersReplySignal, settingsDialog, &SettingsDialog::setParametersReplySlot);
     QObject::connect(this, &MainWindow::getParametersReplySignal, settingsDialog, &SettingsDialog::getParametersReplySlot);
 
+    // fill values
+    QVector<QString> names;
+    names.push_back("leftCameraIndex");
+    names.push_back("rightCameraIndex");
+    getParametersSignal(names);
+
     int ret = settingsDialog->exec();
     SPDLOG_TRACE("Got return value {} from settingDialog.exec()", ret);
 }
@@ -370,15 +371,13 @@ void MainWindow::validateMoveReplySlot(bool succeeded, QString message)
     messageLabel->setText(message);
 }
 
-void MainWindow::discardMoveReplySlot(bool succeeded, QString message)
+void MainWindow::discardMoveReplySlot(bool succeeded, QString message, QVector<QString> encodings)
 {
-    messageLabel->setText("Got board: " + message);
+    messageLabel->setText(message);
 
     for (int i = 0; i < 64; i++)
     {
-        std::string encoding;
-        EncodingMapper::map(message.at(i), encoding);
-        pieceLabels[i / 8][i % 8]->setPiece(encoding, nameToPixmap[encoding]);
+        pieceLabels[i / 8][i % 8]->setPiece(encodings[i], nameToPixmap[encodings[i]]);
     }
 }
 
@@ -417,16 +416,20 @@ void MainWindow::testClassifierReplySlot(bool succeeded, QString message)
     messageLabel->setText(message);
 }
 
-void MainWindow::classifyBoardReplySlot(bool succeeded, QString message)
+void MainWindow::classifyBoardReplySlot(bool succeeded, QString message, QVector<QString> encodings)
 {
-    messageLabel->setText("Got board: " + message);
+    if (!succeeded)
+    {
+        messageLabel->setText(message);
+        return;
+    }
 
     for (int i = 0; i < 64; i++)
     {
-        std::string encoding;
-        EncodingMapper::map(message.at(i), encoding);
-        pieceLabels[i / 8][i % 8]->setPiece(encoding, nameToPixmap[encoding]);
+        pieceLabels[i / 8][i % 8]->setPiece(encodings[i], nameToPixmap[encodings[i]]);
     }
+
+    messageLabel->setText(message);
 }
 
 
@@ -467,9 +470,9 @@ void MainWindow::changeSettingsReplySlot(bool succeeded, QString message)
 
 
 // ---------- clicks on chess GUI ---------- //
-void MainWindow::leftClickedSlot(int row, int col, std::string pieceName)
+void MainWindow::leftClickedSlot(int row, int col, QString pieceName)
 {
-    qDebug() << "leftClickedSlot" << row << col;
+    SPDLOG_DEBUG("Left click ({},{})", row, col);
     if (lastRow == -1 || lastCol == -1)
     {
         pieceLabels[row][col]->modifyStyleSheet("border: 2px solid red;");
@@ -488,9 +491,9 @@ void MainWindow::leftClickedSlot(int row, int col, std::string pieceName)
     lastCol = -1;
 }
 
-void MainWindow::rightClickedSlot(int row, int col, std::string pieceName)
+void MainWindow::rightClickedSlot(int row, int col, QString pieceName)
 {
-    qDebug() << "rightClickedSlot" << row << col << pieceName;
+    SPDLOG_DEBUG("Right click ({},{})", row, col);
 
     // reset selection
     lastRow = -1;
@@ -509,7 +512,7 @@ void MainWindow::rightClickedSlot(int row, int col, std::string pieceName)
         qDebug() << "Piece name not found: " << pieceName;
         return;
     }
-    std::string nextPieceName = pieceNames[(i + 1) % 13];
+    QString nextPieceName = pieceNames[(i + 1) % 13];
     qDebug() << "Changing to" << nextPieceName;
     pieceLabels[row][col]->setPiece(nextPieceName, nameToPixmap[nextPieceName]);
 }

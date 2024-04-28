@@ -14,6 +14,7 @@ class KNearestNeighbors : public AbstractClassifier
 public:
     
 private:
+    bool trained;
     Mat_<double> X;     // feature matrix (one row = one feature = one fixed-size color histogram)
     Mat_<uchar> y;      // class labels (see EncodingMapperIP)
     int k;              // number of neighbors
@@ -21,15 +22,15 @@ private:
 public:
     KNearestNeighbors(int k = 5);
 
-    virtual int train() override;
+    int train() override;
 
-    virtual int test() override;
+    int test() override;
 
-    virtual std::string classifyBoard() override;
+    int classifyBoard(QVector<QString>& encodings) override;
 
-    virtual int save(std::string folderPath) override;
+    int save(std::string folderPath) override;
 
-    virtual int load(std::string folderPath) override;
+    int load(std::string folderPath) override;
 
 private:
     struct distanceAndLabel
@@ -48,4 +49,7 @@ private:
     Mat_<double> getFeatureHistogram(Mat_<Vec3b> img);
 
     uchar classify(Mat_<Vec3b> image);
+
+    uchar externalToInternal(QString encoding);
+    QString internalToExternal(uchar encoding);
 };

@@ -5,10 +5,11 @@ Configurer::Configurer(CameraSide cameraSide, std::shared_ptr<QMutex> imshowMute
 {
 	this->cameraSide = cameraSide;
 	this->imshowMutex = imshowMutex;
+	configured = false; 
 }
 
 
-int Configurer::configure(Mat_<Vec3b> img, bool isTest)
+int Configurer::configure(Mat_<Vec3b> img, bool isTest, bool showImages, bool concatImages)
 {
 	// resize
 	Mat_<Vec3b> imgResizedColor;
@@ -150,10 +151,10 @@ int Configurer::configure(Mat_<Vec3b> img, bool isTest)
 	}
 
 	// visualize
-	if (DEFAULT_SHOW_IMAGES)
+	if (showImages)
 	{
 		imshowMutex->lock();
-		if (DEFAULT_CONCAT_IMAGES)
+		if (concatImages)
 		{
 			Mat_<uchar> grayscaleImages;
 			Mat_<Vec3b> colorImages;
@@ -198,7 +199,7 @@ int Configurer::configure(Mat_<Vec3b> img, bool isTest)
 }
 
 
-int Configurer::cropAndLabel(Mat_<Vec3b> imgOriginal, std::string board[64], bool isTest)
+int Configurer::cropAndLabel(Mat_<Vec3b> imgOriginal, QVector<QString> encodings, bool isTest, bool concatImages)
 {
 	Mat_<Vec3b> imgWarped, imgNoBorder;
 	if (warpAndRemoveBorder(imgOriginal, imgWarped, imgNoBorder) != 0)
@@ -237,7 +238,7 @@ int Configurer::cropAndLabel(Mat_<Vec3b> imgOriginal, std::string board[64], boo
 			}
 			else
 			{
-				std::string folder = TEMPORARY_FOLDER_PATH + std::string("\\") + board[row * 8 + col];
+				std::string folder = TEMPORARY_FOLDER_PATH + std::string("\\") + encodings[row * 8 + col].toStdString();
 				std::string path;
 				int ret = FileHandler::saveImage(imgCell, folder, path, true, FileHandler::boardImageName(row, col));
 				if (ret != 0)
@@ -252,7 +253,7 @@ int Configurer::cropAndLabel(Mat_<Vec3b> imgOriginal, std::string board[64], boo
 	if (isTest)
 	{
 		imshowMutex->lock();
-		if (DEFAULT_CONCAT_IMAGES)
+		if (concatImages)
 		{
 			Mat_<Vec3b> wholeImages;
 			Mat_<Vec3b> filler = Mat_<Vec3b>::zeros(imgWarped.rows - imgNoBorder.rows, imgNoBorder.cols);  // padding for imgNoBorder height

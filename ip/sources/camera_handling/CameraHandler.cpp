@@ -23,13 +23,28 @@ void CameraHandler::doWork()
 	unsigned int count = 0;
 
 	isRunning = true;
+	int emptyFrameTolerance = 3;
 	while (isRunning)
 	{
 		videoCapture.read(frame);
 		if (frame.empty())
 		{
 			SPDLOG_TRACE("Got empty frame, camera {}!", index);
-			break;
+			//break;
+			waitKey(30);
+			continue;
+			/*
+			emptyFrameTolerance--;
+			if (emptyFrameTolerance > 0)
+			{
+				waitKey(30);
+				continue;  // try reading another
+			}
+			else
+			{
+				break;
+			}
+			*/
 		}
 
 		// check for requests (before conversion!)

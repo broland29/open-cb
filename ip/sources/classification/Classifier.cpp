@@ -57,7 +57,7 @@ int Classifier::testClassifier()
 }
 
 
-std::string Classifier::classifyBoard()
+int Classifier::classifyBoard(QVector<QString>& encodings)
 {
-	return activeClassifier->classifyBoard();
+	return activeClassifier->classifyBoard(encodings);
 }

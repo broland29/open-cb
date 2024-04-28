@@ -12,6 +12,8 @@
 #include "ClickableLabel.h"
 #include "EncodingMapper.h"
 #include "settings/SettingsDialog.h"
+#include <QVector>
+#include <QString>
 
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
@@ -65,14 +67,17 @@ private:
 
 
     // clicking logic
-    std::array<std::string, 13> pieceNames = { "FR", "WP", "WB", "WN", "WR", "WQ", "WK", "BP", "BB", "BN", "BR", "BQ", "BK" };
-    std::map<std::string, QPixmap> nameToPixmap;
+    QVector<QString> pieceNames = { "FR",
+        "WP", "WB", "WN", "WR", "WQ", "WK",
+        "BP", "BB", "BN", "BR", "BQ", "BK"
+    };
+    std::map<QString, QPixmap> nameToPixmap;
     int lastRow = -1;
     int lastCol = -1;
-    std::string lastPieceName;
+    QString lastPieceName;
 
     void setInitialSetup();
-    QString getBoardFromChessGUI();
+    QVector<QString> getEncodingsFromChessGUI();
 
 public slots:
     // slots for raw qt signals
@@ -98,7 +103,7 @@ public slots:
 
     // reply slots for signals
     void validateMoveReplySlot(bool succeeded, QString message);
-    void discardMoveReplySlot(bool succeeded, QString message);
+    void discardMoveReplySlot(bool succeeded, QString message, QVector<QString> encodings);
     void newGameReplySlot(bool succeeded, QString message);
 
     void changeClassifierReplySlot(bool succeeded, QString message);
@@ -106,7 +111,7 @@ public slots:
     void loadClassifierReplySlot(bool succeeded, QString message);
     void trainClassifierReplySlot(bool succeeded, QString message);
     void testClassifierReplySlot(bool succeeded, QString message);
-    void classifyBoardReplySlot(bool succeeded, QString message);
+    void classifyBoardReplySlot(bool succeeded, QString message, QVector<QString> encodings);
 
     void testConfigureReplySlot(bool succeeded, QString message);
     void configureReplySlot(bool succeeded, QString message);
@@ -117,8 +122,8 @@ public slots:
     void changeSettingsReplySlot(bool succeeded, QString message);
 
     // clicks on chess GUI
-    void leftClickedSlot(int row, int col, std::string pieceName);
-    void rightClickedSlot(int row, int col, std::string pieceName);
+    void leftClickedSlot(int row, int col, QString pieceName);
+    void rightClickedSlot(int row, int col, QString pieceName);
 
     // getting a new frame
     void previewImageReadySlotLeft(QImage previewImage);
@@ -131,7 +136,7 @@ public slots:
     void getParametersSlot(QVector<QString> names);
 
 signals:
-    void validateMoveSignal(QString board);
+    void validateMoveSignal(QVector<QString> encodings);
     void discardMoveSignal();
     void newGameSignal();
 
@@ -144,8 +149,8 @@ signals:
 
     void testConfigureSignal();
     void configureSignal();
-    void testCropAndLabelSignal(QString board);
-    void cropAndLabelSignal(QString board);
+    void testCropAndLabelSignal(QVector<QString> encoding);
+    void cropAndLabelSignal(QVector<QString> encoding);
     void shuffleAndSplitSignal();
     void clearAllImagesSignal();
     void changeSettingsSignal();

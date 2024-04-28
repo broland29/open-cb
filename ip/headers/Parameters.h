@@ -16,7 +16,9 @@ class Parameters
 public:
 	std::map<QString, Variant> parameters = {
 		{ "leftCameraIndex", 10 },
-		{ "rightCameraIndex", 11 }
+		{ "rightCameraIndex", 11 },
+		{ "showImages", true },
+		{ "concatImages", true }
 	};
 private:
 public:

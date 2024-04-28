@@ -100,12 +100,11 @@ int FileHandler::clearAllImages()
 }
 
 
-int FileHandler::readLabelFolderImages(std::string labelFolderBasePath, std::vector<std::pair<Mat_<Vec3b>, uchar>>& imagesAndLabels)
+int FileHandler::readLabelFolderImages(std::string labelFolderBasePath, std::vector<std::pair<Mat_<Vec3b>, QString>>& imagesAndLabels)
 {
-	for (std::string labelFolder : labelFolders)
+	for (QString encoding : ENCODINGS)
 	{
-		uchar label;
-		EncodingMapperIP::map(labelFolder, label);
+		std::string labelFolder = encoding.toStdString();
 
 		std::string labelFolderPath = labelFolderBasePath + std::string("\\") + labelFolder;
 		for (const auto& dirEntry : fs::directory_iterator(labelFolderPath))
@@ -118,7 +117,7 @@ int FileHandler::readLabelFolderImages(std::string labelFolderBasePath, std::vec
 				return 1;
 			}
 
-			imagesAndLabels.push_back(std::pair<Mat_<Vec3b>, uchar>(img, label));
+			imagesAndLabels.push_back(std::pair<Mat_<Vec3b>, QString>(img, encoding));
 		}
 	}
 
@@ -164,8 +163,9 @@ int FileHandler::readLabelFolderPathInfos(std::string labelFolderBasePath, std::
 		return 0;  // not much to iterate if base folder was not even there
 	}
 
-	for (std::string labelFolder : labelFolders)
+	for (QString encoding : ENCODINGS)
 	{
+		std::string labelFolder = encoding.toStdString();
 		std::string labelFolderPath = labelFolderBasePath + std::string("\\") + labelFolder;
 		for (const auto& dirEntry : fs::directory_iterator(labelFolderPath))
 		{
@@ -198,8 +198,9 @@ int FileHandler::clearLabeledFolder(std::string labelFolderBasePath)
 	}
 
 	// re-create subdirectories
-	for (std::string labelFolder : labelFolders)
+	for (QString encoding : ENCODINGS)
 	{
+		std::string labelFolder = encoding.toStdString();
 		std::string labelFolderPath = labelFolderBasePath + std::string("\\") + labelFolder;
 		if (fs::create_directory(labelFolderPath) == false)  // https://en.cppreference.com/w/cpp/filesystem/create_directory
 		{

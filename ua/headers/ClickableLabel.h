@@ -5,6 +5,7 @@
 #include <Qt>
 #include <QMouseEvent>
 #include <QPixmap>
+#include <QString>
 
 // https://wiki.qt.io/Clickable_QLabel
 class ClickableLabel : public QLabel
@@ -16,17 +17,17 @@ public:
     ~ClickableLabel();
     int row;
     int col;
-    void setPiece(std::string pieceName, QPixmap piecePixmap);
-    std::string getPieceName();
+    void setPiece(QString pieceName, QPixmap piecePixmap);
+    QString getPieceName();
     void modifyStyleSheet(QString string);
 
 signals:
-    void leftClicked(int row, int col, std::string pieceName);
-    void rightClicked(int row, int col, std::string pieceName);
+    void leftClicked(int row, int col, QString pieceName);
+    void rightClicked(int row, int col, QString pieceName);
 
 protected:
     void mousePressEvent(QMouseEvent* event);
 
 private:
-    std::string pieceName;
+    QString pieceName;
 };

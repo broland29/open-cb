@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <QDebug>
+#include <spdlog/spdlog.h>
 
 class EncodingMapper
 {

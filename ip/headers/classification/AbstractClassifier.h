@@ -1,6 +1,7 @@
 #pragma once
 
-#include <string>
+#include <QVector>
+#include <QString>
 
 
 class AbstractClassifier
@@ -14,8 +15,8 @@ public:
 	// test the classifier. images in TEST_FOLDER_PATH
 	virtual int test() = 0;
 
-	// classify a board. 64 images, in BOARD_FOLDER_PATH. return "" for failure, encodings for success
-	virtual std::string classifyBoard() = 0;
+	// classify a board. 64 images, in BOARD_FOLDER_PATH
+	virtual int classifyBoard(QVector<QString>& encodings) = 0;
 
 	// save classifier to disk
 	virtual int save(std::string folderPath) = 0;

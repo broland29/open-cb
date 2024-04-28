@@ -84,6 +84,8 @@ SettingsDialog::SettingsDialog(QWidget* parent)
 	QObject::connect(saveButton, &QPushButton::clicked, this, &SettingsDialog::saveButtonClicked);
 	QObject::connect(refreshButton, &QPushButton::clicked, this, &SettingsDialog::refreshButtonClicked);
 	QObject::connect(cancelButton, &QPushButton::clicked, this, &SettingsDialog::cancelButtonClicked);
+
+	// MainWindow shall emit getParametersSignal to fill fields after constructing and tieing slots and signals
 }
 
 
@@ -129,6 +131,10 @@ void SettingsDialog::saveButtonClicked()
 	values.push_back(parameterWidgets["leftCameraIndex"]->getValue());
 	names.push_back("rightCameraIndex");
 	values.push_back(parameterWidgets["rightCameraIndex"]->getValue());
+	names.push_back("showImages");
+	values.push_back(parameterWidgets["showImages"]->getValue());
+	names.push_back("concatImages");
+	values.push_back(parameterWidgets["concatImages"]->getValue());
 
 	if (names.size() != values.size())
 	{
@@ -151,6 +157,8 @@ void SettingsDialog::refreshButtonClicked()
 	QVector<QString> names;
 	names.push_back("leftCameraIndex");
 	names.push_back("rightCameraIndex");
+	names.push_back("showImages");
+	names.push_back("concatImages");
 	emit getParametersSignal(names);
 }
 

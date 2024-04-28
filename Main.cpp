@@ -23,28 +23,15 @@ int main(int argc, char* argv[])
 	ValidationAndResponse* validationAndResponse = new ValidationAndResponse();
 	UserApplication* userApplication = new UserApplication(argc, argv);
 
-	// for shorter code
-	CameraHandler* cameraHandlerLeft = imageProcessing->cameraHandlerLeft;
-	CameraHandler* cameraHandlerRight = imageProcessing->cameraHandlerRight;
 	MainWindow* mainWindow = userApplication->mainWindow;
 	QApplication* application = userApplication->application;
 
 	// create worker threads
 	QThread* imageProcessingThread = new QThread;
 
-	QThread* cameraHandlerLeftThread = new QThread;
-	QObject::connect(cameraHandlerLeftThread, &QThread::started, cameraHandlerLeft, &CameraHandler::doWork);
-	QObject::connect(cameraHandlerLeft, &CameraHandler::stop, cameraHandlerLeftThread, &QThread::quit);
-	QObject::connect(cameraHandlerLeftThread, &QThread::finished, cameraHandlerLeft, &CameraHandler::deleteLater);
-
-	QThread* cameraHandlerRightThread = new QThread;
-	QObject::connect(cameraHandlerRightThread, &QThread::started, cameraHandlerRight, &CameraHandler::doWork);
-	QObject::connect(cameraHandlerRight, &CameraHandler::stop, cameraHandlerRightThread, &QThread::quit);
-	QObject::connect(cameraHandlerRightThread, &QThread::finished, cameraHandlerRight, &CameraHandler::deleteLater);
-
 	// cross - thread communication
-	QObject::connect(cameraHandlerLeft, &CameraHandler::previewImageReadySignal, mainWindow, &MainWindow::previewImageReadySlotLeft);
-	QObject::connect(cameraHandlerRight, &CameraHandler::previewImageReadySignal, mainWindow, &MainWindow::previewImageReadySlotRight);
+	QObject::connect(imageProcessing, &ImageProcessing::previewImageReadyLeftSignal, mainWindow, &MainWindow::previewImageReadySlotLeft);
+	QObject::connect(imageProcessing, &ImageProcessing::previewImageReadyRightSignal, mainWindow, &MainWindow::previewImageReadySlotRight);
 
 	QObject::connect(mainWindow, &MainWindow::validateMoveSignal, validationAndResponse, &ValidationAndResponse::validateMoveSlot);
 	QObject::connect(mainWindow, &MainWindow::discardMoveSignal, validationAndResponse, &ValidationAndResponse::discardMoveSlot);
@@ -94,13 +81,8 @@ int main(int argc, char* argv[])
 
 	// start thread
 	imageProcessing->moveToThread(imageProcessingThread);
-
-	cameraHandlerLeft->moveToThread(cameraHandlerLeftThread);
-	cameraHandlerRight->moveToThread(cameraHandlerRightThread);
 	
 	imageProcessingThread->start();
-	cameraHandlerLeftThread->start();
-	cameraHandlerRightThread->start();
 
 	return userApplication->run();
 }

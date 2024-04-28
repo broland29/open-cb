@@ -27,12 +27,10 @@ class ImageProcessing : public QObject
 	Q_OBJECT
 
 public:
+	QThread* cameraHandlerLeftThread = NULL;
+	QThread* cameraHandlerRightThread = NULL;
 	CameraHandler* cameraHandlerLeft;
 	CameraHandler* cameraHandlerRight;
-
-	// parameters
-	int leftCameraIndex;
-	int rightCameraIndex;
 
 private:
 	Parameters parameters;
@@ -53,8 +51,9 @@ public:
 private:
 	int getImage(SignalWaiter* signalWaiter, Mat_<Vec3b>& img);
 	void configure(bool isTest);
-	void cropAndLabel(std::string board[64], bool isTest);
-	void setParameters();
+	void cropAndLabel(QVector<QString> encodings, bool isTest);
+	void setupCameraHandlerLeft();
+	void setupCameraHandlerRight();
 
 signals:
 	void changeClassifierReplySignal(bool succeeded, QString message);
@@ -62,7 +61,7 @@ signals:
 	void loadClassifierReplySignal(bool succeeded, QString message);
 	void trainClassifierReplySignal(bool succeeded, QString message);
 	void testClassifierReplySignal(bool succeeded, QString message);
-	void classifyBoardReplySignal(bool succeeded, QString message);
+	void classifyBoardReplySignal(bool succeeded, QString message, QVector<QString> encodings);
 
 	void testConfigureReplySignal(bool succeeded, QString message);
 	void configureReplySignal(bool succeeded, QString message);
@@ -75,6 +74,9 @@ signals:
 	void setParametersReplySignal(bool succeeded, QString message);
 	void getParametersReplySignal(QVector<QString> names, QVector<QString> values);
 
+	void previewImageReadyLeftSignal(QImage image);
+	void previewImageReadyRightSignal(QImage image);
+
 public slots:
 	void changeClassifierSlot(QString newClassifierName);
 	void saveClassifierSlot(QString folderPath);
@@ -85,14 +87,17 @@ public slots:
 
 	void testConfigureSlot();
 	void configureSlot();
-	void testCropAndLabelSlot(QString board);
-	void cropAndLabelSlot(QString board);
+	void testCropAndLabelSlot(QVector<QString> encodings);
+	void cropAndLabelSlot(QVector<QString> encodings);
 	void shuffleAndSplitSlot();
 	void clearAllImagesSlot();
 	void changeSettingsSlot();
 
 	void setParametersSlot(QVector<QString> names, QVector<QString> values);
 	void getParametersSlot(QVector<QString> names);
+
+	void previewImageReadyLeftSlot(QImage image);
+	void previewImageReadyRightSlot(QImage image);
 
 	void beforeQuit();
 };

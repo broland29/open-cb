@@ -37,10 +37,11 @@ int ConvolutionalNeuralNetwork::test()
 }
 
 
-std::string ConvolutionalNeuralNetwork::classifyBoard()
+int ConvolutionalNeuralNetwork::classifyBoard(QVector<QString>& encodings)
 {
+	encodings.resize(64, "?");
 	// todo
-	return "";
+	return 404;
 }
 
 

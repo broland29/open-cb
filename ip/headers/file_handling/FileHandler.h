@@ -45,7 +45,7 @@ public:
 
 	static int readLabelFolderImages(
 		std::string labelFolderBasePath,						    // TEMPORARY/TRAIN/VALIDATION/TEST_FOLDER_PATH
-		std::vector<std::pair<Mat_<Vec3b>, uchar>>& imagesAndLabels	// <image, label> pairs
+		std::vector<std::pair<Mat_<Vec3b>, QString>>& imagesAndLabels	// <image, label> pairs
 	);
 
 	// get all cell images of the board saved beforehand, using boardImageName

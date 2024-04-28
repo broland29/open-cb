@@ -18,13 +18,13 @@ private:
 public:
 	SupportVectorMachine();
 
-	virtual int train() override;
+	int train() override;
 
-	virtual int test() override;
+	int test() override;
 
-	virtual std::string classifyBoard() override;
+	int classifyBoard(QVector<QString>& encodings) override;
 
-	virtual int save(std::string folderPath) override;
+	int save(std::string folderPath) override;
 
-	virtual int load(std::string folderPath) override;
+	int load(std::string folderPath) override;
 };

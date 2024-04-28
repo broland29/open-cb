@@ -26,7 +26,7 @@ public:
 	int loadClassifier(std::string folderPath);
 	int trainClassifier();
 	int testClassifier();
-	std::string classifyBoard();
+	int classifyBoard(QVector<QString>& encodings);
 
 private:
 };

@@ -98,7 +98,19 @@ void Parameters::setValue(QString name, QString value)
 	bool success = true;  // since toStdString has no arg, assume success
 	if (std::holds_alternative<bool>(value_))
 	{
-		parameters[name] = value.toInt(&success);  // should work
+		if (value == "True")
+		{
+			parameters[name] = true;
+		}
+		else if (value == "False")
+		{
+			parameters[name] = false;
+		}
+		else
+		{
+			SPDLOG_ERROR("Unknown value {}", value.toStdString());
+			return;
+		}
 	}
 	else if (std::holds_alternative<int>(value_))
 	{

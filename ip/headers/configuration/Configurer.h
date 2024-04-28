@@ -22,11 +22,6 @@
 #define DEFAULT_HOUGH_WINDOW_SIZE		3
 #define DEFAULT_HOUGH_NUMBER_OF_LINES	20
 
-#define DEFAULT_SHOW_IMAGES				true
-#define DEFAULT_CONCAT_IMAGES			true
-
-
-
 
 enum class CameraSide
 {
@@ -59,13 +54,16 @@ public:
 	// gets the corners of the chessboard
 	int configure(
 		Mat_<Vec3b> img,  // image from which the corner positions will be extracted
-		bool isTest
+		bool isTest,
+		bool showImages,
+		bool concatImages
 	);
 
 	int cropAndLabel(
 		Mat_<Vec3b> img,
-		std::string board[64],  // labelFolder for each cell
-		bool isTest
+		QVector<QString> encodings,  // labelFolder for each cell
+		bool isTest,
+		bool concatImages
 	);
 
 	// save cell images on disk. while this is an overhead, classifiers may need different

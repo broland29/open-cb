@@ -5,25 +5,19 @@ ImageProcessing::ImageProcessing()
 {
 	utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_SILENT);
 
+	// fill parameters
 	ParametersHandler::loadFromJSON(parameters);
-	setParameters();  // important, to fill with valid values
 
 	imshowMutex = std::make_shared<QMutex>();
 
-	cameraHandlerLeft = new CameraHandler(leftCameraIndex);
-	cameraHandlerRight = new CameraHandler(rightCameraIndex);
+	setupCameraHandlerLeft();
+	setupCameraHandlerRight();
+
 	classifier = new Classifier();
 	configurerLeft = new Configurer(CameraSide::LEFT, imshowMutex);
 	configurerRight = new Configurer(CameraSide::RIGHT, imshowMutex);
 }
 
-
-void ImageProcessing::setParameters()
-{
-	leftCameraIndex = get<int>(parameters.parameters["leftCameraIndex"]);
-	rightCameraIndex = get<int>(parameters.parameters["rightCameraIndex"]);
-	// TODO cont
-}
 
 
 int ImageProcessing::getImage(SignalWaiter* signalWaiter, Mat_<Vec3b>& img)
@@ -115,37 +109,35 @@ void ImageProcessing::testClassifierSlot()
 
 void ImageProcessing::classifyBoardSlot()
 {
-	// todo - should map. from classifyBoard() it gets a string 
-
 	// get images
 	Mat_<Vec3b> imgLeft, imgRight;
 	if (getImage(new SignalWaiter(cameraHandlerLeft, "clas", "classifyLeft"), imgLeft) != 0)
 	{
-		emit classifyBoardReplySignal(false, "Error getting image from left camera");
+		emit classifyBoardReplySignal(false, "Error getting image from left camera", QVector<QString>());
 		return;
 	}
 	if (getImage(new SignalWaiter(cameraHandlerRight, "clas", "classifyRight"), imgRight) != 0)
 	{
-		emit classifyBoardReplySignal(false, "Error getting image from right camera");
+		emit classifyBoardReplySignal(false, "Error getting image from right camera", QVector<QString>());
 		return;
 	}
 
 	// call on configurer - prepare cell images
 	if (configurerLeft->prepareCellImages(imgLeft) + configurerRight->prepareCellImages(imgRight) != 0)
 	{
-		emit configureReplySignal(false, "Error when preparing cells");
+		emit classifyBoardReplySignal(false, "Preparing cell images failed. Make sure to run \"Configure\" beforehand.", QVector<QString>());
 		return;
 	}
 
 	// call on classifier
-	std::string ret = classifier->classifyBoard();
-	if (ret == "")
+	QVector<QString> encodings;
+	if (classifier->classifyBoard(encodings) != 0)
 	{
-		emit classifyBoardReplySignal(false, "Classifying board failed");
+		emit classifyBoardReplySignal(false, "Classifying board failed. Make sure to run \"Train\" beforehand.", QVector<QString>());
 		return;
 	}
 
-	emit classifyBoardReplySignal(true, QString::fromStdString(ret));
+	emit classifyBoardReplySignal(true, "Classification successful", encodings);
 }
 
 
@@ -165,7 +157,8 @@ void ImageProcessing::configure(bool isTest)
 	}
 	
 	// call on configurer
-	if (configurerLeft->configure(imgLeft, isTest) + configurerRight->configure(imgRight, isTest) != 0)
+	if (configurerLeft->configure(imgLeft, isTest, get<bool>(parameters.parameters["showImages"]), get<bool>(parameters.parameters["concatImages"])) +
+	    configurerRight->configure(imgRight, isTest, get<bool>(parameters.parameters["showImages"]), get<bool>(parameters.parameters["concatImages"])) != 0)
 	{
 		emit configureReplySignal(false, "Error when configuring");
 		return;
@@ -185,7 +178,7 @@ void ImageProcessing::configureSlot()
 }
 
 
-void ImageProcessing::cropAndLabel(std::string board[64], bool isTest)
+void ImageProcessing::cropAndLabel(QVector<QString> encodings, bool isTest)
 {
 	// get images
 	Mat_<Vec3b> imgLeft, imgRight;
@@ -201,7 +194,8 @@ void ImageProcessing::cropAndLabel(std::string board[64], bool isTest)
 	}
 
 	// call on configurer
-	if (configurerLeft->cropAndLabel(imgLeft, board, isTest) + configurerRight->cropAndLabel(imgRight, board, isTest) != 0)
+	if (configurerLeft->cropAndLabel(imgLeft, encodings, isTest, get<bool>(parameters.parameters["concatImages"])) +
+		configurerRight->cropAndLabel(imgRight, encodings, isTest, get<bool>(parameters.parameters["concatImages"])) != 0)
 	{
 		emit cropAndLabelReplySignal(false, "Error when configuring");
 		return;
@@ -210,30 +204,14 @@ void ImageProcessing::cropAndLabel(std::string board[64], bool isTest)
 	cropAndLabelReplySignal(true, "Configuration successful");
 }
 
-void ImageProcessing::testCropAndLabelSlot(QString board)
+void ImageProcessing::testCropAndLabelSlot(QVector<QString> encodings)
 {
-	std::string _board[64];
-	for (int i = 0; i < 8; i++)
-	{
-		for (int j = 0; j < 8; j++)
-		{
-			EncodingMapperIP::map(board[i * 8 + j], i, j, _board[i * 8 + j]);
-		}
-	}
-	cropAndLabel(_board, true);
+	cropAndLabel(encodings, true);
 }
 
-void ImageProcessing::cropAndLabelSlot(QString board)
+void ImageProcessing::cropAndLabelSlot(QVector<QString> encodings)
 {
-	std::string _board[64];
-	for (int i = 0; i < 8; i++)
-	{
-		for (int j = 0; j < 8; j++)
-		{
-			EncodingMapperIP::map(board[i * 8 + j], i, j, _board[i * 8 + j]);
-		}
-	}
-	cropAndLabel(_board, false);
+	cropAndLabel(encodings, false);
 }
 
 
@@ -287,8 +265,26 @@ void ImageProcessing::setParametersSlot(QVector<QString> names, QVector<QString>
 		return;
 	}
 
+	// camera indices are special: they are used "non-stop" by camera handlers; so even though parameter gets updated
+	//   in parameters.parameters, we need to "update" the camera readers to see immediate effect
+	int oldLeftCameraIndex = get<int>(parameters.parameters["leftCameraIndex"]);
+	int oldRightCameraIndex = get<int>(parameters.parameters["rightCameraIndex"]);
+
 	parameters.setValues(names, values);
-	// todo - make it have effect on program
+	ParametersHandler::saveToJSON(parameters);
+
+	int newLeftCameraIndex = get<int>(parameters.parameters["leftCameraIndex"]);
+	int newRightCameraIndex = get<int>(parameters.parameters["rightCameraIndex"]);
+	if (newLeftCameraIndex != oldLeftCameraIndex)
+	{
+		SPDLOG_TRACE("Switching left camera index from {} to {}", oldLeftCameraIndex, newLeftCameraIndex);
+		setupCameraHandlerLeft();
+	}
+	if (newRightCameraIndex != oldRightCameraIndex)
+	{
+		SPDLOG_TRACE("Switching right camera index from {} to {}", oldRightCameraIndex, newRightCameraIndex);
+		setupCameraHandlerRight();
+	}
 
 	emit setParametersReplySignal(true, "Modifications saved");
 }
@@ -311,4 +307,68 @@ void ImageProcessing::beforeQuit()
 	SPDLOG_TRACE("Saving parameters");
 	ParametersHandler::saveToJSON(parameters);
 	SPDLOG_TRACE("Parameters saved");
+}
+
+
+void ImageProcessing::setupCameraHandlerLeft()
+{
+	// if exists and running, exit, so cleanup happens
+	if (cameraHandlerLeftThread != NULL && cameraHandlerLeftThread->isRunning())
+	{
+		cameraHandlerLeft->stop();
+	}
+
+	// replace thread and handler
+	cameraHandlerLeftThread = new QThread;
+	cameraHandlerLeft = new CameraHandler(get<int>(parameters.parameters["leftCameraIndex"]));
+
+	// thread connections
+	QObject::connect(cameraHandlerLeftThread, &QThread::started, cameraHandlerLeft, &CameraHandler::doWork);
+	QObject::connect(cameraHandlerLeft, &CameraHandler::stop, cameraHandlerLeftThread, &QThread::quit, Qt::BlockingQueuedConnection);
+	QObject::connect(cameraHandlerLeftThread, &QThread::finished, cameraHandlerLeft, &CameraHandler::deleteLater);
+
+	// imageProcessing connections - delegate
+	QObject::connect(cameraHandlerLeft, &CameraHandler::previewImageReadySignal, this, &ImageProcessing::previewImageReadyLeftSignal, Qt::BlockingQueuedConnection);
+
+	// move to thread and start
+	cameraHandlerLeft->moveToThread(cameraHandlerLeftThread);
+	cameraHandlerLeftThread->start();
+}
+
+
+void ImageProcessing::setupCameraHandlerRight()
+{
+	// if exists and running, exit, so cleanup happens
+	if (cameraHandlerRightThread != NULL && cameraHandlerRightThread->isRunning())
+	{
+		cameraHandlerRight->stop();
+	}
+
+	// replace thread and handler
+	cameraHandlerRightThread = new QThread;
+	cameraHandlerRight = new CameraHandler(get<int>(parameters.parameters["rightCameraIndex"]));
+
+	// thread connections
+	QObject::connect(cameraHandlerRightThread, &QThread::started, cameraHandlerRight, &CameraHandler::doWork);
+	QObject::connect(cameraHandlerRight, &CameraHandler::stop, cameraHandlerRightThread, &QThread::quit, Qt::BlockingQueuedConnection);
+	QObject::connect(cameraHandlerRightThread, &QThread::finished, cameraHandlerRight, &CameraHandler::deleteLater);
+
+	// imageProcessing connections - delegate
+	QObject::connect(cameraHandlerRight, &CameraHandler::previewImageReadySignal, this, &ImageProcessing::previewImageReadyRightSignal, Qt::BlockingQueuedConnection);
+
+	// move to thread and start
+	cameraHandlerRight->moveToThread(cameraHandlerRightThread);
+	cameraHandlerRightThread->start();
+}
+
+
+void ImageProcessing::previewImageReadyLeftSlot(QImage image)
+{
+	emit previewImageReadyLeftSignal(image);
+}
+
+
+void ImageProcessing::previewImageReadyRightSlot(QImage image)
+{
+	emit previewImageReadyRightSignal(image);
 }
