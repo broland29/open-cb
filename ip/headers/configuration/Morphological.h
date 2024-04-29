@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Common.h"
+#include "../CommonIP.h"
 
 
 // Perform erosion on img, with structuring element sel

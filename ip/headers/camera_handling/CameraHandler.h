@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Common.h"
+#include "../CommonIP.h"
 #include "../file_handling/FileHandler.h"
 
 #include <QThread>

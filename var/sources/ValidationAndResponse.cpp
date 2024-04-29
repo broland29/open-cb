@@ -15,20 +15,25 @@ void ValidationAndResponse::validateMoveSlot(QVector<QString> encodings)
 	{
 		for (int j = 0; j < 8; j++)
 		{
-			if (encodings[i * 8 + j] == "WF") { board[i][j] = FR; continue; }
-			if (encodings[i * 8 + j] == "WP") { board[i][j] = WP; continue; }
-			if (encodings[i * 8 + j] == "WB") { board[i][j] = WB; continue; }
-			if (encodings[i * 8 + j] == "WN") { board[i][j] = WN; continue; }
-			if (encodings[i * 8 + j] == "WR") { board[i][j] = WR; continue; }
-			if (encodings[i * 8 + j] == "WQ") { board[i][j] = WQ; continue; }
-			if (encodings[i * 8 + j] == "WK") { board[i][j] = WK; continue; }
-			if (encodings[i * 8 + j] == "BF") { board[i][j] = FR; continue; }
-			if (encodings[i * 8 + j] == "BP") { board[i][j] = BP; continue; }
-			if (encodings[i * 8 + j] == "BB") { board[i][j] = BB; continue; }
-			if (encodings[i * 8 + j] == "BN") { board[i][j] = BN; continue; }
-			if (encodings[i * 8 + j] == "BR") { board[i][j] = BR; continue; }
-			if (encodings[i * 8 + j] == "BQ") { board[i][j] = BQ; continue; }
-			if (encodings[i * 8 + j] == "BK") { board[i][j] = BK; continue; }
+			QString encoding = encodings[i * 8 + j];
+			if (encoding == "FR") { board[i][j] = FR; continue; }
+			if (encoding == "WP") { board[i][j] = WP; continue; }
+			if (encoding == "WB") { board[i][j] = WB; continue; }
+			if (encoding == "WN") { board[i][j] = WN; continue; }
+			if (encoding == "WR") { board[i][j] = WR; continue; }
+			if (encoding == "WQ") { board[i][j] = WQ; continue; }
+			if (encoding == "WK") { board[i][j] = WK; continue; }
+			if (encoding == "BP") { board[i][j] = BP; continue; }
+			if (encoding == "BB") { board[i][j] = BB; continue; }
+			if (encoding == "BN") { board[i][j] = BN; continue; }
+			if (encoding == "BR") { board[i][j] = BR; continue; }
+			if (encoding == "BQ") { board[i][j] = BQ; continue; }
+			if (encoding == "BK") { board[i][j] = BK; continue; }
+			else {
+				SPDLOG_ERROR("Unknown encoding {}", encoding.toStdString());
+				emit validateMoveReplySignal(false, "Internal error");
+				return;
+			}
 		}
 	}
 	

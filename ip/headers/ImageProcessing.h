@@ -7,8 +7,7 @@
 #include "configuration/Configurer.h"
 #include "file_handling/FileHandler.h"
 
-#include "Common.h"
-#include "EncodingMapperIP.h"
+#include "CommonIP.h"
 
 #include <opencv2/core/utils/logger.hpp>
 

@@ -31,7 +31,7 @@ void Validator::validateBoard(char board[8][8], char message[200])
     }
     if (whiteKingCount != 1 || blackKingCount != 1)
     {
-        strcpy(message, "IIncorrect king count!");
+        strcpy(message, "I!");
         return;
     }
 

@@ -296,8 +296,7 @@ bool canPieceAttackCell(char board[8][8], int currRow, int currCol, int destRow,
     case BK:
         return _canKingAttackCell(board, currRow, currCol, destRow, destCol);
     default:
-        std::cout << "Reached default in canPieceAttackCell!" << std::endl;
-        assert(false);
+        SPDLOG_ERROR("Unknown encoding {}", board[currRow][currCol]);
         return false;
     }
 }

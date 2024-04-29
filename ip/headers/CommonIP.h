@@ -40,17 +40,6 @@ using namespace cv;
 #define JSON_PATH                   "C:\\open-cb\\mem\\per\\persistence.json"              
 
 
-// "Standard behavior: Windows file system treats file and directory names as case-insensitive"
-//  so, unfortunately, cannot use P and p, must use WP and BP
-// these encodings will be used for folders, for passing around, for everything, to avoid endless mapping.
-// can get std::string easily. if classifier uses other labels, it has to encode/decode for itself
-static QVector<QString> ENCODINGS =
-{
-    "WF", "WP", "WB", "WN", "WR", "WQ", "WK",
-    "BF", "BP", "BB", "BN", "BR", "BQ", "BK",
-};
-
-
 // Checks if pixel (i,j) is inside img's boundaries
 bool inline isInside(Mat img, int i, int j)
 {

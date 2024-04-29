@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../Common.h"
-#include "../EncodingMapperIP.h"
 
 #include "AbstractClassifier.h"
 #include "../file_handling/FileHandler.h"

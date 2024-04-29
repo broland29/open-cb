@@ -10,13 +10,14 @@
 #include <QRadioButton>
 #include <QCheckBox>
 #include "ClickableLabel.h"
-#include "EncodingMapper.h"
 #include "settings/SettingsDialog.h"
 #include <QVector>
 #include <QString>
 
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
+
+#include "../Common.h"
 
 #if FMT_VERSION >= 90000
 // https://github.com/fmtlib/fmt/issues/2245
@@ -67,10 +68,6 @@ private:
 
 
     // clicking logic
-    QVector<QString> pieceNames = { "FR",
-        "WP", "WB", "WN", "WR", "WQ", "WK",
-        "BP", "BB", "BN", "BR", "BQ", "BK"
-    };
     std::map<QString, QPixmap> nameToPixmap;
     int lastRow = -1;
     int lastCol = -1;

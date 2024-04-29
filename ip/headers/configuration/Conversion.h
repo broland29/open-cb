@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Common.h"
+#include "../CommonIP.h"
 
 
 // Converts grayscale image img to binary based on threshold

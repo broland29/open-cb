@@ -50,6 +50,7 @@ file(GLOB_RECURSE SOURCES
     "${LOG_DIR}/*.cpp"
     "${LOG_DIR}/*.h"
     "Main.cpp"
+    "Common.h"
 )
 file(GLOB_RECURSE TEST_SOURCES
     "${TEST_DIR}/*.cpp"

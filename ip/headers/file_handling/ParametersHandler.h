@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../Parameters.h"
-#include "../Common.h"
+#include "../CommonIP.h"
 
 #include <fstream>
 #include <spdlog/spdlog.h>

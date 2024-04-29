@@ -64,9 +64,18 @@ MainWindow::MainWindow(QWidget* parent) :
         }
     }
 
-    for (auto pieceName : pieceNames)
+    for (QString encoding : ENCODINGS)
     {
-        QString resourcePath = ":pieceImages/" + pieceName + ".png";
+        QString resourcePath;
+        if (encoding == "WF" || encoding == "BF")
+        {
+            resourcePath = ":pieceImages/FR.png";  // same empty png used for both frees
+        }
+        else
+        {
+            resourcePath = ":pieceImages/" + encoding + ".png";
+        }
+
         QPixmap piecePixmap;
         if (!piecePixmap.load(resourcePath))
         {
@@ -77,7 +86,7 @@ MainWindow::MainWindow(QWidget* parent) :
             SPDLOG_TRACE("Succesfully loaded {}", resourcePath);
         }
         piecePixmap = piecePixmap.scaled(30, 30, Qt::KeepAspectRatio);
-        nameToPixmap.insert(std::pair(pieceName, piecePixmap));
+        nameToPixmap.insert(std::pair(encoding, piecePixmap));
     }
 
     setInitialSetup();
@@ -472,7 +481,7 @@ void MainWindow::changeSettingsReplySlot(bool succeeded, QString message)
 // ---------- clicks on chess GUI ---------- //
 void MainWindow::leftClickedSlot(int row, int col, QString pieceName)
 {
-    SPDLOG_DEBUG("Left click ({},{})", row, col);
+    SPDLOG_TRACE("Left click ({},{})", row, col);
     if (lastRow == -1 || lastCol == -1)
     {
         pieceLabels[row][col]->modifyStyleSheet("border: 2px solid red;");
@@ -493,27 +502,27 @@ void MainWindow::leftClickedSlot(int row, int col, QString pieceName)
 
 void MainWindow::rightClickedSlot(int row, int col, QString pieceName)
 {
-    SPDLOG_DEBUG("Right click ({},{})", row, col);
+    SPDLOG_TRACE("Right click ({},{})", row, col);
 
     // reset selection
     lastRow = -1;
     lastCol = -1;
 
     int i;
-    for (i = 0; i < 13; i++)
+    for (i = 0; i < ENCODINGS.size(); i++)
     {
-        if (pieceNames[i] == pieceName)
+        if (ENCODINGS[i] == pieceName)
         {
-            break;
+            goto _found;
         }
     }
-    if (i == 13)
-    {
-        qDebug() << "Piece name not found: " << pieceName;
-        return;
-    }
-    QString nextPieceName = pieceNames[(i + 1) % 13];
-    qDebug() << "Changing to" << nextPieceName;
+
+    SPDLOG_ERROR("Piece name {} not found", pieceName);
+    return;
+    
+_found:
+    QString nextPieceName = ENCODINGS[(i + 1) % ENCODINGS.size()];
+    SPDLOG_TRACE("Changing to {}", nextPieceName);
     pieceLabels[row][col]->setPiece(nextPieceName, nameToPixmap[nextPieceName]);
 }
 

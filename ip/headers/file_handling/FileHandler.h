@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../Common.h"
-#include "../EncodingMapperIP.h"
+#include "../CommonIP.h"
+#include "../../../Common.h"
 
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 #include <experimental/filesystem>
