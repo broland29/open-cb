@@ -1,6 +1,17 @@
 #include "../../headers/settings/SettingsDialog.h"
 
 
+QVector<QString> SettingsDialog::NAMES = {
+	"leftCameraIndex",
+	"rightCameraIndex",
+	"showImages",
+	"concatImages",
+	"borderTop",
+	"borderRight",
+	"borderBottom",
+	"borderLeft",
+};
+
 SettingsDialog::SettingsDialog(QWidget* parent)
 {
 	// define all widgets for parameters. key is internal/JSON name
@@ -124,17 +135,12 @@ QWidget* SettingsDialog::wrapParameters(std::vector<AbstractParameter*> paramete
 
 void SettingsDialog::saveButtonClicked()
 {
-	QVector<QString> names;
+	QVector<QString> names = NAMES;
 	QVector<QString> values;
-
-	names.push_back("leftCameraIndex");
-	values.push_back(parameterWidgets["leftCameraIndex"]->getValue());
-	names.push_back("rightCameraIndex");
-	values.push_back(parameterWidgets["rightCameraIndex"]->getValue());
-	names.push_back("showImages");
-	values.push_back(parameterWidgets["showImages"]->getValue());
-	names.push_back("concatImages");
-	values.push_back(parameterWidgets["concatImages"]->getValue());
+	for (QString name : names)
+	{
+		values.push_back(parameterWidgets[name]->getValue());
+	}
 
 	if (names.size() != values.size())
 	{
@@ -154,11 +160,7 @@ void SettingsDialog::saveButtonClicked()
 
 void SettingsDialog::refreshButtonClicked()
 {
-	QVector<QString> names;
-	names.push_back("leftCameraIndex");
-	names.push_back("rightCameraIndex");
-	names.push_back("showImages");
-	names.push_back("concatImages");
+	QVector<QString> names = NAMES;
 	emit getParametersSignal(names);
 }
 

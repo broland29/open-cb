@@ -34,7 +34,7 @@ int ParametersHandler::loadFromJSON(Parameters& parameters)
 		if (!jsonBuffer.contains(name))
 		{
 			SPDLOG_ERROR("{} does not contain key {}", JSON_PATH, name);
-			return 3;
+			continue;  // will leave it as default (or as it was), see Parameters.h
 		}
 
 		// extract new value, knowing type from old. exception thrown if types not matching

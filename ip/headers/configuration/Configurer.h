@@ -62,18 +62,26 @@ public:
 		Mat_<Vec3b> img,
 		QVector<QString> encodings,  // labelFolder for each cell
 		bool isTest,
-		bool concatImages
+		bool concatImages,
+		int borderTop, 
+		int borderRight, 
+		int borderBottom, 
+		int borderLeft
 	);
 
 	// save cell images on disk. while this is an overhead, classifiers may need different
 	//     image formats (ex: CNN), so cannot universally just pass an array of Mats
 	int prepareCellImages(
-		Mat_<Vec3b> imgOriginal
+		Mat_<Vec3b> imgOriginal,
+		int borderTop,
+		int borderRight,
+		int borderBottom,
+		int borderLeft
 	);
 
 private:
 	// actually extracts two cells
-	Mat_<Vec3b> extractCell(int i, int j, Mat_<Vec3b> img);
+	Mat_<Vec3b> extractCell(int i, int j, Mat_<Vec3b> img, int borderTop, int borderRight, int borderBottom, int borderLeft);
 
 	// coordinate system transformation: left -> main (see cams.drawio)
 	void leftToMain(int lr, int lc, int& mr, int& mc);
@@ -84,7 +92,11 @@ private:
 	int warpAndRemoveBorder(
 		Mat_<Vec3b> imgOriginal,
 		Mat_<Vec3b>& imgWarped,
-		Mat_<Vec3b>& imgNoBorder
+		Mat_<Vec3b>& imgNoBorder,
+		int borderTop,
+		int borderRight,
+		int borderBottom,
+		int borderLeft
 	);
 
 	// Draws a cross on color image img, "around" point p, with given diameter

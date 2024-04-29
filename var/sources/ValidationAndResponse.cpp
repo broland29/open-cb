@@ -16,13 +16,14 @@ void ValidationAndResponse::validateMoveSlot(QVector<QString> encodings)
 		for (int j = 0; j < 8; j++)
 		{
 			QString encoding = encodings[i * 8 + j];
-			if (encoding == "FR") { board[i][j] = FR; continue; }
+			if (encoding == "WF") { board[i][j] = FR; continue; }
 			if (encoding == "WP") { board[i][j] = WP; continue; }
 			if (encoding == "WB") { board[i][j] = WB; continue; }
 			if (encoding == "WN") { board[i][j] = WN; continue; }
 			if (encoding == "WR") { board[i][j] = WR; continue; }
 			if (encoding == "WQ") { board[i][j] = WQ; continue; }
 			if (encoding == "WK") { board[i][j] = WK; continue; }
+			if (encoding == "BF") { board[i][j] = FR; continue; }
 			if (encoding == "BP") { board[i][j] = BP; continue; }
 			if (encoding == "BB") { board[i][j] = BB; continue; }
 			if (encoding == "BN") { board[i][j] = BN; continue; }

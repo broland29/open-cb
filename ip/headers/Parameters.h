@@ -15,11 +15,16 @@ class Parameters
 {
 public:
 	std::map<QString, Variant> parameters = {
-		{ "leftCameraIndex", 10 },
-		{ "rightCameraIndex", 11 },
-		{ "showImages", true },
-		{ "concatImages", true }
+		{ "leftCameraIndex",	1		},
+		{ "rightCameraIndex",	2		},
+		{ "showImages",			true	},
+		{ "concatImages",		true	},
+		{ "borderTop",			53		},
+		{ "borderRight",		50		},
+		{ "borderBottom",		55		},
+		{ "borderLeft",			70		},
 	};
+
 private:
 public:
 	static void variantToQString(Variant variant, QString& qString);

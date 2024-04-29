@@ -358,9 +358,7 @@ void MainWindow::settingsButtonClicked()
     QObject::connect(this, &MainWindow::getParametersReplySignal, settingsDialog, &SettingsDialog::getParametersReplySlot);
 
     // fill values
-    QVector<QString> names;
-    names.push_back("leftCameraIndex");
-    names.push_back("rightCameraIndex");
+    QVector<QString> names = SettingsDialog::NAMES;
     getParametersSignal(names);
 
     int ret = settingsDialog->exec();
@@ -508,20 +506,21 @@ void MainWindow::rightClickedSlot(int row, int col, QString pieceName)
     lastRow = -1;
     lastCol = -1;
 
+    // no WF/BF visible on board
+    QVector<QString> switchOrder = { "FR", "WP", "WB", "WN", "WR", "WQ", "WK", "BP", "BB", "BN", "BR", "BQ", "BK" };
     int i;
-    for (i = 0; i < ENCODINGS.size(); i++)
+    for (i = 0; i < switchOrder.size(); i++)
     {
-        if (ENCODINGS[i] == pieceName)
+        if (switchOrder[i] == pieceName)
         {
             goto _found;
         }
     }
-
     SPDLOG_ERROR("Piece name {} not found", pieceName);
     return;
     
 _found:
-    QString nextPieceName = ENCODINGS[(i + 1) % ENCODINGS.size()];
+    QString nextPieceName = switchOrder[(i + 1) % switchOrder.size()];
     SPDLOG_TRACE("Changing to {}", nextPieceName);
     pieceLabels[row][col]->setPiece(nextPieceName, nameToPixmap[nextPieceName]);
 }

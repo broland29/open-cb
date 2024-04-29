@@ -199,10 +199,11 @@ int Configurer::configure(Mat_<Vec3b> img, bool isTest, bool showImages, bool co
 }
 
 
-int Configurer::cropAndLabel(Mat_<Vec3b> imgOriginal, QVector<QString> encodings, bool isTest, bool concatImages)
+int Configurer::cropAndLabel(Mat_<Vec3b> imgOriginal, QVector<QString> encodings, bool isTest, bool concatImages,
+	int borderTop, int borderRight, int borderBottom, int borderLeft)
 {
 	Mat_<Vec3b> imgWarped, imgNoBorder;
-	if (warpAndRemoveBorder(imgOriginal, imgWarped, imgNoBorder) != 0)
+	if (warpAndRemoveBorder(imgOriginal, imgWarped, imgNoBorder, borderTop, borderRight, borderBottom, borderLeft) != 0)
 	{
 		return 1;
 	}
@@ -227,7 +228,7 @@ int Configurer::cropAndLabel(Mat_<Vec3b> imgOriginal, QVector<QString> encodings
 			}
 
 			// extract based on camera's coord system (i,j), save with name based on main coord system (row,col)
-			Mat_<Vec3b> imgCell = extractCell(i, j, imgNoBorder);
+			Mat_<Vec3b> imgCell = extractCell(i, j, imgNoBorder, borderTop, borderRight, borderBottom, borderLeft);
 			if (isTest)
 			{
 				// corner images usually provide better overview
@@ -292,10 +293,10 @@ int Configurer::cropAndLabel(Mat_<Vec3b> imgOriginal, QVector<QString> encodings
 }
 
 
-int Configurer::prepareCellImages(Mat_<Vec3b> imgOriginal)
+int Configurer::prepareCellImages(Mat_<Vec3b> imgOriginal, int borderTop, int borderRight, int borderBottom, int borderLeft)
 {
 	Mat_<Vec3b> imgWarped, imgNoBorder;
-	if (warpAndRemoveBorder(imgOriginal, imgWarped, imgNoBorder) != 0)
+	if (warpAndRemoveBorder(imgOriginal, imgWarped, imgNoBorder, borderTop, borderRight, borderBottom, borderLeft) != 0)
 	{
 		return 1;
 	}
@@ -319,7 +320,7 @@ int Configurer::prepareCellImages(Mat_<Vec3b> imgOriginal)
 
 
 			// extract based on camera's coord system (i,j), save with name based on main coord system (row,col)
-			Mat_<Vec3b> imgCell = extractCell(i, j, imgNoBorder);
+			Mat_<Vec3b> imgCell = extractCell(i, j, imgNoBorder, borderTop, borderRight, borderBottom, borderLeft);
 			std::string path;
 			int ret = FileHandler::saveImage(imgCell, BOARD_FOLDER_PATH, path, false, FileHandler::boardImageName(row, col));
 			if (ret != 0)
@@ -334,13 +335,16 @@ int Configurer::prepareCellImages(Mat_<Vec3b> imgOriginal)
 }
 
 
-Mat_<Vec3b> Configurer::extractCell(int i, int j, Mat_<Vec3b> img)
+Mat_<Vec3b> Configurer::extractCell(int i, int j, Mat_<Vec3b> img, int borderTop, int borderRight, int borderBottom, int borderLeft)
 {
+	int width = cellWidth(borderRight, borderLeft);
+	int height = cellHeight(borderTop, borderBottom);
+
 	return img(Rect{
-		CELL_WIDTH * j,			// x
-		CELL_HEIGHT * (i - 1),  // y - start from cell above
-		CELL_WIDTH,             // width
-		CELL_HEIGHT * 2         // height - two cells
+		width* j,			// x
+		height* (i - 1),	// y - start from cell above
+		width,				// width
+		height * 2			// height - two cells
 		});
 }
 
@@ -359,7 +363,8 @@ void Configurer::rightToMain(int rr, int rc, int& mr, int& mc)
 }
 
 
-int Configurer::warpAndRemoveBorder(Mat_<Vec3b> imgOriginal, Mat_<Vec3b>& imgWarped, Mat_<Vec3b>& imgNoBorder)
+int Configurer::warpAndRemoveBorder(Mat_<Vec3b> imgOriginal, Mat_<Vec3b>& imgWarped, Mat_<Vec3b>& imgNoBorder,
+	int borderTop, int borderRight, int borderBottom, int borderLeft)
 {
 	if (!configured)
 	{
@@ -381,10 +386,10 @@ int Configurer::warpAndRemoveBorder(Mat_<Vec3b> imgOriginal, Mat_<Vec3b>& imgWar
 	warpPerspective(imgResizedColor, imgWarped, M, Size(500, 500));
 
 	imgNoBorder = imgWarped(Rect{
-		BORDER_LEFT,								// x
-		BORDER_TOP,									// y
-		IMAGE_WIDTH - BORDER_LEFT - BORDER_RIGHT,	// width
-		IMAGE_HEIGHT - BORDER_TOP - BORDER_BOTTOM	// height
+		borderLeft,								// x
+		borderTop,									// y
+		IMAGE_WIDTH - borderLeft - borderRight,	// width
+		IMAGE_HEIGHT - borderTop - borderBottom	// height
 		});
 
 	return 0;

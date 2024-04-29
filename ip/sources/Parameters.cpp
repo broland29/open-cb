@@ -5,7 +5,7 @@ void Parameters::variantToQString(Variant variant, QString& qString)
 {
 	if (std::holds_alternative<bool>(variant))
 	{
-		qString = QString::number(std::get<bool>(variant));  // should work
+		qString = (std::get<bool>(variant)) ? "True" : "False";
 	}
 	else if (std::holds_alternative<int>(variant))
 	{
@@ -29,7 +29,7 @@ void Parameters::variantToStdString(Variant variant, std::string& stdString)
 {
 	if (std::holds_alternative<bool>(variant))
 	{
-		stdString = std::to_string(std::get<bool>(variant));
+		stdString = (std::get<bool>(variant)) ? "True" : "False";
 	}
 	else if (std::holds_alternative<int>(variant))
 	{

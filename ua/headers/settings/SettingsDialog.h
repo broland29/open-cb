@@ -26,6 +26,8 @@ class SettingsDialog : public QDialog
 	Q_OBJECT
 
 public:
+	// could optimize not to get and set all values all the time. but for now, we call get/set on these
+	static QVector<QString> NAMES;
 
 private:	
 	std::map<QString, AbstractParameter*> parameterWidgets;

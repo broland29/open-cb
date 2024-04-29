@@ -123,7 +123,12 @@ void ImageProcessing::classifyBoardSlot()
 	}
 
 	// call on configurer - prepare cell images
-	if (configurerLeft->prepareCellImages(imgLeft) + configurerRight->prepareCellImages(imgRight) != 0)
+	const int borderTop = get<int>(parameters.parameters["borderTop"]);
+	const int borderRight = get<int>(parameters.parameters["borderRight"]);
+	const int borderBottom = get<int>(parameters.parameters["borderBottom"]);
+	const int borderLeft = get<int>(parameters.parameters["borderLeft"]);
+	if (configurerLeft->prepareCellImages(imgLeft, borderTop, borderRight, borderBottom, borderLeft) +
+		configurerRight->prepareCellImages(imgRight, borderTop, borderRight, borderBottom, borderLeft) != 0)
 	{
 		emit classifyBoardReplySignal(false, "Preparing cell images failed. Make sure to run \"Configure\" beforehand.", QVector<QString>());
 		return;
@@ -194,8 +199,13 @@ void ImageProcessing::cropAndLabel(QVector<QString> encodings, bool isTest)
 	}
 
 	// call on configurer
-	if (configurerLeft->cropAndLabel(imgLeft, encodings, isTest, get<bool>(parameters.parameters["concatImages"])) +
-		configurerRight->cropAndLabel(imgRight, encodings, isTest, get<bool>(parameters.parameters["concatImages"])) != 0)
+	const bool concatImages = get<bool>(parameters.parameters["concatImages"]);
+	const int borderTop = get<int>(parameters.parameters["borderTop"]);
+	const int borderRight = get<int>(parameters.parameters["borderRight"]);
+	const int borderBottom = get<int>(parameters.parameters["borderBottom"]);
+	const int borderLeft = get<int>(parameters.parameters["borderLeft"]);
+	if (configurerLeft->cropAndLabel(imgLeft, encodings, isTest, concatImages, borderTop, borderRight, borderBottom, borderLeft) +
+		configurerRight->cropAndLabel(imgRight, encodings, isTest, concatImages, borderTop, borderRight, borderBottom, borderLeft) != 0)
 	{
 		emit cropAndLabelReplySignal(false, "Error when configuring");
 		return;

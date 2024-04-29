@@ -11,12 +11,16 @@ using namespace cv;
 
 #define IMAGE_WIDTH			500
 #define IMAGE_HEIGHT		500
-#define BORDER_LEFT         53
-#define BORDER_RIGHT        50
-#define BORDER_TOP          55
-#define BORDER_BOTTOM       70
-#define CELL_WIDTH          (IMAGE_WIDTH - BORDER_RIGHT - BORDER_LEFT) / 8
-#define CELL_HEIGHT         (IMAGE_HEIGHT - BORDER_TOP - BORDER_BOTTOM) / 8
+
+int inline cellWidth(int borderRight, int borderLeft)
+{
+    return (IMAGE_WIDTH - borderRight - borderLeft) / 8;
+}
+
+int inline cellHeight(int borderTop, int borderBottom)
+{
+    return (IMAGE_HEIGHT - borderTop - borderBottom) / 8;
+}
 
 
 #define PREVIEW_LEFT_PATH       "C:\\open-cb\\mem\\img\\pre\\cam_left.jpeg"

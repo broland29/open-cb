@@ -34,6 +34,14 @@ void ClickableLabel::setPiece(QString pieceName, QPixmap piecePixmap)
 
 QString ClickableLabel::getPieceName()
 {
+    if (pieceName == "FR")
+    {
+        if ((row + col) % 2 == 0)
+        {
+            return "WF";
+        }
+        return "BF";
+    }
     return pieceName;
 }
 
