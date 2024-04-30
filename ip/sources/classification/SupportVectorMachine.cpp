@@ -360,14 +360,14 @@ int SupportVectorMachine::classifyBoard(QVector<QString>& encodings)
 
 
 
-int SupportVectorMachine::save(std::string folderPath)
+int SupportVectorMachine::save()
 {
 	// todo
 	return 404;
 }
 
 
-int SupportVectorMachine::load(std::string folderPath)
+int SupportVectorMachine::load()
 {
 	// todo
 	return 404;

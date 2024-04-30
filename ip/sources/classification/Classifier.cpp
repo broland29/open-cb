@@ -33,15 +33,15 @@ int Classifier::changeClassifier(std::string newClassifierName)
 }
 
 
-int Classifier::saveClassifier(std::string folderPath)
+int Classifier::saveClassifier()
 {
-	return activeClassifier->save(folderPath);
+	return activeClassifier->save();
 }
 
 
-int Classifier::loadClassifier(std::string folderPath)
+int Classifier::loadClassifier()
 {
-	return activeClassifier->load(folderPath);
+	return activeClassifier->load();
 }
 
 

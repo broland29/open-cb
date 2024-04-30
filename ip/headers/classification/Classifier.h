@@ -22,8 +22,8 @@ private:
 
 public:
 	int changeClassifier(std::string newClassifierName);
-	int saveClassifier(std::string folderPath);
-	int loadClassifier(std::string folderPath);
+	int saveClassifier();
+	int loadClassifier();
 	int trainClassifier();
 	int testClassifier();
 	int classifyBoard(QVector<QString>& encodings);

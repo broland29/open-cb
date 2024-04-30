@@ -44,3 +44,7 @@ std::ostream& operator << (std::ostream& os, const std::map<QString, Variant>& m
 
 template <> struct fmt::formatter<std::map<QString, Variant>> : ostream_formatter {};
 
+//template <> struct fmt::formatter<Castle> : ostream_formatter {};
+//template <> struct fmt::formatter<Mat_<uchar>> : ostream_formatter {};
+
+

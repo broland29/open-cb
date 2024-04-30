@@ -59,27 +59,27 @@ void ImageProcessing::changeClassifierSlot(QString newClassifierName)
 }
 
 
-void ImageProcessing::saveClassifierSlot(QString folderPath)
+void ImageProcessing::saveClassifierSlot()
 {
-	int ret = classifier->saveClassifier(folderPath.toStdString());
+	int ret = classifier->saveClassifier();
 	if (ret != 0)
 	{
 		emit saveClassifierReplySignal(false, "Saving classifier failed");
 		return;
 	}
-	emit saveClassifierReplySignal(true, "Saved classifier to " + folderPath);
+	emit saveClassifierReplySignal(true, "Saved classifier.");
 }
 
 
-void ImageProcessing::loadClassifierSlot(QString folderPath)
+void ImageProcessing::loadClassifierSlot()
 {
-	int ret = classifier->loadClassifier(folderPath.toStdString());
+	int ret = classifier->loadClassifier();
 	if (ret != 0)
 	{
 		emit loadClassifierReplySignal(false, "Loading classifier failed");
 		return;
 	}
-	emit loadClassifierReplySignal(true, "Loaded classifier from " + folderPath);
+	emit loadClassifierReplySignal(true, "Loaded classifier.");
 }
 
 

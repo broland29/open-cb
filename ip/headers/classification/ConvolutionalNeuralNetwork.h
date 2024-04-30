@@ -17,7 +17,7 @@ public:
 
 	int classifyBoard(QVector<QString>& encodings) override;
 
-	int save(std::string folderPath) override;
+	int save() override;
 
-	int load(std::string folderPath) override;
+	int load() override;
 };

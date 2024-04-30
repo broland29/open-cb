@@ -121,7 +121,7 @@ int FileHandler::readLabelFolderImages(std::string labelFolderBasePath, std::vec
 		}
 	}
 
-	SPDLOG_TRACE("{} images loaded", imagesAndLabels.size());
+	SPDLOG_TRACE("Loaded {} images from {}", imagesAndLabels.size(), labelFolderBasePath);
 
 	return 0;
 }

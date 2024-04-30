@@ -19,8 +19,8 @@ public:
 	virtual int classifyBoard(QVector<QString>& encodings) = 0;
 
 	// save classifier to disk
-	virtual int save(std::string folderPath) = 0;
+	virtual int save() = 0;
 
 	// load classifier from disk
-	virtual int load(std::string folderPath) = 0;
+	virtual int load() = 0;
 };

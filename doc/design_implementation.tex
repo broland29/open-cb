@@ -24,5 +24,28 @@ The chapter should contain (but not limited to):
 \section{Module Overview and Communication}
 \section{User Application Module}
 \section{Image Processing Module}
+
+\subsection{AbstractClassifier}
+
+This class provides a blueprint for classifiers. This is needed for \t{Classifier}, since this way every classifier can be wrapped in this class and switched around easily. Currently there are three classifiers supported, based on three different algorithms: K Nearest Neighbors, Support Vector Machine and Convolutional Neural Network. \t{AbstarctClassifier} specifies methods \t{train}, \t{test}, \t{classifyBoard}, \t{save} and \t{load}. These are linked to direct functionalities.
+
+
+\subsection{K Nearest Neighbors}
+
+This classifier is the simplest option a user can choose. It is based on the KNN presented in Pattern Recognition Systems. For features, it uses the color histogram, more precisely the three color histograms (blue, green, red) with a given resolution, put ``one after another''. The resolution of the histograms is given by the number of bins, which currently is set to 8. This means that the color value of one channel, ranging from 0 to 255, gets mapped into one of the eight bins, based on where it lies on the scale. The labels are from 0 to 13 or 14, depending if one specifies to unite the free classes or not, but more on this later.
+
+Both the feature matrix and label matrix are of type \t{int}. This is good for simplicity, but also has other reasons. The class label is used directly as index in many cases. Both matrices are written to and read from the file system using simple \t{ofstream} operations. This way one can see the actual values, and there is no need to artificially convert to images, which when converted back would most probably result in loss of information.
+
+As we know, KNN does not need actual training, it just loads the images and builds the feature matrix and label matrix from it. This happens relatively fast for the tested amount of images. Since the validation set is not used in any form, and the number of images is already low, I chose to append the validation images to the training set. As previously said, the number of classes, and hence the labels may vary. This is because I provided the option to treat classes WF and BF the same way. Both of these classes will be used as free in VAR anyways, and for KNN, the separation just brings a great amount of confusion. Since we talk about color histograms, we completely lose the notion of dimensionality. An image with bottom half black and upper half white (BF) and one like this but flipped horizontally (WF) are pretty much the same for this classifier. This can be seen in the confusion matrix if both classes are used:
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.7\textwidth]{figs/design_implementation/confusion_matrix_two_frees.PNG}
+    \caption{Confusion matrix: two frees}
+    \label{fig:confusion_matrix_two_frees}
+\end{figure}
+
+The testing phase consists of running the classification on the test set, computing the confusion matrix, and from that computing the total accuracy, as well as per-class precision and recall. After getting the confusion matrix, it is enough to iterate it once: for precision (at class \t{i}) we need the sum on row \text{i}, for recall we need the sum on column \t{i}, and for accuracy we need ``everything''. As expected, the results are not at all impressive: this is a very naive approach, and the biggest drawback is the feature selected. Chess pieces are distinguished by their form, not their color.
+
 \section{Validation and Response Module}
 

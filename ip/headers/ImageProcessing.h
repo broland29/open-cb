@@ -78,8 +78,8 @@ signals:
 
 public slots:
 	void changeClassifierSlot(QString newClassifierName);
-	void saveClassifierSlot(QString folderPath);
-	void loadClassifierSlot(QString folderPath);
+	void saveClassifierSlot();
+	void loadClassifierSlot();
 	void trainClassifierSlot();
 	void testClassifierSlot();
 	void classifyBoardSlot();

@@ -138,8 +138,8 @@ signals:
     void newGameSignal();
 
     void changeClassifierSignal(QString classifier);
-    void saveClassifierSignal(QString path);
-    void loadClassifierSignal(QString path);
+    void saveClassifierSignal();
+    void loadClassifierSignal();
     void trainClassifierSignal();
     void testClassifierSignal();
     void classifyBoardSignal();

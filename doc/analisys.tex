@@ -2,65 +2,50 @@
 \label{ch:analysis}
 \pagestyle{fancy}
 
-{\color{blue}Together with the next two chapters takes about 70\% of the whole paper.\\}
 
-The purpose of this chapter is to explain the operating principles of the implemented
-application.
-Here you write about your solution from a theory standpoint – i.e. you explain it and demonstrate its theoretical properties/value, e.g.:
-\begin{itemize}
-	\item used or proposed algorithms,
-    \item used protocols,
-    \item  abstract models,
-    \item  logic explanations/arguments concerning the chosen solution,
-    \item  logic and functional structure of the application, etc.
-\end{itemize}
-
-
-~\\\parbox[c]{\textwidth}{\color{red}\bfseries
-
-YOU SHOULD NOT write about the implementation.
-YOU SHOULD NOT describe technologies and other things which do not pertain to
-your project (no fillers, please!).
-}
-
-
-% \section{A section title}\label{sec:context}
-
-% \subsection{A Subsection title}
-
-Every table in the thesis should be numbered as Table \textit{x.y}, where \textit{x} is the chapter number where the table is included, and \textit{y} is the number of the table within that chapter. There should be one empty line after the paragraph preceding the table, and one empty line after the table. Example: in this row we have inserted a reference to Table~\ref{tab:nonlin}.
-
-\begin{table}[ht]
-    \caption{Results} % table caption
-    \label{tab:nonlin} % \label{table:nonlin} introduces the label used to refer the table in the textt; reference is achieved via \ref{table:nonlin}
-    \centering                          % centered table
-    \begin{tabular}{|c|c|c|c|}          % 4 centerered columns
-        \hline
-        Case & Method\#1 & Method\#2 & Method\#3 \\ [0.5ex]   % heading
-        \hline                              % single horizontal line
-        1 & 50 & 837 & 970 \\               % table body
-        2 & 47 & 877 & 230 \\
-        3 & 31 & 25 & 415 \\[1ex]           % [1ex] adds vertical space
-        \hline
-    \end{tabular}
-
-\end{table}
-
-Every figure used in the thesis should be referred  (e.g. Figure x.y shows the components of the system...) and numbered.
-
-Numbering is like this: Figure \textit{x.y} where \textit{x} is the chapter number and \textit{y} is the number of the figure within that chapter. E.g. , in this row we have inserted a reference to Figure~\ref{fig:imag}.
-
-\begin{figure}[ht]
-    \centering
-    \includegraphics[]{figs/test.jpg}
-    \caption{Figure name}
-    \label{fig:imag}
-\end{figure}
 
 
 
 \section{Image Processing Algorithms}
 \subsection{Hough}
+
+The process of line identification from a source image is not at all a trivial problem. The article \i{A survey of Hough Transform} \cite{hough_survey} takes a comprehensive look at this algorithm. It describes it as ``an ingenious method that converts such global curve detection problem into an efficient peak detection problem in parameter space''.
+
+Most of the time, the input should be an edge image. In our case, we apply Canny Edge Detection beforehand. The idea is to define a parameter space, map the image in it, and then take each object pixel, and let them vote about on which lane they think they can lie on. Bins, sometimes called accumulators, count these votes, and the lines with the most votes or above a certain threshold win. This way, any parametric analytic curve could be described- there are applications of Hough on finding circles and ellipses. However, for us, the goal is to get the lines defined by the chessboard, to identify it.
+
+For line parametrization, there were attempts to use different equations to describe a line. The simple slope-intercept form $f(x,y) = y - mx - c = 0$ for example suffered from the limitation that lines perpendicular to the abscissa were impossible to represent. There are workarounds to avoid this, however, I chose to follow the recommendation of \cite{prs_labs} and go with a different form, the one recommended by Duda and Hart: the normal parametrization/ $\rho - \theta$ representation:
+
+\[ \rho = x \cos{\theta} + y \sin{\theta}\]
+
+To illustrate how this representation works, here is Figure \ref{fig:rhotheta1}, showing an example. 
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.3\textwidth]{figs/rhotheta1.png}
+    \caption{Line in parametric representation}
+    \label{fig:rhotheta1}
+\end{figure}
+
+The origin is on the top left corner, to follow the convention enforced by openCV. You can see the \t{x} and \t{y} axes, and the red line is the one we want to describe. We take the normal to the red line from the origin: this is the purple line. The length of the purple line is $\rho$. The angle between the \t{x} axis and the purple line is $\theta$. In this particular case, if we take one unit on the axis to be of length 1, we can say that $\rho = 4\sqrt{2}$ and $\theta = \pi/2 = 45^{\circ}$.
+
+Now we just need to define a convention for the ranges we want to check. I will use Figure \ref{fig:rhotheta2} to show some examples, including border cases.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/rhotheta2.png}
+    \caption{Parameter bounaries}
+    \label{fig:rhotheta2}
+\end{figure}
+
+The coordinate system is the same as in Figure \ref{fig:rhotheta1}. The dotted box shows the region of interest, more specifically, pixels that are inside the image. Lines as we know go to infinity, so they naturally go out of bounds. On the left picture, I wanted to focus on the limits of $\theta$. We can see that lines \t{L3}, \t{L4} and \t{L5} will be inside the image. While lines \t{L1} and \t{L2} could be described by a normal form, they are out of bounds, hence not of interest. If we think about $\theta_1$ and $\theta_2$, we can observe that they are in the range $[2\pi, 3\pi/4]$, or $[180^{\circ}, 270^{\circ}]$. Looking at the right figure, we can focus on $\rho$. Again, some lines are out of the image, and we don't care about them. We cannot filter them based only on $\rho$. But we can see the two extremes. The minimum $\rho$ is achieved by \t{L1}: it has only one pixel inside the image, and it coincides with the origin of the coordinate system, so it is at 0 distance from it. Meanwhile, line \t{L5} is at maximum distance, given that its perpendicular coincides with the diagonal of the image. Overall, we can conclude:
+
+\[\theta \in [0, 2\pi) \cup (3\pi/4, 2\pi)\]
+\[\rho \in [0,\sqrt{width * width + height * height}]\]
+
+To enhance the efficiency, some use kernel operations to calculate votes. Others try to use a rotation-based approach, where ``the edge image is rotated about the center of the image plane by a fixed angle step, and in each rotated image, search is carried out in the horizontal and vertical directions to find the end points of horizontal and vertical line segments'' \cite{hough_survey}. Some try to use Neural Networks, to train a model to map an image to parametric lines. And as always, dedicated hardware and parallelization can be of great help.
+
+The good thing about the Hough algorithm is that it is widely spread in the image processing domain.
+
 \subsection{Canny Edge Detection}
 \subsection{Perspective Transform}
 

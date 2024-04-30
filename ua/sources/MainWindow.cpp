@@ -277,16 +277,14 @@ void MainWindow::classifierComboBoxChanged()
 
 void MainWindow::saveClassifierButtonClicked()
 {
-    QString path = "DUMMYPATH";
-    SPDLOG_TRACE("Emitting saveClassifierSignal with {}", path);
-    emit saveClassifierSignal(path);
+    SPDLOG_TRACE("Emitting saveClassifierSignal");
+    emit saveClassifierSignal();
 }
 
 void MainWindow::loadClassifierButtonClicked()
 {
-    QString path = "DUMMYPATH";
-    SPDLOG_TRACE("Emitting loadClassifierSignal with {}", path);
-    emit loadClassifierSignal(path);
+    SPDLOG_TRACE("Emitting loadClassifierSignal");
+    emit loadClassifierSignal();
 }
 
 void MainWindow::trainClassifierButtonClicked()

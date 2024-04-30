@@ -45,7 +45,7 @@ int ConvolutionalNeuralNetwork::classifyBoard(QVector<QString>& encodings)
 }
 
 
-int ConvolutionalNeuralNetwork::save(std::string folderPath)
+int ConvolutionalNeuralNetwork::save()
 {
 	// todo
 	// CNNs already saved after training phase - maybe renaming and some move operations are enough
@@ -53,7 +53,7 @@ int ConvolutionalNeuralNetwork::save(std::string folderPath)
 }
 
 
-int ConvolutionalNeuralNetwork::load(std::string folderPath)
+int ConvolutionalNeuralNetwork::load()
 {
 	// todo
 	// CNNs already load when testing/ classifying board - maybe enough to change a field to current CNN

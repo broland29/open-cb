@@ -1,6 +1,7 @@
 #pragma once
 
 #include <spdlog/spdlog.h>
+#include <spdlog/fmt/ostr.h>
 #include <opencv2/opencv.hpp>
 #include <QString>
 #include <QVector>
@@ -37,9 +38,9 @@ int inline cellHeight(int borderTop, int borderBottom)
 #define BOARD_FOLDER_PATH           "C:\\open-cb\\mem\\img\\brd"  // images for actual classification (cells from one image)
 #define GRAB_FOLDER_PATH             "C:\\open-cb\\mem\\img\\grb" // images grabbed by CameraReader, but not yet used
 
+#define KNN_FOLDER_PATH             "C:\\open-cb\\mem\\knn"
 #define CNN_FOLDER_PATH             "C:\\open-cb\\mem\\cnn"
 
-#define CLASS_COUNT 14
 
 #define JSON_PATH                   "C:\\open-cb\\mem\\per\\persistence.json"              
 
@@ -49,6 +50,7 @@ bool inline isInside(Mat img, int i, int j)
 {
     return (i >= 0 && i < img.rows) && (j >= 0 && j < img.cols);
 }
+
 
 
 
