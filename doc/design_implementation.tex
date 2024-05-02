@@ -55,6 +55,34 @@ You may ask, why are these intersections important? Well, initially I wanted to 
 
 One assumption we can safely make is that the chessboard is square. And that it is the biggest square in the image. So, instead of looking for the lines delimiting the cells, I chose to search for the 20 most dominant lines Hough can find, compute all the intersections of all lines, and search for the points which are in the image, and closest to the corner of the image. This way we get the corner points of the chessboard. The fact that chessboard borders vary in size and often are confusing for Image Processing algorithms led me to the decision to give up finding the thickness of the border, and instead make it the user's job to fine-tune the border width parameters. This is not very elegant, but it works.
 
+\section{Support Vector Machine}
+
+Implementing a Support Vector Machine classifier implies dealing with advanced mathematics. If there had been only two classes, and two features, like the classical example of red and blue points, I would have given it a run. However, we have 14 classes and features of high dimensions. There is a high chance that the input is not linearly separable. It is hard to visualize things at this complexity, so debugging is very hard. Since this classifier is only a small part of the project, I chose to use an already implemented SVM, namely the one given by OpenCV.
+
+To use the OpenCV SVM, one has to include the header \t{opencv2/ml.hpp}. This interface gives a simple method \t{ml::SVM::create} to get a \t{Ptr<ml::SVM>}. if I understood correctly, this \t{Ptr} is OpenCV's implementation of smart pointers. So I have a field of this type in class \t{SupportVectorMachine}, and create is called when training (we want to avoid doing things in the constructor since the constructor gets called all the time, while the \t{train} method might never be invoked during a session). After creation, you have to set the type, the kernel and the term criteria. Having the SVM and the training images ready, a simple high-level function called \t{train} does all the job for us.
+
+For testing, I used the \t{predict} method on the whole test set, then computed the confusion matrix from this. This way, I had the chance to use the same \t{calculateAndLogMetrics} function as in the case of KNN, so this is a somewhat ``fair'' comparison. I could have used the utilities given by \t{ml::SVM} to calculate metrics, but, at least for me, it seemed that these are very superficially documented and, hence hard to set up.
+
+Both the training and the testing are done not directly on the images, but on features extracted by a feature extractor. Header \t{opencv2/xfeatures2d.hpp} comes with a set of such feature extractors. To get it to work, one has to install \t{opencv4[contrib]}. I chose ORB since it was the easiest to get to work and seemed to get more features than BRIEF. Even like this, there was one huge problem: feature extractors needed a set of key points to extract features, and keypoint detectors gave a different amount of key points for different images, and in some cases, found no key points at all. Since we want to use these descriptors as features in classification, this is unacceptable.
+
+The workaround I did was the idea of my thesis supervisor: instead of using a key point detector, I hard-coded a matrix of key points. This matrix is used on every (grayscale) image, when training or when testing. This way the feature is of fixed length, the feature matrix is a proper matrix, and \t{ml::SVM} is happy.
+
+I have to admit that this classifier is my least favorite from the project since I could not deep dive into its implementation to fully understand and fine-tune it. Also, there is a bug when calling \t{load}, about which I could not find any information on the internet. It is indeed a big implementation, giving a lot of options, but what are these used for, remains a mystery.
+
+
+\section{Convolutional Neural Network}
+
+As a programmer, when I hear about Artificial Intelligence, I immediately think about Python, Tensorflow and Keras. For the problem of multi-class classification of images, Convolutional Neural Networks are the winners. Even though my project started as a pure C++ program, when I reached the point of adding a CNN to the project, I had to go with Python. I had some previous experience with these libraries, and I know that many people are going through the same struggles trying to set up and use a CNN in Python.
+
+There are three Python scripts, each one fulfilling a functionality: \t{cnn\_train.py}, \t{cnn\_test.py} and \t{cnn\_classify\_board.py}. We need two-way interaction: a modality to call these scripts and pass arguments to them, and a way to get a response from them. For the first issue, I used the \t{system} method. As this is from C and executes commands directly like in a command line, many people suggest avoiding it. However, I chose it because of its simplicity, and because the user does not influence the command executed, as it is known at compile-time (hardcoded).
+
+The \t{system} command also returns the return value from the scripts. This is good for error checking. But in the case of \t{cnn\_classify\_board.py}, we need to retrieve a whole matrix of encodings, and for this, we need something extra. I chose the easiest solution I could have come up with, which is storing the result in a text file. Then, if the script returns a success code of 0, the C++ function can go on and read the values from the given text file.
+
+Since training and testing happen in different scripts, the model has to be saved after training, so we can load it in the test script. This was, functionalities ``save'' and ``load'' for the CNN are implicit.
+
+Some things are needed in multiple scripts, like libraries \t{tensorflow} and \t{sys}, parameters \t{img\_width} and \t{img\_height}, or functions \t{load\_images} and \t{plot\_samples}. These are put in a separate script \t{cnn\_common.py} and included in all other scripts.
+
+
 
 
 \section{Validation and Response Module}

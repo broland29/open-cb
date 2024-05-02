@@ -6,3 +6,4 @@ mem/*
 
 doc/*
 !doc/*.tex
+!doc/thesis.bib

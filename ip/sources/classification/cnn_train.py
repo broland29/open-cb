@@ -1,10 +1,8 @@
 print("\n ---------- start train.py ---------- \n")
 
-import cnn_common as cm
-import tensorflow as tf
-import sys
-import pathlib
-import matplotlib.pyplot as plt
+from cnn_common import *
+import os.path
+import datetime
 
 
 # check gpu
@@ -15,7 +13,7 @@ print(tf.config.list_physical_devices('GPU'))
 # parse command line arguments
 argv = sys.argv
 
-if cm.debug:
+if debug:
     print("Argument count:", len(argv))
     print("Arguments:")
     for arg in argv:
@@ -26,13 +24,13 @@ if len(argv) != 4:
     print("   argv[1]   -   directory_trn    -   directory of labeled train folder")
     print("   argv[2]   -   directory_val    -   directory of labeled validation folder")
     print("   argv[3]   -   directory_model  -   where to save model")
-    sys.exit(1)
+    sys.exit(2)
 
 directory_trn = pathlib.Path(argv[1])
 directory_val = pathlib.Path(argv[2])
 directory_model = pathlib.Path(argv[3])
 
-if cm.debug:
+if debug:
     print("directory_trn:", directory_trn)
     print("directory_val:", directory_val)
     print("directory_trn jpeg count:", len(list(directory_trn.glob('*/*.jpeg'))))
@@ -40,14 +38,16 @@ if cm.debug:
     print("directory_model:", directory_model)
 
 
-# load datasets
-dataset_trn = cm.load_images(directory_trn, cm.seed, cm.image_size, cm.batch_size, 2)
-dataset_val = cm.load_images(directory_val, cm.seed, cm.image_size, cm.batch_size, 3)
+# load datasets - error handling in load_images
+dataset_trn = load_images(directory_trn, seed, image_size, batch_size, error_exit_code=3)
+dataset_val = load_images(directory_val, seed, image_size, batch_size, error_exit_code=4)
 
-if cm.debug:
-    cm.plot_samples(dataset_trn, "Samples from training data set")
-    cm.plot_samples(dataset_val, "Samples from validation data set")
+if debug:
+    plot_samples(dataset_trn, "Samples from training data set")
+    plot_samples(dataset_val, "Samples from validation data set")
     plt.show()
+
+print("Class names:", dataset_trn.class_names)
 
 
 # some sparkle
@@ -67,22 +67,32 @@ model = tf.keras.Sequential([
     tf.keras.layers.MaxPooling2D(),
     tf.keras.layers.Flatten(),
     tf.keras.layers.Dense(128, activation='relu'),
-    tf.keras.layers.Dense(cm.num_classes)])
+    tf.keras.layers.Dense(num_classes)])
 
 model.compile(
     optimizer='adam',
     loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
     metrics=['accuracy'])
-input_shape = (None, cm.img_height, cm.img_width, 3)  # https://www.tensorflow.org/tutorials/load_data/images
+input_shape = (None, img_height, img_width, 3)  # https://www.tensorflow.org/tutorials/load_data/images
 model.build(input_shape)
 model.summary()
+
+# https://www.tensorflow.org/tensorboard/get_started#using_tensorboard_with_keras_modelfit
+log_dir = os.path.join(directory_model,"tb_logs", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
 
 model.fit(
   dataset_trn,
   validation_data=dataset_val,
-  epochs=3)
+  epochs=20,
+  callbacks=[tensorboard_callback])
 
-model.save(directory_model)
+model.save(directory_model)  # if dir not existing, it creates for himself
+print("To see tensorboard:")
+print("\tNavigate to", log_dir)
+print("\tOpen terminal")
+print("\tRun: conda activate <<env_name>>")
+print("\tRun: tensorboard --logdir .")
 
 
 print("\n ----------- end train.py ----------- ")

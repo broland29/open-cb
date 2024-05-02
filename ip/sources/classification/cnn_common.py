@@ -1,5 +1,11 @@
+import sys
+import traceback
+import logging
+
 import tensorflow as tf
+import pathlib
 import matplotlib.pyplot as plt
+
 
 
 debug = True  # show images and log
@@ -22,9 +28,9 @@ def load_images(directory, seed, image_size, batch_size, error_exit_code):
             seed=seed,
             image_size=image_size,
             batch_size=batch_size)
-    except Exception as exception:
-        print("Exception when loading training dataset!")
-        print(exception)
+    except:
+        print("\nError loading images", directory)
+        logging.error(traceback.format_exc())
         sys.exit(error_exit_code)
 
 

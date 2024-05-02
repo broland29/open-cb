@@ -2,7 +2,6 @@
 
 ConvolutionalNeuralNetwork::ConvolutionalNeuralNetwork()
 {
-	// todo
 }
 
 
@@ -39,23 +38,73 @@ int ConvolutionalNeuralNetwork::test()
 
 int ConvolutionalNeuralNetwork::classifyBoard(QVector<QString>& encodings)
 {
-	encodings.resize(64, "?");
-	// todo
-	return 404;
+	std::string command = "conda run --no-capture-output -n rolienv2 python " + std::string(CLASSIFY_BOARD_SCRIPT_PATH) +
+		std::string(" ") + std::string(BOARD_FOLDER_PATH) +			// argv[1]
+		std::string(" ") + std::string(CNN_FOLDER_PATH) +			// argv[2]
+		std::string(" ") + std::string(CNN_FOLDER_PATH);			// argv[3]
+	SPDLOG_TRACE("Executing command {}", command);
+	
+	int ret = system(command.c_str());
+	SPDLOG_TRACE("Command returned {}", ret);
+	
+	// in case of failure from the script side, end
+	if (ret != 0)
+	{
+		return ret;
+	}
+
+	std::string path = CNN_FOLDER_PATH + std::string("\\pred.txt");
+	std::ifstream infile(path);
+	if (!infile.is_open())
+	{
+		SPDLOG_ERROR("Could not open predictions file {}", path);
+		return 1;
+	}
+
+	encodings.resize(64);
+	int buffer;
+	for (int i = 0; i < 64; i++)
+	{
+		infile >> buffer;
+		encodings[i] = internalToExternal(buffer);
+	}
+	
+	return ret;
 }
 
 
 int ConvolutionalNeuralNetwork::save()
 {
-	// todo
-	// CNNs already saved after training phase - maybe renaming and some move operations are enough
-	return 404;
+	SPDLOG_INFO("CNN is implicitly saved after training");
+	return 0;
 }
 
 
 int ConvolutionalNeuralNetwork::load()
 {
-	// todo
-	// CNNs already load when testing/ classifying board - maybe enough to change a field to current CNN
-	return 404;
+	SPDLOG_INFO("CNN is implicitly loaded before testing/ classifying board");
+	return 0;
+}
+
+
+QString ConvolutionalNeuralNetwork::internalToExternal(int encoding)
+{
+	// dataset_trn.class_names in cnn_train.py prints ['BB', 'BF', 'BK', 'BN', 'BP', 'BQ', 'BR', 'WB', 'WF', 'WK', 'WN', 'WP', 'WQ', 'WR']
+	if (encoding == 0) { return "BB"; };
+	if (encoding == 1) { return "BF"; };
+	if (encoding == 2) { return "BK"; };
+	if (encoding == 3) { return "BN"; };
+	if (encoding == 4) { return "BP"; };
+	if (encoding == 5) { return "BQ"; };
+	if (encoding == 6) { return "BR"; };
+	if (encoding == 7) { return "WB"; };
+	if (encoding == 8) { return "WF"; };
+	if (encoding == 9) { return "WK"; };
+	if (encoding == 10) { return "WN"; };
+	if (encoding == 11) { return "WP"; };
+	if (encoding == 12) { return "WQ"; };
+	if (encoding == 13) { return "WR"; };
+
+	SPDLOG_ERROR("Could not convert {}", encoding);
+	return "WF";
 }
