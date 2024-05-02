@@ -7,7 +7,7 @@
 
 
 \section{Image Processing Algorithms}
-\subsection{Hough}
+\subsection{Hough} \label{analysis:hough}
 
 The process of line identification from a source image is not at all a trivial problem. The article \i{A survey of Hough Transform} \cite{hough_survey} takes a comprehensive look at this algorithm. It describes it as ``an ingenious method that converts such global curve detection problem into an efficient peak detection problem in parameter space''.
 
@@ -37,14 +37,14 @@ Now we just need to define a convention for the ranges we want to check. I will 
     \label{fig:rhotheta2}
 \end{figure}
 
-The coordinate system is the same as in Figure \ref{fig:rhotheta1}. The dotted box shows the region of interest, more specifically, pixels that are inside the image. Lines as we know go to infinity, so they naturally go out of bounds. On the left picture, I wanted to focus on the limits of $\theta$. We can see that lines \t{L3}, \t{L4} and \t{L5} will be inside the image. While lines \t{L1} and \t{L2} could be described by a normal form, they are out of bounds, hence not of interest. If we think about $\theta_1$ and $\theta_2$, we can observe that they are in the range $[2\pi, 3\pi/4]$, or $[180^{\circ}, 270^{\circ}]$. Looking at the right figure, we can focus on $\rho$. Again, some lines are out of the image, and we don't care about them. We cannot filter them based only on $\rho$. But we can see the two extremes. The minimum $\rho$ is achieved by \t{L1}: it has only one pixel inside the image, and it coincides with the origin of the coordinate system, so it is at 0 distance from it. Meanwhile, line \t{L5} is at maximum distance, given that its perpendicular coincides with the diagonal of the image. Overall, we can conclude:
+The coordinate system is the same as in Figure \ref{fig:rhotheta1}. The dotted box shows the region of interest, more specifically, pixels that are inside the image. Lines as we know go to infinity, so they naturally go out of bounds. On the left picture, I wanted to focus on the limits of $\theta$. We can see that lines \t{L3}, \t{L4} and \t{L5} will be inside the image. While lines \t{L1} and \t{L2} could be described by a normal form, they are out of bounds, hence not of interest. If we think about $\theta_1$ and $\theta_2$, we can observe that they are in the range $(2\pi, 3\pi/4)$, or $(180^{\circ}, 270^{\circ})$. Looking at the right figure, we can focus on $\rho$. Again, some lines are out of the image, and we don't care about them. We cannot filter them based only on $\rho$. But we can see the two extremes. The minimum $\rho$ is achieved by \t{L1}: it has only one pixel inside the image, and it coincides with the origin of the coordinate system, so it is at 0 distance from it. Meanwhile, line \t{L5} is at maximum distance, given that its perpendicular coincides with the diagonal of the image. Overall, we can conclude:
 
-\[\theta \in [0, 2\pi) \cup (3\pi/4, 2\pi)\]
+\[\theta \in [0, 2\pi] \cup [3\pi/4, 2\pi)\]
 \[\rho \in [0,\sqrt{width * width + height * height}]\]
 
 To enhance the efficiency, some use kernel operations to calculate votes. Others try to use a rotation-based approach, where ``the edge image is rotated about the center of the image plane by a fixed angle step, and in each rotated image, search is carried out in the horizontal and vertical directions to find the end points of horizontal and vertical line segments'' \cite{hough_survey}. Some try to use Neural Networks, to train a model to map an image to parametric lines. And as always, dedicated hardware and parallelization can be of great help.
 
-The good thing about the Hough algorithm is that it is widely spread in the image processing domain.
+Overall, the Hough line detection algorithm is somewhat intuitive, robust to discontinuity and missing data on the curve/line, versatile and well-researched. As some downsides, we can mention that the computation time and memory requirements grow exponentially with the number of parameters, and in its simplest form, it suffers from peak spreading (votes in an area for ``the same thing'') and blind voting (every vote has the same weight).
 
 \subsection{Canny Edge Detection}
 \subsection{Perspective Transform}

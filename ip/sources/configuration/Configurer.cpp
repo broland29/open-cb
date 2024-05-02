@@ -35,9 +35,10 @@ int Configurer::configure(Mat_<Vec3b> img, bool isTest, bool showImages, bool co
 
 	// perform hough on the image resulted from canny
 	std::vector<Point2i> points = getPointsFromBinary(imgCanny);
-	std::vector<lineRoTheta> lines = hough(
+	std::vector<lineRhoTheta> lines = hough(
 		points,
-		imgResizedColor,
+		imgResizedColor.rows,
+		imgResizedColor.cols,
 		DEFAULT_HOUGH_RO_STEP_SIZE,
 		DEFAULT_HOUGH_THETA_STEP_SIZE,
 		DEFAULT_HOUGH_WINDOW_SIZE,
@@ -46,7 +47,7 @@ int Configurer::configure(Mat_<Vec3b> img, bool isTest, bool showImages, bool co
 
 	// draw the resulting lines from Hough
 	Mat_<Vec3b> imgLines = imgResizedColor.clone();
-	for (lineRoTheta line : lines)
+	for (lineRhoTheta line : lines)
 	{
 		imgLines = line.drawLine(imgLines);
 	}
@@ -63,21 +64,21 @@ int Configurer::configure(Mat_<Vec3b> img, bool isTest, bool showImages, bool co
 			if (ret == 1)
 			{
 				SPDLOG_TRACE("Lines [{},{}] and [{},{}] are parallel!",
-					lines[i].ro, lines[i].theta, lines[j].ro, lines[j].theta);
+					lines[i].rho, lines[i].theta, lines[j].rho, lines[j].theta);
 				continue;
 			}
 
 			if (!isInside(imgIntersections, intersection.y, intersection.x))
 			{
 				SPDLOG_TRACE("Lines [{},{}] and [{},{}] intersect outside of the image!",
-					lines[i].ro, lines[i].theta, lines[j].ro, lines[j].theta);
+					lines[i].rho, lines[i].theta, lines[j].rho, lines[j].theta);
 				continue;
 			}
 
 			intersections.push_back(intersection);
 			drawCrossColor(imgIntersections, intersection, 50, Vec3b(0, 0, 255));
 			SPDLOG_TRACE("Lines [{},{}] and [{},{}] intersect in [{},{}]",
-				lines[i].ro, lines[i].theta, lines[j].ro, lines[j].theta, intersection.x, intersection.y);
+				lines[i].rho, lines[i].theta, lines[j].rho, lines[j].theta, intersection.x, intersection.y);
 		}
 	}
 

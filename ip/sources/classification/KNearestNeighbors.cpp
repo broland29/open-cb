@@ -511,8 +511,7 @@ void KNearestNeighbors::calculateAndLogMetrics(std::vector<std::vector<int>> con
     SPDLOG_INFO("Confusion matrix:\n{}", confusionMatrixString);
     for (int i = 0; i < classCount; i++)
     {
-        SPDLOG_TRACE("Class {} ({}):\n\tPrecision: {}\n\tRecall: {}", i, internalToExternal(i).toStdString(),
-            precisions[i], recalls[i]);
+        SPDLOG_TRACE("Class {}:\n\tPrecision: {}\n\tRecall: {}", i, precisions[i], recalls[i]);
     }
     SPDLOG_INFO("Accuracy: {}", accuracy);
 }

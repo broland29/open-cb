@@ -39,6 +39,7 @@ int inline cellHeight(int borderTop, int borderBottom)
 #define GRAB_FOLDER_PATH             "C:\\open-cb\\mem\\img\\grb" // images grabbed by CameraReader, but not yet used
 
 #define KNN_FOLDER_PATH             "C:\\open-cb\\mem\\knn"
+#define SVM_FOLDER_PATH             "C:\\open-cb\\mem\\svm"
 #define CNN_FOLDER_PATH             "C:\\open-cb\\mem\\cnn"
 
 

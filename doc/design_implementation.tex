@@ -47,5 +47,15 @@ As we know, KNN does not need actual training, it just loads the images and buil
 
 The testing phase consists of running the classification on the test set, computing the confusion matrix, and from that computing the total accuracy, as well as per-class precision and recall. After getting the confusion matrix, it is enough to iterate it once: for precision (at class \t{i}) we need the sum on row \text{i}, for recall we need the sum on column \t{i}, and for accuracy we need ``everything''. As expected, the results are not at all impressive: this is a very naive approach, and the biggest drawback is the feature selected. Chess pieces are distinguished by their form, not their color.
 
+\section{Hough}
+
+As simple as it might seem, the implementation of the Hough line detection algorithm came with more trouble than expected. First, the signature of the base method was hard to define. After multiple changes, the current form of the method returns a vector of \t{lineRhoTheta} structures. One such structure encapsulates the two integer values describing a line (as explained in section Hough \ref{analysis:hough}), as well as two methods for easy handling of the lines: \t{drawLine} to illustrate the result, and \t{getIntersection}, since the intersection of the lines is important for us.
+
+You may ask, why are these intersections important? Well, initially I wanted to use the Hough algorithm to detect all the lines of a chessboard, and the intersection points of these lines would have served as the corner points of the cells. In practice, perfect detection of 18 lines cannot be consistently achieved, especially with my setup. Chess boards also come in all forms and shapes, and most of them have borders (the part around the cells that are not cells, just ``decoration''), so this adds at least 4 unwanted lines in the formulae.
+
+One assumption we can safely make is that the chessboard is square. And that it is the biggest square in the image. So, instead of looking for the lines delimiting the cells, I chose to search for the 20 most dominant lines Hough can find, compute all the intersections of all lines, and search for the points which are in the image, and closest to the corner of the image. This way we get the corner points of the chessboard. The fact that chessboard borders vary in size and often are confusing for Image Processing algorithms led me to the decision to give up finding the thickness of the border, and instead make it the user's job to fine-tune the border width parameters. This is not very elegant, but it works.
+
+
+
 \section{Validation and Response Module}
 

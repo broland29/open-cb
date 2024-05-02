@@ -19,7 +19,7 @@ private:
     bool trained;       // true if train was ran at least once
 
     Mat_<int> X;        // feature matrix (one row = one feature = one fixed-size color histogram)
-    Mat_<int> y;      // class labels (0, 1, ..., see internalToExternal, externalToInternal)
+    Mat_<int> y;        // class labels (0, 1, ..., see internalToExternal, externalToInternal)
     int k;              // number of neighbors
 
 public:
@@ -35,6 +35,7 @@ public:
 
     int load() override;
 
+    static void calculateAndLogMetrics(std::vector<std::vector<int>> confusionMatrix, int testSize);
 private:
     // sturct for one potential vote
     struct distanceAndLabel
@@ -69,8 +70,6 @@ private:
     void logImagesDistribution(std::vector<std::pair<Mat_<Vec3b>, QString>> images, std::string imageType);
 
     void logExampleFeatures();
-
-    void calculateAndLogMetrics(std::vector<std::vector<int>> confusionMatrix, int testSize);
 
     std::vector<std::pair<Mat_<Vec3b>, QString>> uniteFrees(std::vector<std::pair<Mat_<Vec3b>, QString>> images);
 };
