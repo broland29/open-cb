@@ -4,7 +4,20 @@
 
 \section{Related Research Work}
 
+Before starting the project, I looked for academic work done in similar directions. Most of the articles found give very good ideas and describe a lot of theory behind the chosen approach, but source code is always missing, and there is a general lack of hands-on tips.
+
+A Computer Vision System for Chess Game Tracking [1] describes a whole pipeline of operations, from getting an image of a chessboard to achieving a 2D reconstructed chessboard state. Many of the ideas presented are also used in my projects, and they appear in other papers as well. The reason for this is that most of the ideas come from intuition: to get the cells, we first need the corners, we must apply rectification to deal with perspective distortion, we can cut the chessboard into cells, we need to define a region of interest (ROI). However, I must give credit for the simple approach used to detect moves: looking at differences. After reading about this, I could not find a better solution and chose to use it.
+
+
+Stonewall \cite{stonewall} gives another great idea: mount the webcam on the side of the board, not over it. This provides “more difference between different pieces”, making classification easier. The authors also apply different filters to enhance the results. For determining the colors of the chessboard (black and white) and pieces (black and white), they apply k-means clustering, and they use LAB color space. Difficulties of classification (shadows, pieces close to each other, distortion) are also presented.
+
+Chess Piece Movement Detection and Tracking [3] was the first paper where I found Canny Edge Detection mentioned. It recommends a Gaussian filter for noise reduction, and morphological operations to reconnect disconnected edges. The Hough algorithm is used to get the lines of the chessboard (also a recurring idea in related papers). The authors introduce the concept of stable and unstable frames to decide when to take a snapshot. They use long algebraic notation for clarity.
+
+
+
 \section{Existing Products}
+Square Off [4] is a company providing a solution for a smart chessboard. Indeed, a whole team of dedicated developers can provide a better solution than a naïve student. However, their product costs around 1200 RON, and their source code is not open source. ChessUp [5] (ChessUp: Chess Smart Board for All Ages, https://playchessup.com/) is another “competitor”. Their product is like Square Off and costs around 1600 RON. They promise built-in AI and a companion app.
+
 
 \section{Other Inspirations}
 

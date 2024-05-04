@@ -30,10 +30,10 @@ Mat_<uchar> canny(Mat_<uchar> img)
 	{
 		for (int j = 0; j < img.cols; j++)
 		{
-			mag(i, j) = sqrt(dx(i, j) * dx(i, j) + dy(i, j) * dy(i, j));  // todo - is i and j used well, or inversed?
+			mag(i, j) = sqrt(dx(i, j) * dx(i, j) + dy(i, j) * dy(i, j));
 			ang(i, j) = atan2(dy(i, j), dx(i, j));
 		}
-	}
+	}	
 
 	// quantize the angles (from degrees to 0-3)
 	Mat_<int> q(img.rows, img.cols);
@@ -41,18 +41,21 @@ Mat_<uchar> canny(Mat_<uchar> img)
 	{
 		for (int j = 0; j < img.cols; j++)
 		{
-			float a = ang(i, j);
+			float a = ang(i, j);  // atan in range (-PI, PI)
 			if (a < 0)
 			{
-				a += 2 * PI;
+				a += 2 * PI;  // => in range [0, 2 * PI)
 			}
-			q(i, j) = int(round(a / (2 * PI) * 8)) % 8;  // todo - understand
-		}
-	}
+			q(i, j) = int(round(a / (2 * PI) * 8)) % 8;  // a / (2 * PI)	=> in range [0, 1)
+		}											     // * 8				=> in range [0, 8)
+	}													 // int(round())	=> in {0, 1, 2, 3, 4, 5, 6, 7, 8}
+														 // % 8				=> in {0, 1, 2, 3, 4, 5, 6, 7}
 
 	// 4. Edge thinning
+	// offset of neighbors in gradient direction (based on quantization)
 	int di[] = { 1,  1,  0, -1, -1, -1,  0,  1 };
 	int dj[] = { 0,  1,  1,  1,  0, -1, -1, -1 };
+	Mat_<float> magOld = mag.clone();
 
 	for (int i = 0; i < img.rows; i++)
 	{
@@ -71,7 +74,7 @@ Mat_<uchar> canny(Mat_<uchar> img)
 			// pad with 0
 			if (isInside(img, iGrad, jGrad))
 			{
-				grad = mag(iGrad, jGrad);
+				grad = magOld(iGrad, jGrad);
 			}
 			else
 			{
@@ -81,7 +84,7 @@ Mat_<uchar> canny(Mat_<uchar> img)
 			// pad with 0
 			if (isInside(img, iGradOpposite, jGradOpposite))
 			{
-				gradOpposite = mag(iGradOpposite, jGradOpposite);
+				gradOpposite = magOld(iGradOpposite, jGradOpposite);
 			}
 			else
 			{
@@ -89,9 +92,9 @@ Mat_<uchar> canny(Mat_<uchar> img)
 			}
 
 			// if not local maxima, rejected
-			if (abs(mag(i, j)) < abs(grad) || abs(mag(i, j)) < abs(gradOpposite))
+			if (abs(magOld(i, j)) < abs(grad) || abs(magOld(i, j)) < abs(gradOpposite))
 			{
-				mag(i, j) = 0;  // TODO copy
+				mag(i, j) = 0;
 			}
 		}
 	}
@@ -176,6 +179,7 @@ Mat_<uchar> canny(Mat_<uchar> img)
 		}
 	}
 
+	// make lose of remaining weak edges
 	Mat_<uchar> toReturn(mag.rows, mag.cols);
 	for (int i = 0; i < mag.rows; i++)
 	{
@@ -191,5 +195,6 @@ Mat_<uchar> canny(Mat_<uchar> img)
 			}
 		}
 	}
+
 	return toReturn;
 }

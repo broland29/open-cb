@@ -36,12 +36,10 @@ private:
 	Classifier* classifier;
 	Configurer* configurerLeft;
 	Configurer* configurerRight;
-	FileHandler* fileHandler;
 
 
 	// common fields
 	std::shared_ptr<QMutex> imshowMutex;
-	unsigned int count;  // the count of images which were saved; common since success case only when both cameras save
 
 public:
 	ImageProcessing();

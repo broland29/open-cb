@@ -2,6 +2,30 @@
 \label{ch:analysis}
 \pagestyle{fancy}
 
+\section{General Considerations}
+
+\subsection{Representation and Coordinate Systems} \label{analysis:representation}
+
+Before we deep dive into anything, it is important to lay down some conventions. First of all, following the rules of chess, a chessboard should be positioned in a way that its upper left corner is white. This applies to both players (if we get one right, the other one just stays on the other side). There are different kinds of chess notations to refer to a movement. Usually, they all obey the convention that the rows are numbered, while the columns are letters, and the white player is used as a reference point. In Figure \ref{fig:representation} we can imagine this as the white player being at the ``bottom part'' of the board. However, for us, from a programmer perspective, looking at a chessboard like a matrix, it makes more sense to use numbers in ``both directions''. Since the project has OpenCV at its core, a Mat-like indexation would refer to \t{A8} as \t{00}, \t{E4} as \t{44}, \t{H2} as \t{67} and so on.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.55\textwidth]{figs/representation.png}
+    \caption{Representation}
+    \label{fig:representation}
+\end{figure}
+
+The project uses two cameras. These are mounted on the two sides of the board where the players are not playing, for convenience. If we use the white player as a reference, we can refer to them as left and right cameras. Each camera has its own coordinate system. This is shown in figure \ref{fig:coordinates}. The left camera and its coordinate system are red, while the right camera has the color green associated.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figs/coordinates.png}
+    \caption{Coordinates}
+    \label{fig:coordinates}
+\end{figure}
+
+We need a global coordinate system, and it makes sense to use the one we started with. So the coordinates the cameras see are translated to the white player's coordinate system, which we will refer to as the main coordinate system from now on. If we observe the pattern, we realize that this translation is trivial. If we convert from left to main, $mainRow = leftCol, mainCol = 7 - leftRow$. If we go from right to main, $mainRow = 7 - rightCol, mainCol = rightRow$.
+
 
 
 
@@ -19,7 +43,7 @@ For line parametrization, there were attempts to use different equations to desc
 
 To illustrate how this representation works, here is Figure \ref{fig:rhotheta1}, showing an example. 
 
-\begin{figure}[ht]
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.3\textwidth]{figs/rhotheta1.png}
     \caption{Line in parametric representation}
@@ -30,7 +54,7 @@ The origin is on the top left corner, to follow the convention enforced by openC
 
 Now we just need to define a convention for the ranges we want to check. I will use Figure \ref{fig:rhotheta2} to show some examples, including border cases.
 
-\begin{figure}[ht]
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.9\textwidth]{figs/rhotheta2.png}
     \caption{Parameter bounaries}

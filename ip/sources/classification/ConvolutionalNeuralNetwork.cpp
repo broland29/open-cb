@@ -89,7 +89,7 @@ int ConvolutionalNeuralNetwork::load()
 
 QString ConvolutionalNeuralNetwork::internalToExternal(int encoding)
 {
-	// dataset_trn.class_names in cnn_train.py prints ['BB', 'BF', 'BK', 'BN', 'BP', 'BQ', 'BR', 'WB', 'WF', 'WK', 'WN', 'WP', 'WQ', 'WR']
+	// print(dataset_trn.class_names) in cnn_train.py results ['BB', 'BF', 'BK', 'BN', 'BP', 'BQ', 'BR', 'WB', 'WF', 'WK', 'WN', 'WP', 'WQ', 'WR']
 	if (encoding == 0) { return "BB"; };
 	if (encoding == 1) { return "BF"; };
 	if (encoding == 2) { return "BK"; };

@@ -23,14 +23,223 @@ The chapter should contain (but not limited to):
 \section{Dependencies}
 \section{Module Overview and Communication}
 \section{User Application Module}
+
+
+
+
+
 \section{Image Processing Module}
 
-\subsection{AbstractClassifier}
+IP is responsible for everything related to images: getting, processing, saving and deleting them. The main class \t{ImageProcessing} provides an entry point for all these functionalities. \t{ImageProcessing} should not do too much on itself. It should wait for signals from the User Application Module, delegate the task of processing the request to the right subcomponent and send back the response from these. In the middle, there might be some mapping needed, but this should be minimal and for a reason.
 
-This class provides a blueprint for classifiers. This is needed for \t{Classifier}, since this way every classifier can be wrapped in this class and switched around easily. Currently there are three classifiers supported, based on three different algorithms: K Nearest Neighbors, Support Vector Machine and Convolutional Neural Network. \t{AbstarctClassifier} specifies methods \t{train}, \t{test}, \t{classifyBoard}, \t{save} and \t{load}. These are linked to direct functionalities.
+Class \t{ImageProcessing} has two \t{CameraHandler}s and two \t{QThread} for them, a \t{Parameters} field containing parameters and utilities, a \t{Classifier} and two \t{Configurer} fields. There is also a mutex for \t{cv::imshow}, but this is just a small detail. In the following, all these subcomponents will be discussed in detail.
+
+% ------------------------------------------------------------------------------------------------------%
+
+\subsection{Camera Handling}
+
+Camera handling is the process of dealing with cameras with the help of OpenCV, listening to requests for images, fulfilling these requests, and continuously providing images for the GUI as a preview of what cameras see.
+
+An instance of the \t{CameraHandler} is capable of handling one camera. Its field index is directly used as an input for OpenCV's \t{VideoCapture}. The field \t{isRunning} is self-explanatory. Field \t{isImageRequested} is the flag through which a request to save a frame can be made. After constructing, the \t{doWork} function shall be called. It is expected that a \t{CameraHandler} instance is run in a separate thread. 
+
+The steps of getting an image through \t{CameraHandler} are the following:
+
+\begin{itemize}
+    \item Create a \t{SignalWaiter} instance: pass the \t{CameraHandler}, where to save the image, and additionally a \t{signalWaiterName}, for debugging.
+    \item Call \t{start} on the \t{SignalWaiter} instance.
+    \item Check the return value of start, if 0, continue.
+    \item Try reading the image from path given by the \t{SignalWaiter} instance. If successful, done.
+\end{itemize}
+
+For convenience, all this is wrapped in \t{ImageProcessing}'s \t{getImage} method. You may ask, what is all this hassle for? Well, there are many ways in which getting an image can go wrong. The request may be made and a response might never come, or come too late. For this, there is a timer embedded in \t{SignalWaiter}. Also, getting the image is the same for every process, but what we do with it, including where we save it, differs in every use case. So this is a unified way of getting the image, which can then be moved or processed in any way. The big goal is to reduce the overhead of \t{CameraHandler}, since it also has to send frames periodically to the GUI, and low frame rates are visible to the human eye and very annoying.
+
+Since concurrency might appear, access to \t{isImageRequested} is synchronized with \t{isImageRequestedLock}. Signal \t{previewImageReadySignal} is emitted periodically, without waiting for a request. If we have a frame, we send it to the preview panel. There will be two \t{CameraHandler} instances, one for each camera. While requests might come somewhat at the same time, the preview frames do not need to be synchronized.
 
 
-\subsection{K Nearest Neighbors}
+% ------------------------------------------------------------------------------------------------------%
+
+\subsection{Configuration}
+
+Configuration refers to getting the corners of the chessboard. This is a preliminary step since to get the images of cells, we first need to know the corner positions and the width of the chessboard border. Since other phases of image processing highly depend on this step, it is better to choose a less fancy but working solution rather than force ideas that sometimes might work, and sometimes not.
+
+Class \t{Configurer} represents a subcomponent which wraps every functionality through three functions:
+\begin{itemize}
+	\item \t{configure}: gets the corners of the chessboard
+    \item \t{cropAndLabel}: cuts the board image into cells and puts them in folders based on provided information (known encodings)
+    \item \t{prepareCellImages}: cuts the board, but this time to prepare for the classification of the board (unknown encodings)
+\end{itemize}
+
+In the following, we will talk about the classes wrapped inside \t{Configurer}, by going through these three functions and what happens in them.
+
+
+
+\subsubsection{Function \t{configure}}
+\paragraph{Filtering}
+
+First, we get the source image. This is a color image, however, for Canny, we will need a preprocessed binary image. The first step \t{Configurer} does in \t{configure} is to resize the image to a fixed size (500x500), convert it to grayscale and apply a Gaussian filter to reduce the noise (\t{Filter}). The results are self-explanatory:
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.475\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figs/conf1.png}
+        \caption{Grayscale image} 
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.475\textwidth}  
+        \centering 
+        \includegraphics[width=\textwidth]{figs/conf2.png}
+        \caption {Filtered image}
+    \end{subfigure}
+    \caption{Initial steps of configuration}
+    \label{fig:conf_initial}
+\end{figure}
+
+
+\paragraph{Conversion, morphological Operations}
+
+Next, we take the image from the previous step and convert it to a binary image (\t{Conversion}). While a binary image could be stored in a boolean matrix, or a bitmap, or whatever fanciness, it is easier to use a \t{Mat\_<char>}, just as in the case of the grayscale images, but with values ``restricted'' to either 0 (object pixel) or 255 (non-object, background pixel). This way it can be easily visualized with \t{imshow}.
+
+To further reduce the noise, we apply the closing operation (\t{Morphological}). This is no more than a dilation followed by an erosion. This helps to get rid of smaller noise created by illumination and smaller details of the chessboard border which are irrelevant anyway.
+ 
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.475\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figs/conf3.png}
+        \caption{Binary image} 
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.475\textwidth}  
+        \centering 
+        \includegraphics[width=\textwidth]{figs/conf4.png}
+        \caption {Image after closing}
+    \end{subfigure}
+    \caption{Preparing for Canny}
+    \label{fig:prep_canny}
+\end{figure}
+
+\paragraph{Canny}
+
+Class \t{Canny} contains the implementation of Canny Edge Detection, based on Image Processing, Laboratory Works\cite{ip_labs}. The input of the method is assumed to be an already noise-filtered grayscale image (in my case, I applied a simple Gaussian filter). I get the magnitude and gradient of pixels from the gradients, which are achieved by applying convolution with a Sobel matrix (in both directions). The angles are quantized into eight numbers, which later on are used for eliminating pixels that do not represent a local maximum based on their magnitude and neighbors in the gradient and opposite gradient direction.
+
+After this, two-level thresholding is done (on the image of magnitudes), with hard-coded values 100 and 200. These could be adaptive or user-defined, but for now, they are hardcoded. Based on these thresholds, pixels are re-evaluated and given a ``naming'', as shown in Table \ref{tab:two-level-thresholding}. The new value could have been arbitrary, but the chosen convention must be respected further on. These values are nice since if we would like to, we could display the thresholded image, in a way that makes sense.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|l|l|}
+    \hline
+    \textbf{Range} & \textbf{New Value} & \textbf{Naming} \\ \hline
+    {[}0, 100)     & 0                  & non-edge        \\ \hline
+    {[}100, 200)   & 50                 & weak-edge       \\ \hline
+    {[}200, 255{]} & 255                & strong-edge     \\ \hline
+    \end{tabular}
+    \caption{Two level thresholding}
+    \label{tab:two-level-thresholding}
+\end{table}
+
+All this is necessary for the edge extension step, in which weak edge pixels are ``appended'' to the strong edges. This is because if we only take strong edges, we might have disconnected borders, and if we take both weak and strong edges (basically lower the threshold), we might get unwanted pixels in the result. To achieve this, we iterate the pixels of the image, and whenever a new strong edge point is found, we start a new Breadth First Search, which accepts both weak and strong edges, and sets the met weak edges to strong ones. To avoid the big overhead of repeating computations, a \t{visited} matrix is defined, which shows if we already checked a given pixel. After this, we can get rid of the remaining weak edges, as they are (hopefully) irrelevant to us.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.45\textwidth]{figs/conf5.png}
+    \caption{Step: Canny Edge Detection}
+    \label{fig:canny}
+\end{figure}
+
+
+\paragraph{Hough}
+
+As simple as it might seem, the implementation of the Hough line detection algorithm came with more trouble than expected. First, the signature of the base method was hard to define. After multiple changes, the current form of the method returns a vector of \t{lineRhoTheta} structures. One such structure encapsulates the two integer values describing a line (as explained in section Hough \ref{analysis:hough}), as well as two methods for easy handling of the lines: \t{drawLine} to illustrate the result, and \t{getIntersection}, since the intersection of the lines is important for us.
+
+You may ask, why are these intersections important? Well, initially I wanted to use the Hough algorithm to detect all the lines of a chessboard, and the intersection points of these lines would have served as the corner points of the cells. In practice, perfect detection of 18 lines cannot be consistently achieved, especially with my setup. Chess boards also come in all forms and shapes, and most of them have borders (the part around the cells that are not cells, just ``decoration''), so this adds at least 4 unwanted lines in the formulae.
+
+One assumption we can safely make is that the chessboard is square. And that it is the biggest square in the image. So, instead of looking for the lines delimiting the cells, I chose to search for the 20 most dominant lines Hough can find, compute all the intersections of all lines, and search for the points which are in the image, and closest to the corner of the image. This way we get the corner points of the chessboard. The fact that chessboard borders vary in size and often are confusing for Image Processing algorithms led me to the decision to give up finding the thickness of the border, and instead make it the user's job to fine-tune the border width parameters. This is not very elegant, but it works.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.45\textwidth]{figs/conf6.png}
+    \caption{Step: Hough Line Detection}
+    \label{fig:hough}
+\end{figure}
+
+
+\paragraph{Corner extraction}
+
+The last steps of configuration are done directly in method \t{configure}. We build up a vector of \t{Point2i} intersections, by calling \t{getIntersection} on each permutation of two lines. We discard intersections outside the image. Later on, these points are iterated, to get the points that are closest to the corners of the image. From the size of the image we know these corners, and the distance is simple to get with the Euclidean distance equation. The corner points are stored since we need them in further operations.
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.475\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figs/conf7.png}
+        \caption{Getting all intersections} 
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.475\textwidth}  
+        \centering 
+        \includegraphics[width=\textwidth]{figs/conf8.png}
+        \caption {Getting corners}
+    \end{subfigure}
+    \caption{Intersection of lines from Hough}
+    \label{fig:prep_canny}
+\end{figure}
+
+
+
+\subsubsection{Function \t{cropAndLabel}}
+
+This function has the purpose of building a training set. The user sets up the chess GUI to resemble what he/ she sees on the board, then presses the \t{cropAndLabel} button. The information from the chess GUI is extracted and passed on to this function through the \t{encodings} parameter. The function has to crop \t{imgOriginal} into cell images and give them names. If parameter \t{isTest} is false, a save operation request is made for each cell image, with the correct folder path. Otherwise the cell images are not saved, they are just displayed.
+
+At this point, we must assume that corner extraction worked well, and we have the four corner points available. By calling a utility function \t{warpAndRemoveBorder}, we extract from the image the warped region of interest. This is done by using OpenCV's \t{getPerspectiveTransform} and \t{warpPerspective} functions. From the resulting image, we can remove the borders, since the border dimensions are given by the user (or default values are used). For a code snippet, see Appendix \ref{appendix:rectification}. The results look like in Figure \ref{fig:rectification}.
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.475\textwidth}   
+        \centering 
+        \includegraphics[width=\textwidth]{figs/conf9.png}
+        \caption{Warping the board}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.475\textwidth}   
+        \centering 
+        \includegraphics[width=\textwidth]{figs/conf10.png}
+        \caption{Removing the border}  
+    \end{subfigure}
+    \caption{Making use of corner points and border dimensions}
+
+    \label{fig:rectification}
+\end{figure}
+
+The name of the files could be arbitrary, as long as it is not repeating (otherwise images would overwrite each other). I chose to compose a meaningful name, so it could help with debugging. The name contains the row and column of the cell, in the main coordinate system. This is achieved through mapping the camera's coordinate system, as explained in Representation and Coordinate Systems \ref{analysis:representation}. The folder path comes from the parameter \t{encodings}, and \t{FileHandler}'s \t{saveImage} utility is called, which will be described later. Some examples of cell pictures can be seen in Figure \ref{fig:cells}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.45\textwidth]{figs/conf11.png}
+    \caption{Cell image examples}
+    \label{fig:cells}
+\end{figure}
+
+
+
+\subsubsection{Function \t{prepareCellImages}}
+
+This function is very similar to the previous one since it also crops the cell images and saves them. However, this time, the images are saved to a different path, defined by \t{BOARD\_FOLDER\_PATH}, and in their name only contains the string ``board'' and the row and column. This convention is used so that the classifiers can read them later and know which image is tied to which cell; they can later unite the classifications and return a matrix of predictions.
+
+
+% ------------------------------------------------------------------------------------------------------%
+
+\subsection{Classification}
+
+Classification refers to the classification of cell images and preceding operations, like training and testing the active classifier.
+
+Class \t{AbstarctClassifier} provides a blueprint for classifiers. It specifies methods \t{train}, \t{test}, \t{classifyBoard}, \t{save} and \t{load}. These are linked to direct functionalities, and every classifier is expected to provide an overridden version of these functions.
+
+Class \t{Classifier}, similarly to \t{Configurer}, serves as a wrapper for every functionality provided by the underlying classifiers, and servers as an interface for \t{ImageProcessing} to use. Classifiers are instantiated in this class, and there is an active classifier, depending on what the user opts for. Currently, there are three classifiers supported, based on three different algorithms: K Nearest Neighbors, Support Vector Machine and Convolutional Neural Network.
+
+
+\subsubsection{K Nearest Neighbors}
 
 This classifier is the simplest option a user can choose. It is based on the KNN presented in Pattern Recognition Systems. For features, it uses the color histogram, more precisely the three color histograms (blue, green, red) with a given resolution, put ``one after another''. The resolution of the histograms is given by the number of bins, which currently is set to 8. This means that the color value of one channel, ranging from 0 to 255, gets mapped into one of the eight bins, based on where it lies on the scale. The labels are from 0 to 13 or 14, depending if one specifies to unite the free classes or not, but more on this later.
 
@@ -47,15 +256,8 @@ As we know, KNN does not need actual training, it just loads the images and buil
 
 The testing phase consists of running the classification on the test set, computing the confusion matrix, and from that computing the total accuracy, as well as per-class precision and recall. After getting the confusion matrix, it is enough to iterate it once: for precision (at class \t{i}) we need the sum on row \text{i}, for recall we need the sum on column \t{i}, and for accuracy we need ``everything''. As expected, the results are not at all impressive: this is a very naive approach, and the biggest drawback is the feature selected. Chess pieces are distinguished by their form, not their color.
 
-\section{Hough}
 
-As simple as it might seem, the implementation of the Hough line detection algorithm came with more trouble than expected. First, the signature of the base method was hard to define. After multiple changes, the current form of the method returns a vector of \t{lineRhoTheta} structures. One such structure encapsulates the two integer values describing a line (as explained in section Hough \ref{analysis:hough}), as well as two methods for easy handling of the lines: \t{drawLine} to illustrate the result, and \t{getIntersection}, since the intersection of the lines is important for us.
-
-You may ask, why are these intersections important? Well, initially I wanted to use the Hough algorithm to detect all the lines of a chessboard, and the intersection points of these lines would have served as the corner points of the cells. In practice, perfect detection of 18 lines cannot be consistently achieved, especially with my setup. Chess boards also come in all forms and shapes, and most of them have borders (the part around the cells that are not cells, just ``decoration''), so this adds at least 4 unwanted lines in the formulae.
-
-One assumption we can safely make is that the chessboard is square. And that it is the biggest square in the image. So, instead of looking for the lines delimiting the cells, I chose to search for the 20 most dominant lines Hough can find, compute all the intersections of all lines, and search for the points which are in the image, and closest to the corner of the image. This way we get the corner points of the chessboard. The fact that chessboard borders vary in size and often are confusing for Image Processing algorithms led me to the decision to give up finding the thickness of the border, and instead make it the user's job to fine-tune the border width parameters. This is not very elegant, but it works.
-
-\section{Support Vector Machine}
+\subsubsection{Support Vector Machine}
 
 Implementing a Support Vector Machine classifier implies dealing with advanced mathematics. If there had been only two classes, and two features, like the classical example of red and blue points, I would have given it a run. However, we have 14 classes and features of high dimensions. There is a high chance that the input is not linearly separable. It is hard to visualize things at this complexity, so debugging is very hard. Since this classifier is only a small part of the project, I chose to use an already implemented SVM, namely the one given by OpenCV.
 
@@ -70,7 +272,7 @@ The workaround I did was the idea of my thesis supervisor: instead of using a ke
 I have to admit that this classifier is my least favorite from the project since I could not deep dive into its implementation to fully understand and fine-tune it. Also, there is a bug when calling \t{load}, about which I could not find any information on the internet. It is indeed a big implementation, giving a lot of options, but what are these used for, remains a mystery.
 
 
-\section{Convolutional Neural Network}
+\subsubsection{Convolutional Neural Network}
 
 As a programmer, when I hear about Artificial Intelligence, I immediately think about Python, Tensorflow and Keras. For the problem of multi-class classification of images, Convolutional Neural Networks are the winners. Even though my project started as a pure C++ program, when I reached the point of adding a CNN to the project, I had to go with Python. I had some previous experience with these libraries, and I know that many people are going through the same struggles trying to set up and use a CNN in Python.
 
@@ -81,6 +283,44 @@ The \t{system} command also returns the return value from the scripts. This is g
 Since training and testing happen in different scripts, the model has to be saved after training, so we can load it in the test script. This was, functionalities ``save'' and ``load'' for the CNN are implicit.
 
 Some things are needed in multiple scripts, like libraries \t{tensorflow} and \t{sys}, parameters \t{img\_width} and \t{img\_height}, or functions \t{load\_images} and \t{plot\_samples}. These are put in a separate script \t{cnn\_common.py} and included in all other scripts.
+
+
+% ------------------------------------------------------------------------------------------------------%
+
+\subsection{File Handling}
+
+Since there are reoccurring patterns when file handling is needed, and this is a part of the project that is (unfortunately) highly OS dependent, operations on files are grouped in classes \t{FileHandler} and \t{ParametersHandler}. Every function they provide is static, so there is no need to have an instance of them to call them.
+
+\subsubsection{Class \t{FileHandler}}
+
+This class mainly specializes in handling images, in labeled and simple folders. Labeled folder refers to folders that have as structure a base folder, which has 14 subfolders, with the names identical to the labels (\t{WF}, \t{WP}...). A simple folder has just one base folder and files directly in it. An example would be the folder for board images. The methods provided come in different shapes and forms, to read to and write from the disk, as well as manipulate the files.
+
+The function \t{shuffleAndSplit} does exactly what its name suggests. It gathers all the (``labeled'') images and re-distributes them. Images are taken from folders \t{TEMPORARY\_FOLDER\_PATH}, \t{TRAIN\_FOLDER\_PATH}, \t{VALIDATION\_FOLDER\_PATH}, \t{TEST\_FOLDER\_PATH}. Images are shuffled randomly, then based on parameters \t{trainSplit}, \t{validationSplit} and \t{testSplit}, x percentage of photos are put in every respective folder. The actual movement of files is just renaming them, and images are not loaded, just their names are shuffled and used in the renaming process.
+
+The function \t{clearAllImages} deletes all images from every folder. \t{readLabelFolderImages} returns a vector of image-label pairs, while \t{readBoardImages} returns an 8 by 8 array of (cell) images. \t{FileHandler} also provides a wrapper for \t{imwrite} called \t{saveImage}, with all the necessary error checking, and a function \t{boardImageName} to be used as a convention by every component saving or loading a board image. The other functions are just helpers.
+
+\subsubsection{Class \t{ParametersHandler}}
+
+Similarly to \t{FileHandler}, \t{ParametersHandler} is an all-static class. Parameters in OpenCB refer to variables that might be changed by the user, through \t{SettingsDialog}. These parameters shall be saved when requested and when the application closes (better safe than sorry), and loaded when the application starts. You can also call this the persistence of the application.
+
+I chose to save the parameters in a human-readable way. This is more memory-heavy, but we are talking about a few bytes only. My choice was JSON format since it is well-known among programmers, and it looks nicer than XML (personal preference). This way, the user may edit the file \t{persistence.json} directly, and it will affect the application. So it also serves as a configuration file.
+
+I used the Niels Lohmann's JSON for Modern C++ library \cite{nlohmann}. Only two functionalities are needed: reading and writing. Functions \t{loadFromJSON} and \t{saveToJSON} do exactly this. Class \t{Parameters} has a field \t{parameters} which models the JSON file. It is a mapping from \t{QString} to \t{Variant}, a custom type equivalent to \t{std::variant<bool, int, double, std::string>}. This might already be overkill, but it works and makes the addition of new parameters easy and standardized. \t{ParametersHandler}'s \t{loadFromJSON} updates one such parameter. I say updates, not returns, because it relies on previously set parameter types to cast and check for errors as needed. We might want to be extra safe in this code segment since we are dealing with user input.
+
+The function \t{saveToJSON} is less precoutious since at this point we have a valid \t{parameters} map which we just want to save to disk. It has a lot of resemblance with the previous function.  
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
