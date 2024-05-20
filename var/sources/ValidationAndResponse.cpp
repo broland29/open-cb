@@ -1,5 +1,4 @@
 #include "..\headers\ValidationAndResponse.h"
-#include "..\headers\Map.h"
 
 
 ValidationAndResponse::ValidationAndResponse()

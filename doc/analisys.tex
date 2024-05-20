@@ -70,20 +70,78 @@ To enhance the efficiency, some use kernel operations to calculate votes. Others
 
 Overall, the Hough line detection algorithm is somewhat intuitive, robust to discontinuity and missing data on the curve/line, versatile and well-researched. As some downsides, we can mention that the computation time and memory requirements grow exponentially with the number of parameters, and in its simplest form, it suffers from peak spreading (votes in an area for ``the same thing'') and blind voting (every vote has the same weight).
 
+
+
+\subsection{Convolution}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/gaussian.png}
+    \caption{Example of Gaussian filtering using convolution}
+    \label{fig:gaussian}
+\end{figure}
+
 \subsection{Canny Edge Detection}
+
+Edge detection is a common task in Image Processing. Edges (and corners) are extremely important, since they are one of the most valuable features we could extract from images. OpenCV's \href{https://docs.opencv.org/3.4/df/d54/tutorial_py_features_meaning.html}{Understanding Features} article gives a simple yet very intuitive example, this is recreated in Figure \ref{fig:edges_corners}. Think about the gray rectangle as our object of interest, and the red, green and blue boxes as small views, regions of interest. Extracting features from an image means searching for a way to transform, ``compress'' our image into a set of features which somewhat accurately describe it.
+
+If we look inside the red square, we do not get much information about where we are. We know that we are inside the object, but it could be anywhere inside. From the green box's preview we can deduce that we are at the bottom of the object, this already reduces the amount of possibilities greatly. And the third, black box is situated at a corner, we can exactly deduce its position. This is a very simplified example, but it gives a good hint on why edges and corners are so searched for.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.45\textwidth]{figs/edges_corners.png}
+    \caption{Importance of edges and corners}
+    \label{fig:edges_corners}
+\end{figure}
+
+In a grayscale image, an edge point is in a region where intensity varies greatly. The most ``extreme edge'' would be a sudden transition from black (intensity of 0) to white (intensity of 255), or the other way around. However, usually this translation is smoothed, by the nature of the image and as a result of previous filtering. We can perceive the image as a function which maps coordinates x and y to intensity levels. If we just look at one dimension, a smooth change of intensity could be modeled by an Inverse Tangent function, mapped in the 0-255 interval (see figure \ref{fig:inverse_tangent}). To detect the ``middle point'' of the transition (i.e., the edge point), we could differentiate once and search for peaks, or differentiate twice and search for zero.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}
+        \addplot[domain=-3:3, color=black]{ ((rad(atan(x)) / (pi / 2)) + 1) * 127)   };
+        \addplot[domain=-3:3, color=red]{ 254 / (pi * (x^2 + 1)) };
+        \addplot[domain=-3:3, color=blue]{ -508 * x / (pi * (x^2 + 1)^2) };
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Inverse Tangent, its first and second order derivatives (black, red and blue)}
+    \label{fig:inverse_tangent}
+\end{figure}
+
+Of course, in the case of images, we have two dimensions, x and y. For this reason, the previous approach is generalized, and we use gradients and Laplacian instead of first and second order derivatives. While for someone who does not refer to mathematics as his strong point (me) it seems like this is just derivatives in multiple dimensions, it also gives us information about neighbor intensities. ``The gradient in an image point is a vector heading the direction of the intensity variation around this point. Its module is proportional with the speed of this variation. If the edge points are part of a contour the gradient will be perpendicular on the tangent to the contour at that point.''\cite{ip_labs}.
+
+We do not need exact values of the gradients. An approximation is enough. And to get such an approximation, one may choose between a range of kernels, like Prewitt, Sobel, and Roberts. Approximation of gradients using the Sobel operator can be done as shown in Equation \ref{eq:sobel}, where the * symbol represents convolution.
+
+\begin{equation}
+\label{eq:sobel}
+\nabla f_x = f(x,y) * 
+\begin{bmatrix}
+    -1 &  0 &  1 \\
+    -2 &  0 &  2 \\
+    -1 &  0 &  1 
+\end{bmatrix}
+,
+\nabla f_y = f(x,y) * 
+\begin{bmatrix}
+     1 &  2 &  1 \\
+     0 &  0 &  0 \\
+    -1 & -1 & -1
+\end{bmatrix}
+\end{equation}
+
 \subsection{Perspective Transform}
 
+
+
 \section{Machine Learning/ Classification Algorithms}
+
 \subsection{K Nearest Neighbors}
+
 \subsection{Support Vector Machine}
 
-Hello
 \subsection{Convolutional Neural Network}
 
+
+
 \section{Chess Move Validation}
-
-\section{Requirements and Features}
-\subsection{Functional Requirements and Features}
-\subsection{Nonfunctional Requirements and Features}
-
-
