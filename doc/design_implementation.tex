@@ -327,3 +327,43 @@ The function \t{saveToJSON} is less precoutious since at this point we have a va
 
 \section{Validation and Response Module}
 
+All files of the VAR module can be found in folder \t{var}. The entry point is \t{ValidationAndResponse}. This is a \t{Q\_OBJECT}, since it has signals and slots to communicate with UA. Its three functionalities are implemented by its three slots, namely \t{validateMoveSlot}, \t{discardMoveSlot} and \t{newGameSlot}. When these are done with their job, they send replies through \t{validateMoveReplySignal}, \t{discardMoveReplySignal} and \t{newGameReplySignal}.
+
+While the naming of the files in this module might not be the most intuitive, this is the only idea I had to split the functionalities without overcomplicating it. The idea is that we have a \t{Validator} structure, which contains the previous and current board (\t{prevBoard}, \t{currBoard}) and metadata. Metadata is information that needs to be kept track of to validate the moves or compose the long algebraic notation. This information is:
+
+\begin{itemize}
+    \item \b{turn}: the current color (whose turn it is)
+    \item \b{moveCount}: incremented after each player moves once, could be part of the notation
+    \item \b{enPassantCol}: the column of the board where en passant could be possible in the next move due to a pawn moving two blocks ahead. -1 if not possible
+    \item \b{castle}: information about the eligibility of castling (did kings or rooks move).
+\end{itemize}
+
+It is assumed that the first board position (the value \t{prevBoard} will initially get) is the position where normal chess games start. This could be changed by changing field \t{initialSetup}. Besides logging, \t{Validatior} offers one method, which is \t{validateBoard}. This is where the magic happens.
+
+We can only have one king of each color, this can be instantly checked, without any other prerequisites. The \t{Validator} instance is saved, so if the move is illegal, it can be set back to its original state, with the old \t{currBoard}, \t{prevBoard} and \t{metadata}. \t{Move.cpp}'s \t{processMove} is called, this validates the move using the information we have. If the move is valid, we can change turns and reset \t{enPassantCol} if it was not changed.
+
+The function \t{processMove} gathers the changes we talked about in Subsection \ref{analysis:approach} and in Figure \ref{fig:move}. Zero changes mean no movement. We have to check for the status of both kings. This is done in \t{getKingSituation}. The final part of this code can be found in Appendix \ref{appendix:kingsituation}. If there are no attackers of the king, it might be free or in stalemate, otherwise it could be in check or checkmate. Extracting the king's situation is crucial because one cannot put himself/herself in check, and knowing if the king is in check is needed to evaluate a possible castleing move.
+
+Based on the number of changes, the flow continues as shown in Figure \ref{fig:varflow}. In \t{\_isXMove} \t{X} could be: \t{WhiteMove}, \t{BlackMove}, \t{WhiteCapture}, \t{BlackCapture}, \t{WhiteEnPassant}, \t{BlackEnPassant}, \t{WhiteCastle}, \t{BlackCastle}. For better readability, changes are captured in a vector of \t{Change} structures. These structures contain the row and the column of the cell we are talking about, the previous piece's encoding (\t{prev}) and the same for the current piece (\t{curr}). There are also some inline functions defined for better readability, which are just wrappers around the encoding checking.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{figs/varflow.png}
+    \caption{Flow of execution in VAR}
+    \label{fig:varflow}
+\end{figure}
+
+An example \t{\_isX} function's flow looks like:
+\begin{enumerate}
+    \item the turn is checked
+    \item the setup shown in Figure \ref{fig:move} is ``forced''
+    \item one or more \t{canPieceAttackCell} calls are made if necessary
+    \item special checks are made
+\end{enumerate}
+
+Turn checking is simply checking if it is a white move that is white's turn, and vice versa. Forcing the setup refers to putting changes into ``slots'' \t{a} \t{b} etc. to have a one-to-one resemblence with the figure previously mentioned. This is important to further narrow down possibilities. Then we can check if indeed we can get the move listed as one of the possibilities. However, having the right pieces is not enough, the move has to be made according to the rules discussed in \ref{chessrules}. For this, we call \t{Attack}'s \t{canPieceAttackCell} on pieces that are involved.
+
+The \t{canPieceAttackCell} function checks that we do not attack an allied piece, and delegates the checking to piece-specific functions. Pieces bishop and rook have their movement checked in a for loop. The moving path must be free, which is checked by \t{\_checkPath}. The queen is a combination of these two. The knight has a hardcoded pattern and can jump over other pieces. The pawn is a special case as well, since we have to check for simple forward move, double forward move, en passant left and right.
+
+Going back to \t{Move}, special checks refer to cases which modify the metadata: movement of pawn may allow en passant next turn, movement of rook or king might disallow castling from now on, promotion has to be checked, and castling is hard-coded.
+

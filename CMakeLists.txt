@@ -61,20 +61,28 @@ file(GLOB_RECURSE TEST_SOURCES
     "${LOG_DIR}/*.h"
 )
 add_executable (OpenCB ${SOURCES})
-#add_executable (Tests ${TEST_SOURCES}) # separate executable, depending on gtest
 
 
 # link libraries
 target_link_libraries(OpenCB Qt::Core)
-#target_link_libraries(Tests Qt::Core)  # since tests also contain var, dependent on QMetaType
 target_link_libraries(OpenCB Qt::Gui)
 target_link_libraries(OpenCB Qt::Widgets)
 
 target_link_libraries(OpenCB ${OpenCV_LIBS})
 
-#target_link_libraries(Tests GTest::gtest)
 
 target_link_libraries(OpenCB spdlog::spdlog)
-#target_link_libraries(Tests spdlog::spdlog)  # since tests also contain var, dependent on spdlog
 
 target_link_libraries(OpenCB nlohmann_json::nlohmann_json)
+
+
+
+
+
+# separate executable, depending on gtest
+add_executable (Tests ${TEST_SOURCES}) 
+target_link_libraries(Tests GTest::gtest)
+target_link_libraries(Tests Qt::Core)           # since tests also contain var, dependent on QMetaType
+target_link_libraries(Tests spdlog::spdlog)     # since tests also contain var, dependent on spdlog
+
+

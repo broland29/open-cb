@@ -1,8 +1,36 @@
 #include "../headers/Test.h"
-//#include "../../var/headers/Move.h"
+#include "../../var/headers/Move.h"
 //#include "Logger.h"
 
-
+TEST(MoveTest, processMoveCheck)
+{
+    char board0p[8][8] =
+    {
+        BR, FR, BB, FR, FR, FR, FR, BK,
+        BP, BP, BP, BP, FR, FR, FR, BP,
+        FR, FR, BN, FR, BQ, WQ, WP, FR,
+        FR, FR, BB, FR, BP, FR, FR, FR,
+        FR, FR, WB, FR, WP, FR, FR, WN,
+        FR, FR, WN, WP, FR, BN, FR, WP,
+        WP, WP, WP, WB, WR, BR, FR, FR,
+        WR, FR, FR, FR, FR, FR, FR, WK
+    };
+    char board0c[8][8] =
+    {
+        BR, FR, BB, FR, FR, FR, FR, BK,
+        BP, BP, BP, BP, FR, FR, WP, BP,
+        FR, FR, BN, FR, BQ, WQ, FR, FR,
+        FR, FR, BB, FR, BP, FR, FR, FR,
+        FR, FR, WB, FR, WP, FR, FR, WN,
+        FR, FR, WN, WP, FR, BN, FR, WP,
+        WP, WP, WP, WB, WR, BR, FR, FR,
+        WR, FR, FR, FR, FR, FR, FR, WK
+    };
+    char message0[200];
+    Metadata metadata0;
+    processMove(board0p, board0c, metadata0, message0);
+    std::cout << message0;
+}
 
 // (1) https://www.ragchess.com/how-to-checkmate-your-opponent/
 

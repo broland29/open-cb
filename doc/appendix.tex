@@ -22,6 +22,29 @@ imgNoBorder = imgWarped(Rect{
 });
 \end{verbatim}
 
+
+\section{Getting the king situation} \label{appendix:kingsituation}
+\begin{verbatim}
+if (attackers.size() == 0)
+{
+    if (canKingMove || canOtherMove)
+    {
+        return KingSituation::FREE;
+    }
+    return KingSituation::STALEMATE;
+}
+else  // we have attackers, we are in check
+{
+    if (canKingMove || canAttackersBeBlocked)
+    {
+        return KingSituation::CHECK;
+    }
+    return KingSituation::CHECKMATE;
+}
+\end{verbatim}
+
+
+
 \chapter{Other Relevant Info}
 
 Proofs etc. if any. Otherwise remove this chapter

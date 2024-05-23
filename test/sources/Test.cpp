@@ -7,9 +7,9 @@ int main(int argc, char* argv[])
 	return RUN_ALL_TESTS();
 }
 
-TEST(TestSuiteName, TestName)
+TEST(SampleTestSuiteName, SampleTestName)
 {
-	std::cout << "Hello from Test!\n";
+	std::cout << "Hello from SampleTestName!\n";
 	EXPECT_TRUE(true);
 }
 

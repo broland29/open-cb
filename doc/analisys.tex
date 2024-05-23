@@ -6,7 +6,7 @@
 
 \subsection{Representation and Coordinate Systems} \label{analysis:representation}
 
-Before we deep dive into anything, it is important to lay down some conventions. First of all, following the rules of chess, a chessboard should be positioned in a way that its upper left corner is white. This applies to both players (if we get one right, the other one just stays on the other side). There are different kinds of chess notations to refer to a movement. Usually, they all obey the convention that the rows are numbered, while the columns are letters, and the white player is used as a reference point. In Figure \ref{fig:representation} we can imagine this as the white player being at the ``bottom part'' of the board. However, for us, from a programmer perspective, looking at a chessboard like a matrix, it makes more sense to use numbers in ``both directions''. Since the project has OpenCV at its core, a Mat-like indexation would refer to \t{A8} as \t{00}, \t{E4} as \t{44}, \t{H2} as \t{67} and so on.
+Before we deep dive into anything, it is important to lay down some conventions. First of all, ``the chessboard is placed between the players in such a way that the near corner square to the right of the player is white'' (FIDE Laws of Chess \cite{fide}). This applies to both players (if we get one right, the other one just stays on the other side). There are different kinds of chess notations to refer to a movement. Usually, they all obey the convention that the rows are numbered, while the columns are letters, and the white player is used as a reference point. In Figure \ref{fig:representation} we can imagine this as the white player being at the ``bottom part'' of the board. However, for us, from a programmer perspective, looking at a chessboard like a matrix, it makes more sense to use numbers in ``both directions''. Since the project has OpenCV at its core, a Mat-like indexation would refer to \t{A8} as \t{00}, \t{E4} as \t{44}, \t{H2} as \t{67} and so on.
 
 \begin{figure}[H]
     \centering
@@ -74,10 +74,15 @@ Overall, the Hough line detection algorithm is somewhat intuitive, robust to dis
 
 \subsection{Convolution}
 
+Wikipedia defines convolution as ``\href{https://en.wikipedia.org/wiki/Convolution}{a mathematical operation on two functions (\i{f} and \i{g}) that produces a third function (\i{f * g})}''. During this document, and in the project in general, when we say convolution we refer to \href{https://en.wikipedia.org/wiki/Convolution#Discrete_convolution}{discrete convolution}. This is because images can be perceived as functions that map coordinates x and y to discrete pixel values. The operation is done on two matrices, one representing a grayscale image, and the other representing a convolution matrix, also called \href{https://en.wikipedia.org/wiki/Kernel_(image_processing)}{kernel}.
+
+Kernels are usually small (3x3, 4x4, 5x5) matrices which, when convoluted with an image, result in another image (or the result can be scaled to another image) that is blurred, sharpened, or preprocessed for other reasons like edge detection. More naturally, convolution means sliding the kernel over the image, and for each pixel, adding up the products of the pixel values which get on top of each other. A simple, yet very effective example is applying a Gaussian blur, as seen in Figure \ref{fig:gaussian}. Here we use an approximation of the Gaussian kernel. The original image has 0 as object pixels, representing a cross. The result is blurred, and the values represent the grayscale value of the background color. The middle value, for example, is the result of the sum $255 * \frac{1}{16} + 0 * \frac{2}{16} + 255 * \frac{1}{16} + 0 * \frac{2}{16} + 0 * \frac{4}{16} + 0 * \frac{2}{16} + 255 * \frac{1}{16} + 0 * \frac{2}{16} + 255 * \frac{1}{16}$. The other values can be found in the same way.
+
+
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.9\textwidth]{figs/gaussian.png}
-    \caption{Example of Gaussian filtering using convolution}
+    \caption{Convolution example: Gaussian kernel}
     \label{fig:gaussian}
 \end{figure}
 
@@ -145,3 +150,68 @@ We do not need exact values of the gradients. An approximation is enough. And to
 
 
 \section{Chess Move Validation}
+
+\subsection{Chess Rules} \label{chessrules}
+
+What is a valid chess move? The rules of chess are set by FIDE (Fédération Internationale des Échecs, or in English, International Chess Federation). The current version can be found online as FIDE Laws of Chess \cite{fide}. While this document has to be rigorous to not allow any confusion or law-breaking, I will omit most of it, focusing only on what is of interest and may not be intuitive. If you do not know chess at all, I recommend reading it first.
+
+As you might already know, bishops move diagonally, rooks vertically/horizontally, queens like a bishop and rook combined, and knights in an L shape. This is shown in Figure \ref{fig:attack_simple}. These movements are the same all the time, indifferent of color and if the piece is capturing or just moving (of course, bishops will stay on the same color throughout the game).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{figs/attack_simple.png}
+    \caption{Moving patterns of bishop, knight, rook, queen}
+    \label{fig:attack_simple}
+\end{figure}
+
+A special move is castling, and while it is common, beginners often get it wrong. The key is that the king always moves two cells, and the rook ``jumps over it''. See Figure \ref{fig:attack_castle}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{figs/attack_castle.png}
+    \caption{Castling (white and black, queenside and kingside)}
+    \label{fig:attack_castle}
+\end{figure}
+
+Things get a little bit more complicated with pawns. They move one cell ``forward'' (depending on the color) if the cell is free. This move can be of two cells if the pawn has not moved yet. They capture diagonally in one cell range. They can only do this diagonal step if there is something to capture. See Figure \ref{fig:attack_pawn}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{figs/attack_pawn.png}
+    \caption{Moving patterns of pawn}
+    \label{fig:attack_pawn}
+\end{figure}
+
+And there is also En Passant, a move which beginners often don't even know. If the enemy pawn just moved two cells forward, and you have a pawn which it will end up near, you can capture it, and your piece gets ``in front of'' the cell previously occupied by the enemy. See Figure \ref{fig:attack_en_passant}. A more formal definition is to be found in the dotted list below.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/attack_enpassant.png}
+    \caption{En passant (black and white)}
+    \label{fig:attack_en_passant}
+\end{figure}
+
+Some important considerations:
+\begin{itemize}
+    \item It is not permitted to move a piece to a square occupied by a piece of the same color. (3.1)
+    \item A piece is considered to attack a square even if this piece is constrained from moving to that square because it would then leave or place the king of its color under attack. (3.1.3)
+    \item The bishop, rook or queen may not move over any intervening pieces. (3.5)
+    \item A pawn occupying a square on the same rank as and on an adjacent file to an opponent’s pawn which has just advanced two squares in one move from its original square may capture this opponent’s pawn as though the latter had been moved only one square. This capture is only legal on the move following this advance and is called an ``en passant'' capture. (3.7.3.1, 3.7.3.2)
+    \item The right to castle has been lost if the king has already moved, or with a rook that has already moved. Castling is prevented temporarily if the square on which the king stands, or the square which it must cross, or the square which it is to occupy, is attacked by one or more of the opponent's pieces, or if there is any piece between the king and the rook with which castling is to be effected. (3.8.2.1, 3.8.2.2)
+    \item No piece can be moved that will either expose the king of the same color to check or leave that king in check. (3.9.2)
+\end{itemize}
+
+
+
+\subsection{Approach} \label{analysis:approach}
+
+To validate a move, first, we need to get it. The information we can take for granted is the previous and the current state of the board, i.e. two chessboard positions. To extract information from these, we need to see the difference between the two states. After getting the different cells, based on how many are there, we can further narrow our search. There are valid moves of two, three and four changes. No change means no movement, and any other number means we can already conclude that the move is illegal.
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/move.png}
+    \caption{All possible chess moves}
+    \label{fig:move}
+\end{figure}
+
