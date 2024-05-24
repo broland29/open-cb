@@ -97,5 +97,7 @@ void processMove(
     char prevBoard[8][8],
     char currBoard[8][8],
     Metadata &metadata,
-    char message[200]
+    bool& isValid,
+    std::string& encoding,
+    std::string& description
 );

@@ -18,7 +18,7 @@ private:
 	Validator* validator;
 
 signals:
-	void validateMoveReplySignal(bool succeeded, QString message);
+	void validateMoveReplySignal(bool isValid, QString encoding, QString description);
 	void discardMoveReplySignal(bool succeeded, QString message, QVector<QString> encodings);
 	void newGameReplySignal(bool succeeded, QString message);
 

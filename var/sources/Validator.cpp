@@ -11,7 +11,7 @@ Validator::Validator()
 }
 
 
-void Validator::validateBoard(char board[8][8], char message[200])
+void Validator::validateBoard(char board[8][8], bool& isValid, std::string& encoding, std::string& description)
 {
     // every board should contain one white and one black king
     int whiteKingCount = 0, blackKingCount = 0;
@@ -31,7 +31,9 @@ void Validator::validateBoard(char board[8][8], char message[200])
     }
     if (whiteKingCount != 1 || blackKingCount != 1)
     {
-        strcpy(message, "I!");
+        isValid = false;
+        encoding = "";
+        description = "There must be exactly one white and one black king";
         return;
     }
 
@@ -43,10 +45,10 @@ void Validator::validateBoard(char board[8][8], char message[200])
     copyBoard(currBoard, board);
 
     // delegate to Move.cpp
-    processMove(prevBoard, currBoard, metadata, message);
+    processMove(prevBoard, currBoard, metadata, isValid, encoding, description);
 
     // if illegal, undo change
-    if (message[0] != 'L')
+    if (!isValid)
     {
         *this = oldValidator;
         SPDLOG_INFO("Move is discarded since illegal.");

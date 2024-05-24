@@ -99,7 +99,7 @@ public slots:
     void helpButtonClicked();
 
     // reply slots for signals
-    void validateMoveReplySlot(bool succeeded, QString message);
+    void validateMoveReplySlot(bool isValid, QString encoding, QString description);
     void discardMoveReplySlot(bool succeeded, QString message, QVector<QString> encodings);
     void newGameReplySlot(bool succeeded, QString message);
 

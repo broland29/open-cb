@@ -371,8 +371,17 @@ void MainWindow::helpButtonClicked()
 
 // ---------- reply slots ---------- //
 
-void MainWindow::validateMoveReplySlot(bool succeeded, QString message)
+void MainWindow::validateMoveReplySlot(bool isValid, QString encoding, QString description)
 {
+    QString message;
+    if (isValid)
+    {
+        message = "Valid move: " + encoding + " (" + description + ")";
+    }
+    else
+    {
+        message = "Invalid move: " + description;
+    }
     messageLabel->setText(message);
 }
 

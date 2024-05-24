@@ -27,7 +27,59 @@ The project uses two cameras. These are mounted on the two sides of the board wh
 We need a global coordinate system, and it makes sense to use the one we started with. So the coordinates the cameras see are translated to the white player's coordinate system, which we will refer to as the main coordinate system from now on. If we observe the pattern, we realize that this translation is trivial. If we convert from left to main, $mainRow = leftCol, mainCol = 7 - leftRow$. If we go from right to main, $mainRow = 7 - rightCol, mainCol = rightRow$.
 
 
+\subsection{Notations}
 
+We need a modality to represent chess pieces. This is needed throughout the project for multiple reasons, such as classification, representation of board states, and saving images to specific folders (labeling). In a perfect world, it would be nice to have one notation in the whole project, but this is not the case currently.
+
+There are 12 pieces in chess. Free cells are also considered a category, and in some cases, black and white free cells are preferably distinguished (ex: classification yields better results this way). So we have 14 piece names, as shown in \ref{tab:notations}. Column ``Common'' refers to the notation used between multiple modules. This is the most expressive, as it is easy to read and interpret. The downside of such a notation is that it is a string - in any representation, it takes up more memory, and checking for equivalency is slower. Column ``VAR Notation'' shows what encoding is used when validating the movement. There are two things to notice here: they are all characters, overcoming the drawback of the previous representation, and white and black free have the same representation. This is because logically there is no need to distinguish them here. The last column shows what is shown to the user. The chess notation of choice is  Long Algebraic Notation since it is expressive and standard.
+
+So why do we need all three? The Long Algebraic Notation does not differentiate between white and black pieces. This can be deduced from the time when it was made. But we want this feature from a global representation. The VAR Notation would be another great representation, and we could give f and F for the two frees for example. The problem is that it cannot be used to save images to specific folders, since Windows folder names are case-insensitive...
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|l|l|l|}
+    \hline
+    \b{Piece Name}   & \b{Common} & \b{VAR Notation} & \b{Algebraic} \\ \hline
+    White Free       & WF         & *                & none          \\ \hline
+    White Pawn       & WP         & P                & P             \\ \hline
+    White Bishop     & WB         & B                & B             \\ \hline
+    White Knight     & WN         & N                & N             \\ \hline
+    White Rook       & WR         & R                & R             \\ \hline
+    White Queen      & WQ         & Q                & Q             \\ \hline
+    White King       & WK         & K                & K             \\ \hline
+    Black Free       & BF         & *                & none          \\ \hline
+    Black Pawn       & BP         & p                & P             \\ \hline
+    Black Bishop     & BB         & b                & B             \\ \hline
+    Black Knight     & BN         & n                & N             \\ \hline
+    Black Rook       & BR         & r                & R             \\ \hline
+    Black Queen      & BQ         & q                & Q             \\ \hline
+    Black King       & BK         & k                & K             \\ \hline
+    \end{tabular}
+    \caption{Notations in the project}
+    \label{tab:notations}
+\end{table}
+
+Long Algebraic Notation might need a little bit of extra explanation. First, cells are referred to as file-rank (column-row), like A3, D4 etc. (see Figure \ref{fig:representation}). Pieces are as shown in Table \ref{tab:notations}. The ``formula'' for composing such a notation would be something like:
+
+\[\t{pieceEnc} + \t{prevEnc} + \t{captEnc} + \t{currEnc} + \t{checkEnc} + \t{promEnc} + \t{epEnc}\]
+
+where \t{pieceEnc} is the encoding of the piece (pawns are omitted), \t{prevEnc} is the encoding of the previous cell, \t{captEnc} is an `x' if there is a capture, \t{currEnc} is the encoding of the current cell, \t{checkEnc} is `\#' if there is a checkmate, `+' if there is a check, \r{promEnc} is the encoding of the piece the pawn was promoted to (if it is the case), and \t{epEnc} is ``ep'' is there was an en passant. In cases like \t{pieceEnc}, \t{captEnc}, \t{checkEnc}, \t{promEnc}, \t{epEnc}, if they are not actual, they are omitted, i.e. an empty string can be used when concatenating. Some examples would be:
+
+% https://www.chess.com/terms/chess-notation#specialcases
+\begin{itemize}
+    \item Pawn (white) moves from e2 to e4:                         \t{e2e4}
+    \item Knight (white) moves from g1 too f3:                      \t{Ng1f3}
+    \item Bishop (white) moves from f5 to c6 with capture:          \t{Bf5xc6}
+    \item Pawn (black) moves from d7 to c6 with capture:            \t{d7xc6}
+    \item Bishop (white) moves from f1 to b5 with check:            \t{Bf1b5+}
+    \item Queen (black) moves from d8 to h4 with checkmate:         \t{Qd8h4\#}
+    \item Pawn (white) moves from a7 to a8 with promotion to queen: \t{a7a8Q}
+    \item Pawn (black) moves from g4 to h3 with en passant:         \t{g4h3ep}
+    \item Kingside (any) castling:                                  \t{0-0}
+    \item Queenside (any) castling:                                 \t{0-0-0}
+\end{itemize}
+
+You might say that it is redundant to mention previous cell encoding. While in most cases we could emit it (and use ``simple'' algebraic notation), there are some corner cases. Example: two knights on the same rank, one moves: we need to specify the file. Two knights on the same file, one moves: we need to specify rank. And specifying the whole previous cell simplifies things.
 
 
 \section{Image Processing Algorithms}
@@ -200,6 +252,9 @@ Some important considerations:
     \item The right to castle has been lost if the king has already moved, or with a rook that has already moved. Castling is prevented temporarily if the square on which the king stands, or the square which it must cross, or the square which it is to occupy, is attacked by one or more of the opponent's pieces, or if there is any piece between the king and the rook with which castling is to be effected. (3.8.2.1, 3.8.2.2)
     \item No piece can be moved that will either expose the king of the same color to check or leave that king in check. (3.9.2)
 \end{itemize}
+
+
+
 
 
 

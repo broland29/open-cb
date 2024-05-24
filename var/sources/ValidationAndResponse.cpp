@@ -31,16 +31,17 @@ void ValidationAndResponse::validateMoveSlot(QVector<QString> encodings)
 			if (encoding == "BK") { board[i][j] = BK; continue; }
 			else {
 				SPDLOG_ERROR("Unknown encoding {}", encoding.toStdString());
-				emit validateMoveReplySignal(false, "Internal error");
+				emit validateMoveReplySignal(false, "", "Internal error, encoding not recognized");
 				return;
 			}
 		}
 	}
 	
-	char message[200];
-	validator->validateBoard(board, message);
+	bool isValid;
+	std::string encoding, description;
+	validator->validateBoard(board, isValid, encoding, description);
 
-	emit validateMoveReplySignal(true, QString::fromLatin1(message));
+	emit validateMoveReplySignal(isValid, QString::fromStdString(encoding), QString::fromStdString(description));
 }
 
 

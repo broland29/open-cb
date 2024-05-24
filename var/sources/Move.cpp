@@ -676,10 +676,7 @@ bool _isBlackCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
 }
 
 
-// Checks if prevBoard to currBoard transition can happen in one legal move.
-//      If yes, message will contain S_SUCCESS (message.h) and encoding will contain the encoding of the move
-//      If not, message will contain the corresponding error message (message.h) and encoding must be discarded
-void processMove(char prevBoard[8][8], char currBoard[8][8], Metadata &metadata, char message[200])
+void processMove(char prevBoard[8][8], char currBoard[8][8], Metadata& metadata, bool& isValid, std::string& encoding, std::string& description)
 {
     SPDLOG_TRACE("Entered processMove");
     // gather changed cells and needed info
@@ -697,101 +694,149 @@ void processMove(char prevBoard[8][8], char currBoard[8][8], Metadata &metadata,
 
     if (changes.size() == 0)
     {
-        strcpy(message, "INo movement");  // considered illegal, so that it does not affect the turns
+        isValid = false;  // considered illegal, so that it does not affect the turns
+        encoding = "";
+        description = "No movement";
         return;
     }
 
-    KingSituation turnKingSituation;
-    KingSituation oppositeKingSituation;
+    KingSituation prevTurnKingSituation;
+    KingSituation currTurnKingSituation;
+    KingSituation currOppositeKingSituation;
     if (metadata.turn == Color::WHITE)
     {
-        turnKingSituation = getKingSituation(currBoard, Color::WHITE, metadata.enPassantCol);
-        oppositeKingSituation = getKingSituation(currBoard, Color::BLACK, metadata.enPassantCol);
+        prevTurnKingSituation = getKingSituation(prevBoard, Color::WHITE, metadata.enPassantCol);
+        currTurnKingSituation = getKingSituation(currBoard, Color::WHITE, metadata.enPassantCol);
+        currOppositeKingSituation = getKingSituation(currBoard, Color::BLACK, metadata.enPassantCol);
     }
     else
     {
-        turnKingSituation = getKingSituation(currBoard, Color::BLACK, metadata.enPassantCol);
-        oppositeKingSituation = getKingSituation(currBoard, Color::WHITE, metadata.enPassantCol);
+        prevTurnKingSituation = getKingSituation(prevBoard, Color::BLACK, metadata.enPassantCol);
+        currTurnKingSituation = getKingSituation(currBoard, Color::BLACK, metadata.enPassantCol);
+        currOppositeKingSituation = getKingSituation(currBoard, Color::WHITE, metadata.enPassantCol);
     }
+
 
     // cannot put ourselves in check / cannot leave ourselves in check
-    if (turnKingSituation == KingSituation::CHECKMATE)
+    if (currTurnKingSituation == KingSituation::CHECKMATE)
     {
-        strcpy(message, "ICannot put yourself/ leave yourself in checkmate");
+        isValid = false;
+        encoding = "";
+        if (prevTurnKingSituation == KingSituation::CHECK)
+        {
+            description = "Cannot leave yourself in check and put yourself in checkmate";
+        }
+        else
+        {
+            description = "Cannot put yourself in checkmate";
+        }
         return;
     }
-    if (turnKingSituation == KingSituation::CHECK)
+    if (currTurnKingSituation == KingSituation::CHECK)
     {
-        strcpy(message, "ICannot put yourself/ leave yourself in check");
-        return;
-    }
-
-    bool isOppositeKingInCheck = (oppositeKingSituation == KingSituation::CHECK);
-    bool isOppositeKingInCheckmate = (oppositeKingSituation == KingSituation::CHECKMATE);
-    char encoding[10];
-
-    if (changes.size() == 2)
-    {
-        if (_isWhiteMove(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, encoding))
+        isValid = false;
+        encoding = "";
+        if (prevTurnKingSituation == KingSituation::CHECK)
         {
-            sprintf(message, "L%-39s%s", "White move", encoding);
-            return;
+            description = "Cannot leave yourself in check";
         }
-        if (_isBlackMove(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, encoding))
+        else
         {
-            sprintf(message, "L%-39s%s", "Black move", encoding);
-            return;
+            description = "Cannot put yourself in check";
         }
-        if (_isWhiteCapture(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, encoding))
-        {
-            sprintf(message, "L%-39s%s", "White capture", encoding);
-            return;
-        }
-        if (_isBlackCapture(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, encoding))
-        {
-            sprintf(message, "L%-39s%s", "Black capture", encoding);
-            return;
-        }
-
-        strcpy(message, "I2-change move not recognized");
         return;
     }
 
-    if (changes.size() == 3)
+    bool isOppositeKingInCheck = (currOppositeKingSituation == KingSituation::CHECK);
+    bool isOppositeKingInCheckmate = (currOppositeKingSituation == KingSituation::CHECKMATE);
+    char _encoding[10];
+
+    int changesCount = changes.size();
+    if (changesCount == 2)
     {
-        if (_isWhiteEnPassant(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, encoding))
+        if (_isWhiteMove(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, _encoding))
         {
-            sprintf(message, "L%-39s%s", "White en passant", encoding);
+            isValid = true;
+            encoding = _encoding;
+            description = "White move";
             return;
         }
-        if (_isBlackEnPassant(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, encoding))
+        if (_isBlackMove(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, _encoding))
         {
-            sprintf(message, "L%-39s%s", "Black en passant", encoding);
+            isValid = true;
+            encoding = _encoding;
+            description = "Black move";
+            return;
+        }
+        if (_isWhiteCapture(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, _encoding))
+        {
+            isValid = true;
+            encoding = _encoding;
+            description = "White capture";
+            return;
+        }
+        if (_isBlackCapture(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, _encoding))
+        {
+            isValid = true;
+            encoding = _encoding;
+            description = "Black capture";
             return;
         }
 
-        strcpy(message, "I3-change move not recognized");
+        isValid = false;
+        encoding = "";
+        description = "Unrecognized move (2 changes)";
         return;
     }
-
-    if (changes.size() == 4)
+    else if (changesCount == 3)
     {
-        if (_isWhiteCastle(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, encoding))
+        if (_isWhiteEnPassant(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, _encoding))
         {
-            sprintf(message, "L%-39s%s", "White castle", encoding);
+            isValid = true;
+            encoding = _encoding;
+            description = "White en passant";
             return;
         }
-        if (_isBlackCastle(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, encoding))
+        if (_isBlackEnPassant(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, _encoding))
         {
-            sprintf(message, "L%-39s%s", "Black castle", encoding);
+            isValid = true;
+            encoding = _encoding;
+            description = "Black en passant";
             return;
         }
 
-        strcpy(message, "I4-change move not recognized");
+        isValid = false;
+        encoding = "";
+        description = "Unrecognized move (3 changes)";
         return;
-
     }
+    else if (changesCount == 4)
+    {
+        if (_isWhiteCastle(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, _encoding))
+        {
+            isValid = true;
+            encoding = _encoding;
+            description = "White castle";
+            return;
+        }
+        if (_isBlackCastle(prevBoard, changes, metadata, isOppositeKingInCheck, isOppositeKingInCheckmate, _encoding))
+        {
+            isValid = true;
+            encoding = _encoding;
+            description = "Black castle";
+            return;
+        }
 
-    strcpy(message, "IMove not recognized");
-    return;
+        isValid = false;
+        encoding = "";
+        description = "Unrecognized move (4 changes)";
+        return;
+    }
+    else
+    {
+        isValid = false;
+        encoding = "";
+        description = "Unrecognized move (" + std::to_string(changesCount) + " changes)";
+        return;
+    }
 }
