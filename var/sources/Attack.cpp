@@ -36,11 +36,10 @@ int _checkPath(char board[8][8], int currRow, int currCol, int destRow, int dest
 }
 
 
-bool _canWhitePawnAttackCell(char board[8][8], int currRow, int currCol, int destRow, int destCol, int enPassantCol)
+bool _canWhitePawnAttackCell(char board[8][8], int currRow, int currCol, int destRow, int destCol)
 {
     assert(IS_WHITE_PAWN(board[currRow][currCol]) || IS_BLACK_PAWN(board[currRow][currCol]));
     assert(_isInside(currRow) && _isInside(currCol) && _isInside(destRow) && _isInside(destCol));
-    assert(enPassantCol >= -1 && enPassantCol <= 7);
 
     if (destRow == currRow - 1)
     {
@@ -50,6 +49,7 @@ bool _canWhitePawnAttackCell(char board[8][8], int currRow, int currCol, int des
             return true;
         }
 
+        /*
         // en passant left
         if (destCol == currCol - 1 && IS_BLACK_PAWN(board[currRow][currCol - 1]) && currRow == 3 && enPassantCol == destCol && IS_FREE(board[destRow][destCol]))
         {
@@ -61,6 +61,7 @@ bool _canWhitePawnAttackCell(char board[8][8], int currRow, int currCol, int des
         {
             return true;
         }
+        */
 
         // simple capture
         if ((destCol == currCol - 1 || destCol == currCol + 1) && IS_BLACK(board[destRow][destCol]))
@@ -81,11 +82,10 @@ bool _canWhitePawnAttackCell(char board[8][8], int currRow, int currCol, int des
 }
 
 
-bool _canBlackPawnAttackCell(char board[8][8], int currRow, int currCol, int destRow, int destCol, int enPassantCol)
+bool _canBlackPawnAttackCell(char board[8][8], int currRow, int currCol, int destRow, int destCol)
 {
     assert(IS_BLACK_PAWN(board[currRow][currCol]));
     assert(_isInside(currRow) && _isInside(currCol) && _isInside(destRow) && _isInside(destCol));
-    assert(enPassantCol >= -1 && enPassantCol <= 7);
 
     if (destRow == currRow + 1)
     {
@@ -95,6 +95,7 @@ bool _canBlackPawnAttackCell(char board[8][8], int currRow, int currCol, int des
             return true;
         }
 
+        /*
         // en passant left
         if (destCol == currCol - 1 && IS_WHITE_PAWN(board[currRow][currCol - 1]) && currRow == 4 && enPassantCol == destCol)
         {
@@ -106,6 +107,7 @@ bool _canBlackPawnAttackCell(char board[8][8], int currRow, int currCol, int des
         {
             return true;
         }
+        */
 
         // simple capture
         if ((destCol == currCol - 1 || destCol == currCol + 1) && IS_WHITE(board[destRow][destCol]))
@@ -259,7 +261,7 @@ bool _canKingAttackCell(char board[8][8], int currRow, int currCol, int destRow,
 
 // checks is board[currRow][currCol] can attack board[destRow][destCol]. checks for empty attacker and attacking
 // self/ ally as well
-bool canPieceAttackCell(char board[8][8], int currRow, int currCol, int destRow, int destCol, int enPassantCol) {
+bool canPieceAttackCell(char board[8][8], int currRow, int currCol, int destRow, int destCol) {
     assert(_isInside(currRow) && _isInside(currCol) && _isInside(destRow) && _isInside(destCol));
 
     // free cells cannot attack
@@ -277,9 +279,9 @@ bool canPieceAttackCell(char board[8][8], int currRow, int currCol, int destRow,
     switch (board[currRow][currCol])
     {
     case WP:
-        return _canWhitePawnAttackCell(board, currRow, currCol, destRow, destCol, enPassantCol);
+        return _canWhitePawnAttackCell(board, currRow, currCol, destRow, destCol);
     case BP:
-        return _canBlackPawnAttackCell(board, currRow, currCol, destRow, destCol, enPassantCol);
+        return _canBlackPawnAttackCell(board, currRow, currCol, destRow, destCol);
     case WB:
     case BB:
         return _canBishopAttackCell(board, currRow, currCol, destRow, destCol);
@@ -303,7 +305,7 @@ bool canPieceAttackCell(char board[8][8], int currRow, int currCol, int destRow,
 
 
 // Checks if anything can attack cell (row, col)
-bool isCellInCheck(char board[8][8], int row, int col, int enPassantCol, Color attackerColor)
+bool isCellInCheck(char board[8][8], int row, int col, Color attackerColor)
 {
     assert(_isInside(row) && _isInside(col));
 
@@ -319,7 +321,7 @@ bool isCellInCheck(char board[8][8], int row, int col, int enPassantCol, Color a
             {
                 continue;
             }
-            if (canPieceAttackCell(board, i, j, row, col, enPassantCol)) {
+            if (canPieceAttackCell(board, i, j, row, col)) {
                 return true;
             }
         }
@@ -328,7 +330,7 @@ bool isCellInCheck(char board[8][8], int row, int col, int enPassantCol, Color a
 }
 
 
-std::vector<Attacker> _getAttackers(char board[8][8], int kingRow, int kingCol, int enPassantCol)
+std::vector<Attacker> _getAttackers(char board[8][8], int kingRow, int kingCol)
 {
     std::vector<Attacker> attackers;
 
@@ -336,7 +338,7 @@ std::vector<Attacker> _getAttackers(char board[8][8], int kingRow, int kingCol, 
     {
         for (int j = 0; j < 8; j++)
         {
-            if (canPieceAttackCell(board, i, j, kingRow, kingCol, enPassantCol))
+            if (canPieceAttackCell(board, i, j, kingRow, kingCol))
             {
                 attackers.push_back(Attacker{i, j, board[i][j]});
             }
@@ -347,7 +349,7 @@ std::vector<Attacker> _getAttackers(char board[8][8], int kingRow, int kingCol, 
 }
 
 
-bool _getCanKingMove(char board[8][8], int kingRow, int kingCol, int enPassantCol)
+bool _getCanKingMove(char board[8][8], int kingRow, int kingCol)
 {
     int di[8] = { -1, -1,  0,  1,  1,  1,  0, -1 };
     int dj[8] = {  0,  1,  1,  1,  0, -1, -1, -1 };
@@ -377,7 +379,7 @@ bool _getCanKingMove(char board[8][8], int kingRow, int kingCol, int enPassantCo
         auxBoard[kingRow][kingCol] = FR;
 
         // skip cell which would put king in check
-        if (isCellInCheck(auxBoard, destRow, destCol, enPassantCol, attackerColor))
+        if (isCellInCheck(auxBoard, destRow, destCol, attackerColor))
         {
             continue;
         }
@@ -391,7 +393,7 @@ bool _getCanKingMove(char board[8][8], int kingRow, int kingCol, int enPassantCo
 
 
 // can other piece of the same color as the king, except the king, move
-bool _getCanOtherMove(char board[8][8], int kingRow, int kingCol, int enPassantCol)
+bool _getCanOtherMove(char board[8][8], int kingRow, int kingCol)
 {
     for (int i = 0; i < 8; i++)
     {
@@ -413,7 +415,7 @@ bool _getCanOtherMove(char board[8][8], int kingRow, int kingCol, int enPassantC
             {
                 for (int v = 0; v < 8; v++)
                 {
-                    if (canPieceAttackCell(board, u, v, i, j, enPassantCol))
+                    if (canPieceAttackCell(board, u, v, i, j))
                     {
                         return true;
                     }
@@ -425,7 +427,7 @@ bool _getCanOtherMove(char board[8][8], int kingRow, int kingCol, int enPassantC
     return false;
 }
 
-bool __canAnyPieceAttackWithoutCausingCheckmate(char board[8][8], int destRow, int destCol, int kingRow, int kingCol, int enPassantCol)
+bool __canAnyPieceAttackWithoutCausingCheckmate(char board[8][8], int destRow, int destCol, int kingRow, int kingCol)
 {
     Color attackerColor = (IS_WHITE(board[kingRow][kingCol])) ? Color::BLACK : Color::WHITE;
     for (int i = 0; i < 8; i++)
@@ -444,7 +446,7 @@ bool __canAnyPieceAttackWithoutCausingCheckmate(char board[8][8], int destRow, i
                 return false;
             }
 
-            if (canPieceAttackCell(board, i, j, destRow, destCol, enPassantCol))
+            if (canPieceAttackCell(board, i, j, destRow, destCol))
             {
                 // build up setup for hypothetical move
                 char auxBoard[8][8];
@@ -452,7 +454,7 @@ bool __canAnyPieceAttackWithoutCausingCheckmate(char board[8][8], int destRow, i
                 auxBoard[destRow][destCol] = board[i][j];
                 auxBoard[i][j] = FR;
 
-                if (!isCellInCheck(auxBoard, kingRow, kingCol, -1, attackerColor))
+                if (!isCellInCheck(auxBoard, kingRow, kingCol, attackerColor))
                 {
                     return true;  // found a solution
                 }
@@ -463,7 +465,7 @@ bool __canAnyPieceAttackWithoutCausingCheckmate(char board[8][8], int destRow, i
     return false;
 }
 
-bool _getCanAttackerBeBlocked(char board[8][8], int kingRow, int kingCol, int enPassantCol, std::vector<Attacker> attackers)
+bool _getCanAttackerBeBlocked(char board[8][8], int kingRow, int kingCol, std::vector<Attacker> attackers)
 {
     // no attackers
     if (attackers.size() == 0)
@@ -477,7 +479,7 @@ bool _getCanAttackerBeBlocked(char board[8][8], int kingRow, int kingCol, int en
         int attackerRow = attackers[0].row;
         int attackerCol = attackers[0].col;
 
-        if (__canAnyPieceAttackWithoutCausingCheckmate(board, attackerRow, attackerCol, kingRow, kingCol, enPassantCol))
+        if (__canAnyPieceAttackWithoutCausingCheckmate(board, attackerRow, attackerCol, kingRow, kingCol))
         {
             return true;
         }
@@ -592,7 +594,7 @@ bool _getCanAttackerBeBlocked(char board[8][8], int kingRow, int kingCol, int en
                 {
                     continue;
                 }
-                if (__canAnyPieceAttackWithoutCausingCheckmate(board, i, j, kingRow, kingCol, enPassantCol))
+                if (__canAnyPieceAttackWithoutCausingCheckmate(board, i, j, kingRow, kingCol))
                 {
                     return true;
                 }
@@ -630,7 +632,7 @@ bool _getCanAttackerBeBlocked(char board[8][8], int kingRow, int kingCol, int en
     {
         for (int j = 0; j < 8; j++)
         {
-            if (__canAnyPieceAttackWithoutCausingCheckmate(board, crossRow, crossCol, kingRow, kingCol, enPassantCol))
+            if (__canAnyPieceAttackWithoutCausingCheckmate(board, crossRow, crossCol, kingRow, kingCol))
             {
                 return true;
             }
@@ -641,7 +643,7 @@ bool _getCanAttackerBeBlocked(char board[8][8], int kingRow, int kingCol, int en
 }
 
 
-KingSituation getKingSituation(char board[8][8], Color kingColor, int enPassantCol)
+KingSituation getKingSituation(char board[8][8], Color kingColor)
 {
     // get king position
     int kingRow, kingCol;
@@ -666,10 +668,10 @@ KingSituation getKingSituation(char board[8][8], Color kingColor, int enPassantC
     assert(false);  // king should be found!
 _found:
 
-    std::vector<Attacker> attackers = _getAttackers(board, kingRow, kingCol, enPassantCol);
-    bool canKingMove = _getCanKingMove(board, kingRow, kingCol, enPassantCol);
-    bool canOtherMove = _getCanOtherMove(board, kingRow, kingCol, enPassantCol);
-    bool canAttackersBeBlocked = _getCanAttackerBeBlocked(board, kingRow, kingCol, enPassantCol, attackers);
+    std::vector<Attacker> attackers = _getAttackers(board, kingRow, kingCol);
+    bool canKingMove = _getCanKingMove(board, kingRow, kingCol);
+    bool canOtherMove = _getCanOtherMove(board, kingRow, kingCol);
+    bool canAttackersBeBlocked = _getCanAttackerBeBlocked(board, kingRow, kingCol, attackers);
 
     if (attackers.size() == 0)
     {

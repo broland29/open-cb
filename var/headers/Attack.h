@@ -60,8 +60,7 @@ bool _canWhitePawnAttackCell(
     int currRow,
     int currCol,
     int destRow,
-    int destCol,
-    int enPassantCol
+    int destCol
 );
 
 
@@ -70,8 +69,7 @@ bool _canBlackPawnAttackCell(
     int currRow,
     int currCol,
     int destRow,
-    int destCol,
-    int enPassantCol
+    int destCol
 );
 
 
@@ -126,8 +124,7 @@ bool canPieceAttackCell(
     int currRow,
     int currCol,
     int destRow,
-    int destCol,
-    int enPassantCol
+    int destCol
 );
 
 
@@ -136,7 +133,6 @@ bool isCellInCheck(
     char board[8][8],
     int row,
     int col,
-    int enPassantCol,
     Color attackerColor
 );
 
@@ -145,8 +141,7 @@ bool isCellInCheck(
 bool _getCanKingMove(
     char board[8][8],
     int kingRow,
-    int kingCol,
-    int enPassantCol
+    int kingCol
 );
 
 
@@ -154,8 +149,7 @@ bool _getCanKingMove(
 bool _getCanOtherMove(
     char board[8][8],
     int kingRow,
-    int kingCol,
-    int enPassantCol
+    int kingCol
 );
 
 
@@ -164,7 +158,6 @@ bool _getCanAttackerBeBlocked(
     char board[8][8],
     int kingRow,
     int kingCol,
-    int enPassantCol,
     std::vector<Attacker> attackers
 );
 
@@ -172,6 +165,5 @@ bool _getCanAttackerBeBlocked(
 
 KingSituation getKingSituation(
     char board[8][8],
-    Color kingColor,
-    int enPassantCol
+    Color kingColor
 );

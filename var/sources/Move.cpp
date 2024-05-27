@@ -37,7 +37,7 @@ bool _isWhiteMove(char prevBoard[8][8], std::vector<Change> changes, Metadata &m
     }
 
     // --- move check --- //
-    if (!canPieceAttackCell(prevBoard, a.row, a.col, b.row, b.col, metadata.enPassantCol))
+    if (!canPieceAttackCell(prevBoard, a.row, a.col, b.row, b.col))
     {
         SPDLOG_TRACE("Incorrect move.");
         return false;
@@ -129,7 +129,7 @@ bool _isBlackMove(char prevBoard[8][8], std::vector<Change> changes, Metadata &m
     }
 
     // --- move check --- //
-    if (!canPieceAttackCell(prevBoard, a.row, a.col, b.row, b.col, metadata.enPassantCol))
+    if (!canPieceAttackCell(prevBoard, a.row, a.col, b.row, b.col))
     {
         SPDLOG_TRACE("Incorrect move.");
         return false;
@@ -220,7 +220,7 @@ bool _isWhiteCapture(char prevBoard[8][8], std::vector<Change> changes, Metadata
     }
 
     // --- move check --- //
-    if (!canPieceAttackCell(prevBoard, a.row, a.col, b.row, b.col, metadata.enPassantCol))
+    if (!canPieceAttackCell(prevBoard, a.row, a.col, b.row, b.col))
     {
         SPDLOG_TRACE("Incorrect move");
         return false;
@@ -308,7 +308,7 @@ bool _isBlackCapture(char prevBoard[8][8], std::vector<Change> changes, Metadata
     }
 
     // --- move check --- //
-    if (!canPieceAttackCell(prevBoard, a.row, a.col, b.row, b.col, metadata.enPassantCol))
+    if (!canPieceAttackCell(prevBoard, a.row, a.col, b.row, b.col))
     {
         SPDLOG_TRACE("Incorrect move");
         return false;
@@ -401,14 +401,30 @@ bool _isWhiteEnPassant(char prevBoard[8][8], std::vector<Change> changes, Metada
     }
 
     // --- move check --- //
-    if (!canPieceAttackCell(prevBoard, a.row, a.col, b.row, b.col, metadata.enPassantCol))
-    {
-        SPDLOG_TRACE("Incorrect move.");
-        return false;
-    }
+    // en passant not considered in Attack since it leads to false positives (wrongly accepted diagonal movements)
 
     // --- special checks --- //
-    // no need to check rows/ columns, since these checked in canPieceAttackCell
+    if (b.row != 3 || a.row != 3)
+    {
+        SPDLOG_TRACE("Incorrect previous cell rows.");
+        return false;
+    }
+    if (abs(b.col - a.col) != 1)
+    {
+        SPDLOG_TRACE("Incorrect previous cell columns (further than 1 distance).");
+        return false;
+    }
+    if (b.col != metadata.enPassantCol)
+    {
+        SPDLOG_TRACE("Incorrect en passant column.");
+        return false;
+    }
+    if (c.col != b.col || c.row != b.row - 1)
+    {
+        SPDLOG_TRACE("Incorrect new position of pawn.");
+        return false;
+    }
+    
     SPDLOG_TRACE("En passant.");
     moveInternalToAlgebraic(
         a.prev,
@@ -460,14 +476,30 @@ bool _isBlackEnPassant(char prevBoard[8][8], std::vector<Change> changes, Metada
     }
 
     // --- move check --- //
-    if (!canPieceAttackCell(prevBoard, a.row, a.col, b.row, b.col, metadata.enPassantCol))
+    // en passant not considered in Attack since it leads to false positives (wrongly accepted diagonal movements)
+
+    // --- special checks --- //
+    if (b.row != 4 || a.row != 4)
     {
-        SPDLOG_TRACE("Incorrect move.");
+        SPDLOG_TRACE("Incorrect previous cell rows.");
+        return false;
+    }
+    if (abs(b.col - a.col) != 1)
+    {
+        SPDLOG_TRACE("Incorrect previous cell columns (further than 1 distance).");
+        return false;
+    }
+    if (b.col != metadata.enPassantCol)
+    {
+        SPDLOG_TRACE("Incorrect en passant column.");
+        return false;
+    }
+    if (c.col != b.col || c.row != b.row + 1)
+    {
+        SPDLOG_TRACE("Incorrect new position of pawn.");
         return false;
     }
 
-    // --- special checks --- //
-    // no need to check rows/ columns, since these checked in canPieceAttackCell
     SPDLOG_TRACE("En passant.");
     moveInternalToAlgebraic(
         a.prev,
@@ -532,8 +564,8 @@ bool _isWhiteCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
         cFRWK.row == 7 && cFRWK.col == 6 &&
         cWRFR.row == 7 && cWRFR.col == 7 &&
         cFRWR.row == 7 && cFRWR.col == 5 &&
-        !isCellInCheck(prevBoard, 7, 5, metadata.enPassantCol, Color::BLACK) &&
-        !isCellInCheck(prevBoard, 7, 6, metadata.enPassantCol, Color::BLACK))
+        !isCellInCheck(prevBoard, 7, 5, Color::BLACK) &&
+        !isCellInCheck(prevBoard, 7, 6, Color::BLACK))
     {
         SPDLOG_TRACE("Kingside castle.");
         moveInternalToAlgebraic(
@@ -556,8 +588,8 @@ bool _isWhiteCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
         cWRFR.row == 7 && cWRFR.col == 0 &&
         cFRWR.row == 7 && cFRWR.col == 3 &&
         IS_FREE(prevBoard[7][1]) &&  // no change shall be there since only 4 changes
-        !isCellInCheck(prevBoard, 7, 3, metadata.enPassantCol, Color::BLACK) &&
-        !isCellInCheck(prevBoard, 7, 2, metadata.enPassantCol, Color::BLACK))
+        !isCellInCheck(prevBoard, 7, 3, Color::BLACK) &&
+        !isCellInCheck(prevBoard, 7, 2, Color::BLACK))
     {
         SPDLOG_TRACE("Queenside castle");
         moveInternalToAlgebraic(
@@ -631,8 +663,8 @@ bool _isBlackCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
         cFRBK.row == 0 && cFRBK.col == 6 &&
         cBRFR.row == 0 && cBRFR.col == 7 &&
         cFRBR.row == 0 && cFRBR.col == 5 &&
-        !isCellInCheck(prevBoard, 0, 5, metadata.enPassantCol, Color::WHITE) &&
-        !isCellInCheck(prevBoard, 0, 6, metadata.enPassantCol, Color::WHITE))
+        !isCellInCheck(prevBoard, 0, 5, Color::WHITE) &&
+        !isCellInCheck(prevBoard, 0, 6, Color::WHITE))
     {
         SPDLOG_TRACE("Kingside castle.");
         moveInternalToAlgebraic(
@@ -654,8 +686,8 @@ bool _isBlackCastle(char prevBoard[8][8], std::vector<Change> changes, Metadata 
         cBRFR.row == 0 && cBRFR.col == 0 &&
         cFRBR.row == 0 && cFRBR.col == 3 &&
         IS_FREE(prevBoard[0][1]) &&  // no change shall be there since only 4 changes
-        !isCellInCheck(prevBoard, 0, 3, metadata.enPassantCol, Color::WHITE) &&
-        !isCellInCheck(prevBoard, 0, 2, metadata.enPassantCol, Color::WHITE))
+        !isCellInCheck(prevBoard, 0, 3, Color::WHITE) &&
+        !isCellInCheck(prevBoard, 0, 2, Color::WHITE))
     {
         SPDLOG_TRACE("Queenside castle.");
         moveInternalToAlgebraic(
@@ -705,15 +737,15 @@ void processMove(char prevBoard[8][8], char currBoard[8][8], Metadata& metadata,
     KingSituation currOppositeKingSituation;
     if (metadata.turn == Color::WHITE)
     {
-        prevTurnKingSituation = getKingSituation(prevBoard, Color::WHITE, metadata.enPassantCol);
-        currTurnKingSituation = getKingSituation(currBoard, Color::WHITE, metadata.enPassantCol);
-        currOppositeKingSituation = getKingSituation(currBoard, Color::BLACK, metadata.enPassantCol);
+        prevTurnKingSituation = getKingSituation(prevBoard, Color::WHITE);
+        currTurnKingSituation = getKingSituation(currBoard, Color::WHITE);
+        currOppositeKingSituation = getKingSituation(currBoard, Color::BLACK);
     }
     else
     {
-        prevTurnKingSituation = getKingSituation(prevBoard, Color::BLACK, metadata.enPassantCol);
-        currTurnKingSituation = getKingSituation(currBoard, Color::BLACK, metadata.enPassantCol);
-        currOppositeKingSituation = getKingSituation(currBoard, Color::WHITE, metadata.enPassantCol);
+        prevTurnKingSituation = getKingSituation(prevBoard, Color::BLACK);
+        currTurnKingSituation = getKingSituation(currBoard, Color::BLACK);
+        currOppositeKingSituation = getKingSituation(currBoard, Color::WHITE);
     }
 
 

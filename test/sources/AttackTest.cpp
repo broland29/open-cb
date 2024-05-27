@@ -140,7 +140,7 @@ TEST(AttackTest, _canWhitePawnAttackCell)
         FR, FR, FR, FR, FR, FR, FR, FR,
         FR, FR, FR, FR, FR, FR, FR, FR
     };
-    EXPECT_TRUE(_canWhitePawnAttackCell(board0, 1, 4, 0, 4, -1));
+    EXPECT_TRUE(_canWhitePawnAttackCell(board0, 1, 4, 0, 4));
 
     char board1[8][8] =
     {
@@ -153,7 +153,7 @@ TEST(AttackTest, _canWhitePawnAttackCell)
         FR, WP, FR, FR, FR, FR, FR, FR,
         FR, FR, FR, FR, FR, FR, FR, FR
     };
-    EXPECT_TRUE(_canWhitePawnAttackCell(board1, 6, 1, 5, 1, -1));
+    EXPECT_TRUE(_canWhitePawnAttackCell(board1, 6, 1, 5, 1));
 
     // double move possible
     char board2[8][8] =
@@ -167,7 +167,7 @@ TEST(AttackTest, _canWhitePawnAttackCell)
         FR, WP, FR, FR, FR, FR, FR, FR,
         FR, FR, FR, FR, FR, FR, FR, FR
     };
-    EXPECT_TRUE(_canWhitePawnAttackCell(board2, 6, 1, 4, 1, -1));
+    EXPECT_TRUE(_canWhitePawnAttackCell(board2, 6, 1, 4, 1));
 
     // diagonal capture possible
     char board3[8][8] =
@@ -181,7 +181,7 @@ TEST(AttackTest, _canWhitePawnAttackCell)
         FR, FR, FR, FR, FR, FR, FR, FR,
         FR, FR, FR, FR, FR, FR, FR, FR
     };
-    EXPECT_TRUE(_canWhitePawnAttackCell(board3, 3, 6, 2, 5, -1));
+    EXPECT_TRUE(_canWhitePawnAttackCell(board3, 3, 6, 2, 5));
 
     char board4[8][8] =
     {
@@ -194,8 +194,9 @@ TEST(AttackTest, _canWhitePawnAttackCell)
         FR, FR, FR, FR, FR, FR, FR, FR,
         FR, FR, FR, FR, FR, FR, FR, FR
     };
-    EXPECT_TRUE(_canWhitePawnAttackCell(board4, 5, 3, 4, 4, -1));
+    EXPECT_TRUE(_canWhitePawnAttackCell(board4, 5, 3, 4, 4));
 
+    /*
     // en passant possible
     char board5[8][8] =
     {
@@ -222,6 +223,7 @@ TEST(AttackTest, _canWhitePawnAttackCell)
         FR, FR, FR, FR, FR, FR, FR, FR
     };
     EXPECT_TRUE(_canWhitePawnAttackCell(board6, 3, 1, 2, 2, 2));
+    */
 
     // --- false cases --- //
     // simple move blocked
@@ -236,7 +238,7 @@ TEST(AttackTest, _canWhitePawnAttackCell)
         FR, FR, FR, FR, WP, FR, FR, FR,
         FR, FR, FR, FR, FR, FR, FR, FR
     };
-    EXPECT_FALSE(_canWhitePawnAttackCell(board7, 6, 4, 5, 4, -1));
+    EXPECT_FALSE(_canWhitePawnAttackCell(board7, 6, 4, 5, 4));
 
     // cannot move diagonally if not capture
     char board8[8][8] =
@@ -250,8 +252,9 @@ TEST(AttackTest, _canWhitePawnAttackCell)
         FR, FR, FR, FR, FR, FR, FR, FR,
         FR, FR, FR, FR, FR, FR, FR, FR
     };
-    EXPECT_FALSE(_canWhitePawnAttackCell(board8, 3, 6, 2, 5, -1));
+    EXPECT_FALSE(_canWhitePawnAttackCell(board8, 3, 6, 2, 5));
 
+    /*
     // en passant not possible, not right column
     char board9[8][8] =
     {
@@ -265,6 +268,7 @@ TEST(AttackTest, _canWhitePawnAttackCell)
         FR, FR, FR, FR, FR, FR, FR, FR
     };
     EXPECT_FALSE(_canWhitePawnAttackCell(board9, 3, 1, 2, 2, 5));
+    */
 
     // long jump blocked
     char board10[8][8] =
@@ -278,7 +282,7 @@ TEST(AttackTest, _canWhitePawnAttackCell)
         WP, FR, FR, FR, FR, FR, FR, FR,
         FR, FR, FR, FR, FR, FR, FR, FR
     };
-    EXPECT_FALSE(_canWhitePawnAttackCell(board10, 6, 0, 4, 0, -1));
+    EXPECT_FALSE(_canWhitePawnAttackCell(board10, 6, 0, 4, 0));
 
     // moving backwards
     char board11[8][8] =
@@ -292,7 +296,7 @@ TEST(AttackTest, _canWhitePawnAttackCell)
         FR, FR, FR, FR, FR, FR, FR, FR,
         FR, FR, FR, FR, FR, FR, FR, FR
     };
-    EXPECT_FALSE(_canWhitePawnAttackCell(board11, 5, 5, 6, 5, -1));
+    EXPECT_FALSE(_canWhitePawnAttackCell(board11, 5, 5, 6, 5));
 }
 
 
@@ -311,7 +315,7 @@ TEST(AttackTest, _canBlackPawnAttackCell)
         FR, FR, FR, FR, FR, FR, FR, BP,
         FR, FR, FR, FR, FR, FR, FR, FR
     };
-    EXPECT_TRUE(_canBlackPawnAttackCell(board0, 6, 7, 7, 7, -1));
+    EXPECT_TRUE(_canBlackPawnAttackCell(board0, 6, 7, 7, 7));
 
     char board1[8][8] =
     {
@@ -324,7 +328,7 @@ TEST(AttackTest, _canBlackPawnAttackCell)
         FR, FR, FR, FR, FR, FR, FR, FR,
         FR, FR, FR, FR, FR, FR, FR, FR
     };
-    EXPECT_TRUE(_canBlackPawnAttackCell(board1, 1, 4, 2, 4, -1));
+    EXPECT_TRUE(_canBlackPawnAttackCell(board1, 1, 4, 2, 4));
 
     // double move possible
     char board2[8][8] =
@@ -338,7 +342,7 @@ TEST(AttackTest, _canBlackPawnAttackCell)
         FR, FR, FR, FR, FR, FR, FR, FR,
         FR, FR, FR, FR, FR, FR, FR, FR
     };
-    EXPECT_TRUE(_canBlackPawnAttackCell(board2, 1, 4, 3, 4, -1));
+    EXPECT_TRUE(_canBlackPawnAttackCell(board2, 1, 4, 3, 4));
 
     // diagonal capture possible
     char board3[8][8] =
@@ -352,7 +356,7 @@ TEST(AttackTest, _canBlackPawnAttackCell)
         FR, FR, FR, FR, FR, FR, FR, FR,
         FR, FR, FR, FR, FR, FR, FR, FR
     };
-    EXPECT_TRUE(_canBlackPawnAttackCell(board3, 2, 5, 3, 6, -1));
+    EXPECT_TRUE(_canBlackPawnAttackCell(board3, 2, 5, 3, 6));
 
     char board4[8][8] =
     {
@@ -365,8 +369,9 @@ TEST(AttackTest, _canBlackPawnAttackCell)
         FR, FR, FR, FR, FR, FR, FR, FR,
         FR, FR, FR, FR, FR, FR, FR, FR
     };
-    EXPECT_TRUE(_canBlackPawnAttackCell(board4, 3, 5, 4, 4, -1));
+    EXPECT_TRUE(_canBlackPawnAttackCell(board4, 3, 5, 4, 4));
 
+    /*
     // en passant possible
     char board5[8][8] =
     {
@@ -393,6 +398,7 @@ TEST(AttackTest, _canBlackPawnAttackCell)
         FR, FR, FR, FR, FR, FR, FR, FR
     };
     EXPECT_TRUE(_canBlackPawnAttackCell(board6, 4, 1, 5, 0, 0));
+    */
 
     // --- false cases --- //
     // simple move blocked
@@ -407,7 +413,7 @@ TEST(AttackTest, _canBlackPawnAttackCell)
         FR, FR, FR, FR, WP, FR, FR, FR,
         FR, FR, FR, FR, FR, FR, FR, FR
     };
-    EXPECT_FALSE(_canBlackPawnAttackCell(board7, 5, 4, 6, 4, -1));
+    EXPECT_FALSE(_canBlackPawnAttackCell(board7, 5, 4, 6, 4));
 
     // cannot move diagonally if not capture
     char board8[8][8] =
@@ -421,8 +427,9 @@ TEST(AttackTest, _canBlackPawnAttackCell)
         FR, FR, FR, FR, FR, BP, FR, FR,
         FR, FR, FR, FR, FR, FR, FR, FR
     };
-    EXPECT_FALSE(_canBlackPawnAttackCell(board8, 6, 5, 7, 6, -1));
+    EXPECT_FALSE(_canBlackPawnAttackCell(board8, 6, 5, 7, 6));
 
+    /*
     // en passant not possible, not right column
     char board9[8][8] =
     {
@@ -436,6 +443,7 @@ TEST(AttackTest, _canBlackPawnAttackCell)
         FR, FR, FR, FR, FR, FR, FR, FR
     };
     EXPECT_FALSE(_canBlackPawnAttackCell(board9, 4, 7, 5, 6, 0));
+    */
 
     // long jump blocked
     char board10[8][8] =
@@ -449,7 +457,7 @@ TEST(AttackTest, _canBlackPawnAttackCell)
         FR, FR, FR, FR, FR, FR, FR, FR,
         FR, FR, FR, FR, FR, FR, FR, FR
     };
-    EXPECT_FALSE(_canBlackPawnAttackCell(board10, 1, 5, 3, 5, -1));
+    EXPECT_FALSE(_canBlackPawnAttackCell(board10, 1, 5, 3, 5));
 
     // moving backwards
     char board11[8][8] =
@@ -463,7 +471,7 @@ TEST(AttackTest, _canBlackPawnAttackCell)
         FR, FR, FR, FR, FR, FR, FR, FR,
         FR, FR, FR, FR, FR, FR, FR, FR
     };
-    EXPECT_FALSE(_canBlackPawnAttackCell(board11, 1, 6, 0, 6, -1));
+    EXPECT_FALSE(_canBlackPawnAttackCell(board11, 1, 6, 0, 6));
 }
 
 
@@ -1166,16 +1174,16 @@ TEST(AttackTest, canPieceAttackCell)
         WP, WP, WP, FR, FR, FR, FR, WP,
         FR, FR, WK, WR, FR, WB, WR, FR
     };
-    EXPECT_TRUE(canPieceAttackCell(board0, 3, 4, 1, 3, -1));
-    EXPECT_TRUE(canPieceAttackCell(board0, 2, 7, 0, 5, -1));
-    EXPECT_TRUE(canPieceAttackCell(board0, 2, 4, 3, 5, -1));
-    EXPECT_TRUE(canPieceAttackCell(board0, 7, 2, 7, 1, -1));
-    EXPECT_TRUE(canPieceAttackCell(board0, 6, 7, 4, 7, -1));
-    EXPECT_FALSE(canPieceAttackCell(board0, 0, 7, 1, 7, -1));
-    EXPECT_FALSE(canPieceAttackCell(board0, 4, 3, 3, 5, -1));
-    EXPECT_FALSE(canPieceAttackCell(board0, 0, 2, 2, 1, -1));
-    EXPECT_FALSE(canPieceAttackCell(board0, 2, 5, 4, 3, -1));
-    EXPECT_FALSE(canPieceAttackCell(board0, 4, 1, 3, 1, -1));
+    EXPECT_TRUE(canPieceAttackCell(board0, 3, 4, 1, 3));
+    EXPECT_TRUE(canPieceAttackCell(board0, 2, 7, 0, 5));
+    EXPECT_TRUE(canPieceAttackCell(board0, 2, 4, 3, 5));
+    EXPECT_TRUE(canPieceAttackCell(board0, 7, 2, 7, 1));
+    EXPECT_TRUE(canPieceAttackCell(board0, 6, 7, 4, 7));
+    EXPECT_FALSE(canPieceAttackCell(board0, 0, 7, 1, 7));
+    EXPECT_FALSE(canPieceAttackCell(board0, 4, 3, 3, 5));
+    EXPECT_FALSE(canPieceAttackCell(board0, 0, 2, 2, 1));
+    EXPECT_FALSE(canPieceAttackCell(board0, 2, 5, 4, 3));
+    EXPECT_FALSE(canPieceAttackCell(board0, 4, 1, 3, 1));
 }
 
 
@@ -1193,7 +1201,7 @@ TEST(AttackTest, isCellInCheck)
         FR, FR, FR, FR, FR, FR, FR, FR,
         FR, FR, FR, FR, FR, FR, FR, FR
     };
-    EXPECT_TRUE(isCellInCheck(board0, 5, 2, -1, Color::BLACK));
+    EXPECT_TRUE(isCellInCheck(board0, 5, 2, Color::BLACK));
 
     char board1[8][8] =
     {
@@ -1206,7 +1214,7 @@ TEST(AttackTest, isCellInCheck)
         FR, FR, FR, FR, FR, FR, FR, FR,
         FR, FR, WK, FR, FR, FR, FR, WB
     };
-    EXPECT_TRUE(isCellInCheck(board1, 7, 2, -1, Color::BLACK));
+    EXPECT_TRUE(isCellInCheck(board1, 7, 2, Color::BLACK));
 
     char board2[8][8] =
     {
@@ -1219,7 +1227,7 @@ TEST(AttackTest, isCellInCheck)
         FR, FR, FR, FR, FR, FR, FR, FR,
         FR, FR, FR, FR, FR, FR, FR, FR
     };
-    EXPECT_TRUE(isCellInCheck(board2, 7, 6, -1, Color::WHITE));
+    EXPECT_TRUE(isCellInCheck(board2, 7, 6, Color::WHITE));
 
     char board3[8][8] =
     {
@@ -1232,7 +1240,7 @@ TEST(AttackTest, isCellInCheck)
         FR, FR, FR, FR, FR, FR, FR, FR,
         FR, FR, FR, FR, FR, FR, FR, FR
     };
-    EXPECT_TRUE(isCellInCheck(board3, 3, 2, -1, Color::WHITE));
+    EXPECT_TRUE(isCellInCheck(board3, 3, 2, Color::WHITE));
 
     // cell not in check
     char board4[8][8] =
@@ -1246,7 +1254,7 @@ TEST(AttackTest, isCellInCheck)
         FR, FR, FR, FR, FR, FR, FR, FR,
         FR, FR, FR, FR, FR, FR, FR, FR
     };
-    EXPECT_FALSE(isCellInCheck(board4, 3, 7, -1, Color::BLACK));
+    EXPECT_FALSE(isCellInCheck(board4, 3, 7, Color::BLACK));
 
     char board5[8][8] =
     {
@@ -1259,7 +1267,7 @@ TEST(AttackTest, isCellInCheck)
         FR, FR, FR, FR, FR, FR, BR, FR,
         FR, FR, FR, FR, FR, FR, FR, BR
     };
-    EXPECT_FALSE(isCellInCheck(board5, 0, 0, -1, Color::BLACK));
+    EXPECT_FALSE(isCellInCheck(board5, 0, 0, Color::BLACK));
 
     char board6[8][8] =
     {
@@ -1272,7 +1280,7 @@ TEST(AttackTest, isCellInCheck)
         FR, FR, FR, FR, FR, FR, FR, FR,
         FR, FR, FR, FR, FR, FR, FR, FR
     };
-    EXPECT_FALSE(isCellInCheck(board6, 4, 4, -1, Color::WHITE));
+    EXPECT_FALSE(isCellInCheck(board6, 4, 4, Color::WHITE));
 
     char board7[8][8] =
     {
@@ -1285,7 +1293,7 @@ TEST(AttackTest, isCellInCheck)
         FR, FR, FR, FR, FR, FR, FR, FR,
         FR, FR, FR, FR, FR, FR, FR, FR
     };
-    EXPECT_FALSE(isCellInCheck(board7, 5, 3, -1, Color::WHITE));
+    EXPECT_FALSE(isCellInCheck(board7, 5, 3, Color::WHITE));
 }
 
 
@@ -1303,7 +1311,7 @@ TEST(AttackTest, getKingSituation)
         FR, FR, FR, FR, FR, FR, FR, FR,
         BR, FR, FR, FR, WK, FR, FR, FR
     };
-    EXPECT_EQ(getKingSituation(board0, Color::WHITE, -1), KingSituation::CHECK);
+    EXPECT_EQ(getKingSituation(board0, Color::WHITE), KingSituation::CHECK);
 
     char board1[8][8] =
     {
@@ -1316,7 +1324,7 @@ TEST(AttackTest, getKingSituation)
         BR, FR, FR, FR, FR, FR, FR, FR,
         BR, FR, FR, FR, WK, FR, FR, FR
     };
-    EXPECT_EQ(getKingSituation(board1, Color::WHITE, -1), KingSituation::CHECKMATE);
+    EXPECT_EQ(getKingSituation(board1, Color::WHITE), KingSituation::CHECKMATE);
 
     char board2[8][8] =
     {
@@ -1329,7 +1337,7 @@ TEST(AttackTest, getKingSituation)
         FR, FR, FR, FR, FR, FR, FR, FR,
         FR, FR, FR, FR, WK, FR, FR, FR
     };
-    EXPECT_EQ(getKingSituation(board2, Color::WHITE, -1), KingSituation::STALEMATE);
+    EXPECT_EQ(getKingSituation(board2, Color::WHITE), KingSituation::STALEMATE);
 
     // some free cases
     char board3[8][8] =
@@ -1343,7 +1351,7 @@ TEST(AttackTest, getKingSituation)
         FR, FR, FR, FR, FR, FR, FR, FR,
         FR, FR, FR, FR, FR, FR, FR, FR
     };
-    EXPECT_EQ(getKingSituation(board3, Color::BLACK, -1), KingSituation::FREE);
+    EXPECT_EQ(getKingSituation(board3, Color::BLACK), KingSituation::FREE);
 
     char board4[8][8] =
     {
@@ -1356,5 +1364,5 @@ TEST(AttackTest, getKingSituation)
         FR, FR, FR, FR, FR, FR, FR, FR,
         FR, FR, FR, FR, FR, BQ, FR, FR
     };
-    EXPECT_EQ(getKingSituation(board4, Color::BLACK, -1), KingSituation::FREE);
+    EXPECT_EQ(getKingSituation(board4, Color::BLACK), KingSituation::FREE);
 }

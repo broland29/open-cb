@@ -244,7 +244,42 @@ TEST(MoveTest, WhitePromotion)
 }
 
 
-TEST(MoveTest, WhiteEnPassant)
+TEST(MoveTest, WhiteEnPassantFromLeft)
+{
+    Metadata metadata;
+    metadata.enPassantCol = 4;
+    bool isValid;
+    std::string encoding, description;
+    char boardPrev[8][8] =
+    {
+        FR, FR, FR, FR, BK, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, WP, BP, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, WK, FR, FR, FR
+    };
+    char boardCurr[8][8] =
+    {
+        FR, FR, FR, FR, BK, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, WP, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, WK, FR, FR, FR
+    };
+    processMove(boardPrev, boardCurr, metadata, isValid, encoding, description);
+    EXPECT_TRUE(isValid);
+    EXPECT_STREQ(encoding.c_str(), "d5xe6ep");
+    EXPECT_STREQ(description.c_str(), "White en passant");
+}
+
+
+TEST(MoveTest, WhiteEnPassantFromRight)
 {
     Metadata metadata;
     metadata.enPassantCol = 4;
@@ -274,6 +309,216 @@ TEST(MoveTest, WhiteEnPassant)
     };
     processMove(boardPrev, boardCurr, metadata, isValid, encoding, description);
     EXPECT_TRUE(isValid);
-    EXPECT_STREQ(encoding.c_str(), "f5e6ep");
-    EXPECT_STREQ(description.c_str(), "White move");
+    EXPECT_STREQ(encoding.c_str(), "f5xe6ep");
+    EXPECT_STREQ(description.c_str(), "White en passant");
+}
+
+
+TEST(MoveTest, BlackEnPassantFromLeft)
+{
+    Metadata metadata;
+    metadata.turn = Color::BLACK;
+    metadata.enPassantCol = 1;
+    bool isValid;
+    std::string encoding, description;
+    char boardPrev[8][8] =
+    {
+        FR, FR, FR, FR, BK, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        BP, WP, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, WK, FR, FR, FR
+    };
+    char boardCurr[8][8] =
+    {
+        FR, FR, FR, FR, BK, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, BP, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, WK, FR, FR, FR
+    };
+    processMove(boardPrev, boardCurr, metadata, isValid, encoding, description);
+    EXPECT_TRUE(isValid);
+    EXPECT_STREQ(encoding.c_str(), "a4xb3ep");
+    EXPECT_STREQ(description.c_str(), "Black en passant");
+}
+
+
+TEST(MoveTest, BlackEnPassantFromRight)
+{
+    Metadata metadata;
+    metadata.turn = Color::BLACK;
+    metadata.enPassantCol = 0;
+    bool isValid;
+    std::string encoding, description;
+    char boardPrev[8][8] =
+    {
+        FR, FR, FR, FR, BK, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        WP, BP, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, WK, FR, FR, FR
+    };
+    char boardCurr[8][8] =
+    {
+        FR, FR, FR, FR, BK, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        BP, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, WK, FR, FR, FR
+    };
+    processMove(boardPrev, boardCurr, metadata, isValid, encoding, description);
+    EXPECT_TRUE(isValid);
+    EXPECT_STREQ(encoding.c_str(), "b4xa3ep");
+    EXPECT_STREQ(description.c_str(), "Black en passant");
+}
+
+
+TEST(MoveTest, WhiteCastleKingside)
+{
+    Metadata metadata;
+    bool isValid;
+    std::string encoding, description;
+    char boardPrev[8][8] =
+    {
+        BR, FR, FR, FR, BK, FR, FR, BR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        WR, FR, FR, FR, WK, FR, FR, WR
+    };
+    char boardCurr[8][8] =
+    {
+        BR, FR, FR, FR, BK, FR, FR, BR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        WR, FR, FR, FR, FR, WR, WK, FR
+    };
+    processMove(boardPrev, boardCurr, metadata, isValid, encoding, description);
+    EXPECT_TRUE(isValid);
+    EXPECT_STREQ(encoding.c_str(), "0-0");
+    EXPECT_STREQ(description.c_str(), "White castle");
+}
+
+
+TEST(MoveTest, BlackCastleKingside)
+{
+    Metadata metadata;
+    metadata.turn = Color::BLACK;
+    bool isValid;
+    std::string encoding, description;
+    char boardPrev[8][8] =
+    {
+        BR, FR, FR, FR, BK, FR, FR, BR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        WR, FR, FR, FR, WK, FR, FR, WR
+    };
+    char boardCurr[8][8] =
+    {
+        BR, FR, FR, FR, FR, BR, BK, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        WR, FR, FR, FR, WK, FR, FR, WR
+    };
+    processMove(boardPrev, boardCurr, metadata, isValid, encoding, description);
+    EXPECT_TRUE(isValid);
+    EXPECT_STREQ(encoding.c_str(), "0-0");
+    EXPECT_STREQ(description.c_str(), "Black castle");
+}
+
+
+TEST(MoveTest, WhiteCastleQueenside)
+{
+    Metadata metadata;
+    bool isValid;
+    std::string encoding, description;
+    char boardPrev[8][8] =
+    {
+        BR, FR, FR, FR, BK, FR, FR, BR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        WR, FR, FR, FR, WK, FR, FR, WR
+    };
+    char boardCurr[8][8] =
+    {
+        BR, FR, FR, FR, BK, FR, FR, BR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, WK, WR, FR, FR, FR, WR
+    };
+    processMove(boardPrev, boardCurr, metadata, isValid, encoding, description);
+    EXPECT_TRUE(isValid);
+    EXPECT_STREQ(encoding.c_str(), "0-0-0");
+    EXPECT_STREQ(description.c_str(), "White castle");
+}
+
+
+TEST(MoveTest, BlackCastleQueenside)
+{
+    Metadata metadata;
+    metadata.turn = Color::BLACK;
+    bool isValid;
+    std::string encoding, description;
+    char boardPrev[8][8] =
+    {
+        BR, FR, FR, FR, BK, FR, FR, BR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        WR, FR, FR, FR, WK, FR, FR, WR
+    };
+    char boardCurr[8][8] =
+    {
+        FR, FR, BK, BR, FR, FR, FR, BR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        FR, FR, FR, FR, FR, FR, FR, FR,
+        WR, FR, FR, FR, WK, FR, FR, WR
+    };
+    processMove(boardPrev, boardCurr, metadata, isValid, encoding, description);
+    EXPECT_TRUE(isValid);
+    EXPECT_STREQ(encoding.c_str(), "0-0-0");
+    EXPECT_STREQ(description.c_str(), "Black castle");
 }
