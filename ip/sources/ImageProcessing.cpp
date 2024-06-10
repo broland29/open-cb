@@ -148,6 +148,7 @@ void ImageProcessing::classifyBoardSlot()
 
 void ImageProcessing::configure(bool isTest)
 {
+	/*
 	// get images
 	Mat_<Vec3b> imgLeft , imgRight;
 	if (getImage(new SignalWaiter(cameraHandlerLeft, "conf", "configureLeft"), imgLeft) != 0)
@@ -160,7 +161,27 @@ void ImageProcessing::configure(bool isTest)
 		emit configureReplySignal(false, "Error getting image from right camera");
 		return;
 	}
-	
+	*/
+	// for testing
+	std::string pathLeft = "C:\\open-cb\\mem\\img\\grb\\image_1718010830460.jpeg";
+	//std::string pathLeft = "C:\\open-cb\\mem\\img\\grb\\image_1718011064683.jpeg";
+	Mat_<Vec3b> imgLeft = imread(pathLeft, IMREAD_COLOR);
+	if (imgLeft.empty())
+	{
+		SPDLOG_ERROR("Image at {} not found", pathLeft);
+		return;
+	}
+
+	std::string pathRight = "C:\\open-cb\\mem\\img\\grb\\image_1718010830565.jpeg";
+	//std::string pathRight = "C:\\open-cb\\mem\\img\\grb\\image_1718011064783.jpeg";
+	Mat_<Vec3b> imgRight = imread(pathRight, IMREAD_COLOR);
+	if (imgLeft.empty())
+	{
+		SPDLOG_ERROR("Image at {} not found", pathRight);
+		return;
+	}
+
+
 	// call on configurer
 	if (configurerLeft->configure(imgLeft, isTest, get<bool>(parameters.parameters["showImages"]), get<bool>(parameters.parameters["concatImages"])) +
 	    configurerRight->configure(imgRight, isTest, get<bool>(parameters.parameters["showImages"]), get<bool>(parameters.parameters["concatImages"])) != 0)

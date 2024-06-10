@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../CommonIP.h"
+#include "BFS.h"
 #include "Canny.h"
 #include "Conversion.h"
 #include "Filter.h"

@@ -25,10 +25,13 @@ int Configurer::configure(Mat_<Vec3b> img, bool isTest, bool showImages, bool co
 	// get binary image from filtered image
 	Mat_<uchar> imgBinary = grayscaleToBinary(imgGauss, binaryThreshold);
 
+	// fill "background noise"
+	Mat_<uchar> imgFilled = fillBFS(imgBinary);
+
 	// perform closing on binary image to remove unnecessarry details
 	uchar selPattern[DEFAULT_CLOSING_SIZE * DEFAULT_CLOSING_SIZE] = { 0 };
-	const cv::Mat_<uchar> sel = cv::Mat(7, 7, CV_8UC1, selPattern);
-	Mat_<uchar> imgClosed = closing(imgBinary, sel);
+	const cv::Mat_<uchar> sel = cv::Mat(DEFAULT_CLOSING_SIZE, DEFAULT_CLOSING_SIZE, CV_8UC1, selPattern);
+	Mat_<uchar> imgClosed = closing(imgFilled, sel);
 
 	// perform canny edge detection on closed image
 	Mat_<uchar> imgCanny = canny(imgClosed);
@@ -166,26 +169,27 @@ int Configurer::configure(Mat_<Vec3b> img, bool isTest, bool showImages, bool co
 
 			cv::hconcat(imgResizedGrayscale, imgGauss, grayscaleRowOne);
 			cv::hconcat(grayscaleRowOne, imgBinary, grayscaleRowOne);
-			cv::hconcat(imgClosed, imgCanny, grayscaleRowTwo);
-			cv::hconcat(grayscaleRowTwo, grayscaleFiller, grayscaleRowTwo);
+			cv::hconcat(imgFilled, imgClosed, grayscaleRowTwo);
+			cv::hconcat(grayscaleRowTwo, imgCanny, grayscaleRowTwo);
 			//cv::vconcat(grayscaleRowOne, grayscaleRowTwo, grayscaleImages);
 
 			cv::hconcat(imgLines, imgIntersections, colorImages);
 			cv::hconcat(colorImages, imgCorners, colorImages);
 
 			//imshow("grayscaleImages", grayscaleImages);
-			imshow("grayscaleRowOne", grayscaleRowOne);
-			imshow("grayscaleRowTwo", grayscaleRowTwo);
 			imshow("colorImages", colorImages);
-			moveWindow("grayscaleRowOne", 50, 50);
-			moveWindow("grayscaleRowTwo", 50, 50);
+			imshow("grayscaleRowTwo", grayscaleRowTwo);
+			imshow("grayscaleRowOne", grayscaleRowOne);
 			moveWindow("colorImages", 50, 50);
+			moveWindow("grayscaleRowTwo", 100, 50);
+			moveWindow("grayscaleRowOne", 150, 50);
 		}
 		else
 		{
 			imshow("imgGrayscale", imgResizedGrayscale);		// GS
 			imshow("imgGauss", imgGauss);						// GS
 			imshow("imgBinary", imgBinary);						// GS
+			imshow("imgFilled", imgFilled);						// GS
 			imshow("imgClosed", imgClosed);					    // GS
 			imshow("imgCanny", imgCanny);						// GS
 			imshow("imgLines", imgLines);						// Color
