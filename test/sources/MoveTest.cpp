@@ -1,6 +1,5 @@
 #include "../headers/Test.h"
 #include "../../var/headers/Move.h"
-//#include "Logger.h"
 
 
 // https://www.chess.com/terms/chess-notation#specialcases

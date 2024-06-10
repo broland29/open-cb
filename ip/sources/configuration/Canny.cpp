@@ -24,7 +24,7 @@ Mat_<uchar> canny(Mat_<uchar> img)
 
 
 	// get magnitude and angle from gradients
-	Mat_<float> mag(img.rows, img.cols);
+	Mat_<float> mag(img.rows, img.cols);  // TODO can normalize and show
 	Mat_<float> ang(img.rows, img.cols);
 	for (int i = 0; i < img.rows; i++)
 	{

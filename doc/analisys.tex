@@ -73,8 +73,8 @@ where \t{pieceEnc} is the encoding of the piece (pawns are omitted), \t{prevEnc}
     \item Pawn (black) moves from d7 to c6 with capture:            \t{d7xc6}
     \item Bishop (white) moves from f1 to b5 with check:            \t{Bf1b5+}
     \item Queen (black) moves from d8 to h4 with checkmate:         \t{Qd8h4\#}
-    \item Pawn (white) moves from e7 to e8 with promotion to queen: \t{a7a8Q}
-    \item Pawn (black) moves from g4 to h3 with en passant:         \t{g4h3ep}
+    \item Pawn (white) moves from e7 to e8 with promotion to queen: \t{e7e8Q}
+    \item Pawn (black) moves from b4 to a3 with en passant:         \t{b4xa3ep}
     \item Kingside (any) castling:                                  \t{0-0}
     \item Queenside (any) castling:                                 \t{0-0-0}
 \end{itemize}
@@ -195,7 +195,73 @@ We do not need exact values of the gradients. An approximation is enough. And to
 
 \subsection{K Nearest Neighbors}
 
+The K Nearest Neighbors algorithm is one of the most popular classification algorithms due to its simplicity and intuitive nature. The article K-nearest neighbor by Leif E. Peterson \cite{knn} notes that \i{it should be one of the first choices for a classification study when there is little or no prior knowledge about the distribution of the data}. Even though we know our dataset since we are the ones making it, choosing KNN as a starting point is reasonable since it can provide us a reference point related to what accuracy we shall expect from more complex classifiers. The previously mentioned paper also describes some general ideas related to classification, some of which will be described in the following.
+
+The KNN algorithm is simple: as in other classification algorithms, the samples are described as feature vectors. Having a training set where we know and purposefully access the labels of images, we can take the image we want to classify, get its feature vector, calculate the distance from this feature vector to every feature vector in the training set, search for the \t{k} closest ones (minimal distance), look at their labels and choose the most frequent label as winner.
+
+Let's say we have feature vectors $a$ and $b$, with features (elements) $a_1, a_2, \ldots, a_n$ and $b_1, b_2, \ldots, b_n$ respectively. The distance can then be calculated using the Euclidean distance:
+
+\[ d(a,b) = \sqrt{(a_1 - b_1)^2 + (a_2 - b_2)^2 + \ldots + (a_n - b_n)^2} \]
+
+Consider the example shown in Figure \ref{fig:knn}. Dots represent feature vectors. Each feature vector has two features: coordinates x and y. This way we can plot them in 2D. Their color represents their label. It is a two-class classification problem: we have red and blue samples. The dot with the question mark inside is the instance we want to classify. The lines show the Euclidean distance, their length is the value of the distance. We take \t{k = 3}, meaning that we look at the 3 closest neighbors. The 3 minimal distances are shown with thicker lines. Since we have two red and one blue neighbor, we will go for red. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{figs/knn.png}
+    \caption{KNN for k = 3}
+    \label{fig:knn}
+\end{figure}
+
+Another great way to visualize KNN and distances is with the Voronoi tessellation, as mentioned in \cite{knn}. Take a look at Figure \ref{fig:voronoi}. The black points represent 2D feature vectors, just like in the previous figure. If in the KNN algorithm we would take \t{k} = 1, we would always choose the label of the closest point. Imagine that each black dot has a color associated as a label, and as we pass through every possible feature vector (like iterating the pixels of an image), we color the given point based on the closest black dot's associated color. The result of one such operation can be seen in Figure \ref{fig:voronoi}. On the left side, we have 10 random points, on the right side the same points plus another 10 points. The illustrations were generated using \href{https://cfbrasz.github.io/Voronoi.html}{Frederik Brasz's online Voronoi diagram generator}.
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[b]{0.475\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figs/voronoi10.png}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.475\textwidth}  
+        \centering 
+        \includegraphics[width=\textwidth]{figs/voronoi20.png}
+    \end{subfigure}
+    \caption{Voronoi tessellation, 10 and 20 random points}
+    \label{fig:voronoi}
+\end{figure}
+
+Of course, the KNN algorithm can be used for any dimension. However, the computations increase greatly. For each classification, we have to calculate the distance from each training sample, and we also need to search for the minimum (this is not a big overhead, but it is relevant). As dimensionality increases, the computational power needed for distance calculation increases as well. While the algorithm itself does not have many parameters to play with, choosing the right \t{k} can be troublesome and may require at least some knowledge about the data, or experimentation. Small \t{k} may lead to overfitting, large \t{k} means that there is a risk to take into consideration samples that are very far from us. Some consider adding weights to votes, so closer neighbors have a more influential vote on the final label. In our case, we stuck to the simplest KNN possible.
+
+
 \subsection{Support Vector Machine}
+
+SVMs are more sophisticated than KNNs. The overall goal is the same, training for the classification of unknown samples and known classes. We still have a training set, test set and hyperparameters. However, the approach is very different. SVMs try to define boundaries, and the new sample will be classified based on which side of the boundary is it on. So, unlike for KNN, we build an actual model.
+
+As previously, a simple example can be provided if we take feature vectors of dimension 2. This means that each instance's feature vector can be plotted in 2D. Support Vector Machines try to find the boundary that separates instances of the training data best. In the case of linear SVMs, the boundary is a hyperplane (point, line, plane, hyperplane for dimensions 1, 2, 3 and more). So in 2D, we search for the best (straight) line. There are multiple solutions, but \i{the optimal hyperplane is orthogonal to the shortest line connecting the convex hulls of the two classes, and intersects it halfway} \cite{svm}. In Figure \ref{fig:svm-lines} I tried to illustrate this. On the left-hand side, we see multiple solutions to the separation problem. On the right, we see the convex hulls with dashed lines and only one solution, the thick line. The dotted lines represent what we refer to as margins. Dots which lay on this margin are the support vectors, hence the name. The thin lines represent the distances from the line to the support vectors/ margin. This is equal on both sides since this gives the ``most general answer''. 
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.4\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figs/svm_more_lines.png}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.475\textwidth}  
+        \centering 
+        \includegraphics[width=\textwidth]{figs/svm_best_line.png}
+    \end{subfigure}
+    \caption{Multiple separating lines (left) and the best one in SVM context (right)}
+    \label{fig:svm-lines}
+\end{figure}
+
+The equation of a hyperplane (linear equation) is $a_1x_1 + a_2x_2 + \ldots + a_nx_n = b$. When talking about SVMs, $x_i$ is feature i, $a_i$ is a weight associated with feature $x_i$, often noted as $w_i$. And since they like to think of these as elements of vectors, and have a 0 on the right-hand side, we get the equation $w * x + b = 0$. This is what gives us the separating hyperplane, and we can plug in one element from each side to define which class lies on the positive, respectively on the negative side.
+
+A very intuitive example of weights was given in Using SVMs for text categorization \cite{svm}, where the author says: \i{The weight vector for the category ``interest'' includes the words prime (.70), rate (.67), interest (63), rates(.60), and discount (.46), with large positive weights, and the words group (-.24), year (-.25), sees (-.33), world (-.35), and dlrs (-.71) with large negative weights}. Of course, these values depend on the implementation, but we can see that they show how much they contribute to the categorization of a sample to a given class.
+
+So, how to find this line? Our goal is to find the appropriate $w$ since this is the only variable. It involves a lot of mathematics, which I don't fully understand nor have time to dive into. It can be shown that calculations come down to a series of dot products.
+
+What happens if the data is not linearly separable? There are multiple approaches to tackle this problem since linear separability is rarely the case. We can allow error since this is natural to avoid overfitting and to make impossible classifications possible. This idea led to the idea of soft margin SVMs, where slack variables are introduced, allowing some degree of misclassification when training, as well as a parameter C which allows us to trade between error and margin.
+
+The other solution to inseparable sets is to map the input to a higher dimensional space, where it can be linearly separated. After doing this and finding the boundary, we can map back to the input dimension. This results in boundaries being ``projected'', which might have circular or other weird shapes.
 
 \subsection{Convolutional Neural Network}
 

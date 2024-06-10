@@ -32,7 +32,7 @@
 %\hypersetup{hidelinks}
 \usepackage{geometry}
 \usepackage{lipsum}
-\usepackage{enumitem}
+
 
 
 
@@ -54,6 +54,9 @@
 %\usepackage{titlesec}
 %\setcounter{secnumdepth}{3}
 
+\usepackage{enumitem}  % https://tex.stackexchange.com/questions/54673/use-numbers-in-every-level-of-enumeration
+\newlist{enumeratenum}{enumerate}{10}
+\setlist[enumeratenum]{label*=\arabic*.}
 
 
 \setlist{noitemsep,nolistsep}
@@ -68,8 +71,8 @@
 \renewcommand{\thesisauthor}{Roland BÁLINT}    %% Your first name(s) and family name.
 \renewcommand{\thesismonth}{July}     %% The month of the licence session
 \renewcommand{\thesisyear}{2024}      %% The year of the
-\renewcommand{\thesistitle}{OPENCB: A MULTIPURPOSE CHESS SUITE} % Title of the thesis
-\renewcommand{\thesissupervisor}{Dr. Eng. Robert VARGA} %% Supervisor
+\renewcommand{\thesistitle}{OpenCB:\\A vision system for chessboard state detection\\and chess move validation} % Title of the thesis
+\renewcommand{\thesissupervisor}{Assist. Prof. Phd. Eng. Robert VARGA} %% Supervisor
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newcommand{\makeThesisTitle}{\textbf{\thesistitletypesize \thesistitle}}
 \newcommand{\makeThesisType}{\thesistypetypesize \thesistype}
@@ -154,6 +157,5 @@
 \bibliographystyle{IEEEtran}
 \bibliography{thesis}%same file name as for .bib
 
-\include{appendix}
 
 \end{document}

@@ -18,7 +18,41 @@ The chapter should contain (but not limited to):
 \section{High Level Overview}
 \subsection{Black Box}
 \subsection{Users}
-\subsection{Use Cases}
+
+\subsection{Users and Use Cases}
+
+From the Vision we can derive that we have two types of users. The main one will simply be called \b{User}. By this, we refer to people who download the software, set it up and want to use it. One such user can use the system for many use cases, which can be grouped into categories:
+
+\begin{itemize}
+    \item Chess piece image acquisition
+    
+    We need to get images of chess pieces. To achieve this, a previous configuration will be necessary, to get the corners of the board (\i{Configure}), after which these cell images can be extracted and labeled (\i{Crop and Label}). To be more user-friendly, test variations of these functions shall be provided as well, such that the results of a potential Configure or Crop action can be seen without any effects on previous values.
+    
+    \item Chess piece image classification
+
+    After having the piece images, we can use Machine Learning algorithms to classify them as either White Free, Pawn, Bishop, Knight, Rook, Queen, King or one of the black counterparts. For this, multiple types of classifiers will be defined, from which the user can choose (\i{Select Classifier}). These can be saved or loaded to save time, trained if necessary and tested to check for metrics. The main functionality \i{Classify Board} can then take a set of 8x8 cell images and classify all of them, reconstructing a board.
+
+    \item Move validation
+    
+    If we have a board position, we can compare it to the previous one, and see if a valid move happened ``in between''. This is done by \i{Validate Move}. Some moves might need to be discarded, as well as there needs to be an easy way of starting a new game.
+
+    \item Miscellaneous actions
+    
+    Aside from what has already been listed, the User can also \i{Shuffle and Split} to mix up the cell images, \i{Clear All} to delete all images, or \i{Change Settings} to modify parameters which persist cross-session.
+\end{itemize}
+
+The secondary actor of the system is \b{Developer}. This could be any open-source connoisseur willing to contribute to the codebase or reuse parts of it. For this, it is essential to have readable code, good documentation and clear version control.
+
+These two actors and the associated use cases can be seen on Figure \ref{fig:usecase}.
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{figs/usecase.png}
+    \caption{Use Case Diagram}
+    \label{fig:usecase}
+\end{figure}
+
 
 \section{Dependencies}
 \section{Module Overview and Communication}
@@ -33,6 +67,13 @@ The chapter should contain (but not limited to):
 IP is responsible for everything related to images: getting, processing, saving and deleting them. The main class \t{ImageProcessing} provides an entry point for all these functionalities. \t{ImageProcessing} should not do too much on itself. It should wait for signals from the User Application Module, delegate the task of processing the request to the right subcomponent and send back the response from these. In the middle, there might be some mapping needed, but this should be minimal and for a reason.
 
 Class \t{ImageProcessing} has two \t{CameraHandler}s and two \t{QThread} for them, a \t{Parameters} field containing parameters and utilities, a \t{Classifier} and two \t{Configurer} fields. There is also a mutex for \t{cv::imshow}, but this is just a small detail. In the following, all these subcomponents will be discussed in detail.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figs/class_ip.png}
+    \caption{Classes of package \t{ip}}
+    \label{fig:classip}
+\end{figure}
 
 % ------------------------------------------------------------------------------------------------------%
 

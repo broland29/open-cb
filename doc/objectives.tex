@@ -2,52 +2,97 @@
 \pagestyle{fancy}
 
 
+% --------------------------------- Vision --------------------------------- %
+
 \section{Vision}
 
-OpenCB aims to be a software solution, designed for chess players of all skill levels, which serves as an add-on for traditional chess, to assist when playing. Checking the validity of chess movements, OpenCV is a great tool for beginners who struggle to respect the rules of chess, but also helpful for professional players, since we all make mistakes. A key idea while developing the project is to keep the physical aspect of the game intact as much as possible. At the same time, the project is open source, under an MIT license, hence available for any developer willing to use the code or contribute to it.
+OpenCB is a mixture of hardware and software. On the hardware side, two cameras are used to get images of a physical chessboard. On the software side, image processing algorithms are applied to detect the board, the board's cells, extract so-called ``cell images'', and classify the chess pieces. Cameras are handled in such a way that a chess position will be extracted from the photos they take. After this, a custom algorithm can be used to validate the chess move the system deduces from the position.
 
-\b{OpenCB is a mixture of hardware and software. In the hardware part, cameras are used to get images of a physical board. In the software part, Image Processing algorithms are applied to classify the pieces seen by the cameras and custom algorithms are used to validate the movement we get from the reconstructed boards.}
+This project aims to provide a software solution, designed for chess players of all skill levels, which serves as an add-on for traditional chess, to assist when playing. By checking the validity of chess movements, OpenCB can be a great tool for beginners who struggle to respect the rules of chess, but also helpful for professional players, since we all make mistakes. While the project adds a software layer to the game of chess, it does it with careful consideration - it is crucial to keep the physical aspect of the game intact as much as possible. At the same time, the project is open-source, under an MIT license, hence available for any developer willing to use the code or contribute to it.
 
-
-
-\section{Users and Use Cases}
-
-From the Vision we can derive that we have two types of users. The main one will simply be called \b{User}. By this, we refer to people who download the software, set it up and want to use it. One such user can use the system for many use cases, which can be grouped into categories:
-
-\begin{itemize}
-    \item Chess piece image acquisition
-    
-    We need to get images of chess pieces. To achieve this, a previous configuration will be necessary, to get the corners of the board (\i{Configure}), after which these cell images can be extracted and labeled (\i{Crop and Label}). To be more user-friendly, test variations of these functions shall be provided as well, such that the results of a potential Configure or Crop action can be seen without any effects on previous values.
-    
-    \item Chess piece image classification
-
-    After having the piece images, we can use Machine Learning algorithms to classify them as either White Free, Pawn, Bishop, Knight, Rook, Queen, King or one of the black counterparts. For this, multiple types of classifiers will be defined, from which the user can choose (\i{Select Classifier}). These can be saved or loaded to save time, trained if necessary and tested to check for metrics. The main functionality \i{Classify Board} can then take a set of 8x8 cell images and classify all of them, reconstructing a board.
-
-    \item Move validation
-    
-    If we have a board position, we can compare it to the previous one, and see if a valid move happened ``in between''. This is done by \i{Validate Move}. Some moves might need to be discarded, as well as there needs to be an easy way of starting a new game.
-
-    \item Miscellaneous actions
-    
-    Aside from what has already been listed, the User can also \i{Shuffle and Split} to mix up the cell images, \i{Clear All} to delete all images, or \i{Change Settings} to modify parameters which persist cross-session.
-\end{itemize}
-
-The secondary actor of the system is \b{Developer}. This could be any open-source connoisseur willing to contribute to the codebase or reuse parts of it. For this, it is essential to have readable code, good documentation and clear version control.
-
-These two actors and the associated use cases can be seen on Figure \ref{fig:usecase}.
-
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.6\textwidth]{figs/usecase.png}
-    \caption{Use Case Diagram}
-    \label{fig:usecase}
-\end{figure}
+The name OpenCB is a wordplay. Open mainly comes from OpenCV, the technology used for image processing, but also refers to the open-source nature of the project. CB is an acronym for chessboard, the central element of the project. The official title of the thesis mentions two of the most important goals: state detection and chess move validation. We can call this a vision system since it has image processing at its core.
 
 
 
-\section{Other Product Requirements}
+% --------------------------------- Functional Requirements --------------------------------- %
 
-As stated before, readability and documentation are key. Another important aspect is performance since it directly impacts the user experience. There are parts of the project that are real-time, like providing a preview of what the camera sees. Here we need an FPS high enough not to annoy the user. Other times, like when classifying, the user can wait a little, since he/she knows that processing is going on in the background, but the wait should not be longer than necessary.
+\section{Functional Requirements}
 
-Maintainability and extendibility are also important since the project might live on for longer. There are a lot of ideas not implemented up to this point, and a lot of other ideas might come in the future. By trying not to overcomplicate solutions, commenting where necessary and leaving space for future additions, the project has a greater value as code.
+Perhaps it is a good idea to form exact requirements from our goals. From the two main objectives, we can deduce that the system spans two logical domains: image processing and chess move validation. Moreover, we can also think of the user interface as another important part of the project. Hence the system will contain three subsystems: IP (Image Processing) for tasks related to images, VAR (Validation and Response) for chess move validation and UA (User Application) for the graphical part. This splitting is important not just for writing code, but also for specifying requirements beforehand, which are:
+
+\begin{enumeratenum}
+    \item {\b{User Application}}
+        \begin{enumeratenum}
+            \item \b{Interface} \label{req:interface} \\
+            UA shall provide a standalone desktop interface, with minimal complexity and minimal number of windows.
+
+            \item \b{Preview Windows} \label{req:preview-windows} \\
+            UA shall provide two windows for camera preview from IP.
+
+            \item \b{Chessboard GUI} \label{req:chessboard-gui} \\
+            UA shall provide a chessboard GUI. When users use this GUI, they shall be able to move the pieces or change them without moving them. This GUI shall be used for correcting classification errors and composing datasets (labeling).
+
+            \item \b{Message Label} \label{req:message-label} \\
+            UA shall provide a label where information or error messages can be displayed.
+            
+            \item \b{VAR Support} \label{req:var-support} \\
+            UA shall provide graphical elements making it possible to request any VAR functionality.
+            
+            \item \b{IP Support} \label{req:ip-support} \\
+            UA shall provide graphical elements making it possible to request any IP functionality.
+        \end{enumeratenum}
+
+
+    \item {\b{Image Processing}}
+        \begin{enumeratenum}
+            \item \b{Preview Frames} \label{req:preview-frames} \\
+            IP shall be able to continuously grab frames from the two cameras so that a live preview can be shown on the preview windows (\ref{req:preview-windows}).
+
+            \item \b{Image Saving} \label{req:image-saving} \\
+            IP shall be able to save a grabbed frame whenever requested.
+            
+            \item \b{Configuration} \label{req:configuration} \\
+            IP shall be able to extract the corners of the chessboard from a grabbed frame.
+
+            \item \b{Cropping} \label{req:cropping} \\
+            IP shall be able to extract (crop) cell images (smaller images of the region supposedly containing only one piece) out of a grabbed frame, given that the corners of the chessboard are available.
+
+            \item \b{Labeling} \label{req:labeling} \\
+            IP shall be able to label cell images. The precondition is having 64 cell images ready and having the chess GUI (\ref{req:chessboard-gui}) configured. The labeling shall be done based on the board position showcased on the chess GUI.
+
+            \item \b{Suffling and Splitting} \label{req:shiffling-and-splitting} \\
+            IP shall be able to shuffle existing cell images and re-distribute them into training, testing and validation sets based on predefined ratios.
+
+            \item \b{Clearing Images} \label{req:clearing-images} \\
+            IP shall be able to clear all cell images on demand.
+            
+        \end{enumeratenum}
+
+
+    \item {\b{Validation and Response}}
+        \begin{enumeratenum}
+            \item \b{Movement Validation} \label{req:movement-validation} \\
+            VAR shall be able to validate a chess move, given the current chess position. The previous chess position shall be memorized, the initial position shall be the initial chess setup.
+
+            \item \b{Movement Discarding} \label{req:movement-discarding} \\
+            VAR shall be able to discard a chess move.
+
+            \item \b{Starting New Game} \label{req:starting-new-game} \\
+            VAR shall be able to reset its state when a new game is issued.
+
+        \end{enumeratenum}
+\end{enumeratenum}
+
+These requirements will serve as a guideline throughout development. However, to achieve them, other things might need to be implemented. A great example is the communication between the subsystems, which might seem like an easy implicit task, but we will see further on that this is not the case.
+
+
+
+% --------------------------------- Non-functional Requirements --------------------------------- %
+
+\section{Non-functional Requirements}
+
+Aside from functional requirements which state exact goals, it is important to enumerate non-functional requirements as well. While they might seem more abstract, they are as important (if not more) than their functional buddies. These will refer to both user and developer experience.
+
+The application shall be \b{user-friendly}. This implies keeping the graphical user interface simple and intuitive, providing a comprehensive user guide, focusing on user needs. Using the application shall be a smooth experience, having responsive graphical elements and being \b{performant} enough to yield low waiting time in time-critical tasks (for example, when providing the camera preview, fast frame grabbing is needed for high enough FPS in the preview window).
+
+From a developer perspective, \b{maintainability} and \b{extendibility} are key. The project in its current state is presented as a demo, and as such, it shall be ready for potential changes in the future. The project shall be \b{well-documented}, have a clean code base, and have comments where necessary. Modules shall be loosely coupled, providing reusable software not just as a whole. In crucial code snippets having a worse-performing but more readable code is preferred.

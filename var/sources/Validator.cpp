@@ -51,7 +51,7 @@ void Validator::validateBoard(char board[8][8], bool& isValid, std::string& enco
     if (!isValid)
     {
         *this = oldValidator;
-        SPDLOG_INFO("Move is discarded since illegal.");
+        SPDLOG_TRACE("Move is discarded since illegal.");
         return;
     }
 
