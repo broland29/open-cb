@@ -2,6 +2,7 @@
 
 #include "MainWindow.h"
 #include "TestWindow.h"
+#include "../ip/headers/Parameters.h"
 #include <QApplication>
 #include <iostream>
 

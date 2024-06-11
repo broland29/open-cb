@@ -128,9 +128,9 @@ public slots:
 
     // delegating to dialog since inexistent at the beginning
     void setParametersReplySlot(bool succeeded, QString message);
-    void getParametersReplySlot(QVector<QString> names, QVector<QString> values);
-    void setParametersSlot(QVector<QString> names, QVector<QString> values);
-    void getParametersSlot(QVector<QString> names);
+    void getParametersReplySlot(Parameters parameters);
+    void setParametersSlot(Parameters parameters);
+    void getParametersSlot();
 
 signals:
     void validateMoveSignal(QVector<QString> encodings);
@@ -153,8 +153,8 @@ signals:
     void changeSettingsSignal();
 
     // delegating from dialog since inexistent at the beginning
-    void setParametersSignal(QVector<QString> names, QVector<QString> values);
-    void getParametersSignal(QVector<QString> names);
+    void setParametersSignal(Parameters parameters);
+    void getParametersSignal();
     void setParametersReplySignal(bool succeeded, QString message);
-    void getParametersReplySignal(QVector<QString> names, QVector<QString> values);
+    void getParametersReplySignal(Parameters parameters);
 };

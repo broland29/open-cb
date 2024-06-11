@@ -1,83 +1,50 @@
 #include "../../headers/settings/SettingsDialog.h"
 
 
-QVector<QString> SettingsDialog::NAMES = {
-	"leftCameraIndex",
-	"rightCameraIndex",
-	"showImages",
-	"concatImages",
-	"borderTop",
-	"borderRight",
-	"borderBottom",
-	"borderLeft",
-};
+
 
 SettingsDialog::SettingsDialog(QWidget* parent)
 {
-	// define all widgets for parameters. key is internal/JSON name
-	parameterWidgets = std::map<QString, AbstractParameter*> {
-		{ "showImages", new ComboBoxParameter("Show images", std::vector<QString>{"True", "False"}) },
-		{ "concatImages", new ComboBoxParameter("Concat images", std::vector<QString>{"True", "False"}) },
-		{ "leftCameraIndex", new LineEditParameter("Left camera index") },
-		{ "rightCameraIndex", new LineEditParameter("Right camera index") },
-		{ "borderTop", new LineEditParameter("Border top") },
-		{ "borderRight", new LineEditParameter("Border right") },
-		{ "borderBottom", new LineEditParameter("Border bottom") },
-		{ "borderLeft", new LineEditParameter("Border left") },
-		{ "imageWidth", new LineEditParameter("Image width") },
-		{ "imageHeight", new LineEditParameter("Image height") },
-		{ "binaryThreshold", new LineEditParameter("Binary Threshold") },
-		{ "closingSize", new LineEditParameter("Closing size") },
-		{ "houghRo", new LineEditParameter("Hough ro") },
-		{ "houghTheta", new LineEditParameter("Hough theta") },
-		{ "houghWindowSize", new LineEditParameter("Hough window size") },
-		{ "houghNoOfLines", new LineEditParameter("Hough no of lines") },
-		{ "KNN", new LineEditParameter("KNN") },
-		{ "SVM", new LineEditParameter("SVM") },
-		{ "CNN", new LineEditParameter("CNN") },
+	cameraHandlerParametersWidgets = std::map<QString, AbstractParameter*> {
+		{ "leftCameraIndex", new LineEditParameter("leftCameraIndex") },
+		{ "rightCameraIndex", new LineEditParameter("rightCameraIndex") }
 	};
 
-	// put widgets in separate containers to use utility function wrapParameters
-	std::vector<AbstractParameter*> visualizationParameters = {
-		parameterWidgets["showImages"],
-		parameterWidgets["concatImages"],
-	};
-	std::vector<AbstractParameter*> cameraParameters = {
-		parameterWidgets["leftCameraIndex"],
-		parameterWidgets["rightCameraIndex"],
-	};
-	std::vector<AbstractParameter*> configurationParameters = {
-		parameterWidgets["borderTop"],
-		parameterWidgets["borderRight"],
-		parameterWidgets["borderBottom"],
-		parameterWidgets["borderLeft"],
-		parameterWidgets["imageWidth"],
-		parameterWidgets["imageHeight"],
-		parameterWidgets["binaryThreshold"],
-		parameterWidgets["closingSize"],
-		parameterWidgets["houghRo"],
-		parameterWidgets["houghTheta"],
-		parameterWidgets["houghWindowSize"],
-		parameterWidgets["houghNoOfLines"],
-	};
-	std::vector<AbstractParameter*> classificationParameters = {
-		parameterWidgets["KNN"],
-		parameterWidgets["SVM"],
-		parameterWidgets["CNN"],
+	configureParametersWidgets = std::map<QString, AbstractParameter*> {
+		{ "gaussianFilterDimension", new LineEditParameter("gaussianFilterDimension") },
+		{ "binaryThreshold", new LineEditParameter("binaryThreshold") },
+		{ "closingFilterDimension", new LineEditParameter("closingFilterDimension") },
+		{ "houghRoStepSize", new LineEditParameter("houghRoStepSize") },
+		{ "houghThetaStepSize", new LineEditParameter("houghThetaStepSize") },
+		{ "houghWindowSize", new LineEditParameter("houghWindowSize") },
+		{ "houghNumberOfLines", new LineEditParameter("houghNumberOfLines") },
+		{ "showImages", new ComboBoxParameter("showImages", std::vector<QString>{"True", "False"}) },
+		{ "concatImages", new ComboBoxParameter("concatImages", std::vector<QString>{"True", "False"}) }
 	};
 
+	borderParametersWidgets = std::map<QString, AbstractParameter*> {
+		{ "borderTop", new LineEditParameter("borderTop") },
+		{ "borderRight", new LineEditParameter("borderRight") },
+		{ "borderBottom", new LineEditParameter("borderBottom") },
+		{ "borderLeft", new LineEditParameter("borderLeft") }
+	};
+
+	cropAndLabelParametersWidgets = std::map<QString, AbstractParameter*>{
+		{ "showImages", new ComboBoxParameter("showImages", std::vector<QString>{"True", "False"}) },
+		{ "concatImages", new ComboBoxParameter("concatImages", std::vector<QString>{"True", "False"}) }
+	};
 
 	setWindowTitle("Settings");
 	QLayout* centralLayout = new QVBoxLayout(this);
 
-	centralLayout->addWidget(new QLabel("Visualization parameters:"));
-	centralLayout->addWidget(wrapParameters(visualizationParameters));
-	centralLayout->addWidget(new QLabel("Camera parameters:"));
-	centralLayout->addWidget(wrapParameters(cameraParameters));
-	centralLayout->addWidget(new QLabel("Configuration parameters:"));
-	centralLayout->addWidget(wrapParameters(configurationParameters));
-	centralLayout->addWidget(new QLabel("Classification parameters:"));
-	centralLayout->addWidget(wrapParameters(classificationParameters));
+	centralLayout->addWidget(new QLabel("Camera handler parameters:"));
+	centralLayout->addWidget(wrapParameters(cameraHandlerParametersWidgets));
+	centralLayout->addWidget(new QLabel("Configure parameters:"));
+	centralLayout->addWidget(wrapParameters(configureParametersWidgets));
+	centralLayout->addWidget(new QLabel("Border parameters:"));
+	centralLayout->addWidget(wrapParameters(borderParametersWidgets));
+	centralLayout->addWidget(new QLabel("Crop and label parameters:"));
+	centralLayout->addWidget(wrapParameters(cropAndLabelParametersWidgets));
 
 	messageLabel = new QLabel("Message will appear here");
 	centralLayout->addWidget(messageLabel);
@@ -106,20 +73,24 @@ void loadParameters()
 }
 
 
-QWidget* SettingsDialog::wrapParameters(std::vector<AbstractParameter*> parameters, int columns)
+QWidget* SettingsDialog::wrapParameters(std::map<QString, AbstractParameter*> parameterWidgets, int columns)
 {
-	QWidget* widget = new QWidget();
-	QGridLayout* layout = new QGridLayout(widget);
+	QWidget* wrapperWidget = new QWidget();
+	QGridLayout* wrapperLayout = new QGridLayout(wrapperWidget);
 
 	int row = 0;
 	int column = 0;
 
-	for (int i = 0; i < parameters.size(); i++)
+	auto it = parameterWidgets.begin();
+	for (int i = 0; i < parameterWidgets.size(); i++)
 	{
-		QLabel* label = new QLabel(parameters[i]->labelText);
+		QString name = it->first;
+		AbstractParameter* widget = it->second;
 
-		layout->addWidget(label, row, column * 2);
-		layout->addWidget(parameters[i]->getWidget(), row, column * 2 + 1);
+		QLabel* label = new QLabel(widget->labelText);
+
+		wrapperLayout->addWidget(label, row, column * 2);
+		wrapperLayout->addWidget(widget->getWidget(), row, column * 2 + 1);
 
 		column++;
 		if (column >= columns)
@@ -127,41 +98,46 @@ QWidget* SettingsDialog::wrapParameters(std::vector<AbstractParameter*> paramete
 			row++;
 			column = 0;
 		}
+
+		it++;
 	}
 
-	return widget;
+	return wrapperWidget;
 }
 
 
 void SettingsDialog::saveButtonClicked()
 {
-	QVector<QString> names = NAMES;
-	QVector<QString> values;
-	for (QString name : names)
-	{
-		values.push_back(parameterWidgets[name]->getValue());
-	}
+	Parameters parameters;
+	
+	parameters.cameraHandlingParameters.cameraHandlerParameters.leftCameraIndex = cameraHandlerParametersWidgets["leftCameraIndex"]->getValue().toInt();
+	parameters.cameraHandlingParameters.cameraHandlerParameters.rightCameraIndex = cameraHandlerParametersWidgets["rightCameraIndex"]->getValue().toInt();
 
-	if (names.size() != values.size())
-	{
-		SPDLOG_ERROR("Size mismatch");
-		return;
-	}
+	parameters.configurationParameters.configureParameters.gaussianFilterDimension = configureParametersWidgets["gaussianFilterDimension"]->getValue().toInt();
+	parameters.configurationParameters.configureParameters.binaryThreshold = static_cast<uchar>(configureParametersWidgets["binaryThreshold"]->getValue().toInt());
+	parameters.configurationParameters.configureParameters.closingFilterDimension = configureParametersWidgets["closingFilterDimension"]->getValue().toInt();
+	parameters.configurationParameters.configureParameters.houghRoStepSize = configureParametersWidgets["houghRoStepSize"]->getValue().toInt();
+	parameters.configurationParameters.configureParameters.houghThetaStepSize = configureParametersWidgets["houghThetaStepSize"]->getValue().toInt();
+	parameters.configurationParameters.configureParameters.houghWindowSize = configureParametersWidgets["houghWindowSize"]->getValue().toInt();
+	parameters.configurationParameters.configureParameters.houghNumberOfLines = configureParametersWidgets["houghNumberOfLines"]->getValue().toInt();
+	parameters.configurationParameters.configureParameters.showImages = (configureParametersWidgets["showImages"]->getValue() == "True");
+	parameters.configurationParameters.configureParameters.concatImages = (configureParametersWidgets["concatImages"]->getValue() == "True");
 
-	SPDLOG_TRACE("Sending parameters:");
-	for (int i = 0; i < names.size(); i++)
-	{
-		SPDLOG_TRACE("{}:{}", names[i].toStdString(), values[i].toStdString());
-	}
+	parameters.configurationParameters.borderParameters.borderTop = borderParametersWidgets["borderTop"]->getValue().toInt();
+	parameters.configurationParameters.borderParameters.borderRight = borderParametersWidgets["borderRight"]->getValue().toInt();
+	parameters.configurationParameters.borderParameters.borderBottom = borderParametersWidgets["borderBottom"]->getValue().toInt();
+	parameters.configurationParameters.borderParameters.borderLeft = borderParametersWidgets["borderLeft"]->getValue().toInt();
 
-	emit setParametersSignal(names, values);
+	parameters.configurationParameters.cropAndLabelParameters.showImages = (cropAndLabelParametersWidgets["showImages"]->getValue() == "True");
+	parameters.configurationParameters.cropAndLabelParameters.concatImages = (cropAndLabelParametersWidgets["concatImages"]->getValue() == "True");
+
+	emit setParametersSignal(parameters);
 }
 
 
 void SettingsDialog::refreshButtonClicked()
 {
-	QVector<QString> names = NAMES;
-	emit getParametersSignal(names);
+	emit getParametersSignal();
 }
 
 
@@ -177,25 +153,27 @@ void SettingsDialog::setParametersReplySlot(bool succeeded, QString message)
 }
 
 
-
-
-
-void SettingsDialog::getParametersReplySlot(QVector<QString> names, QVector<QString> values)
+void SettingsDialog::getParametersReplySlot(Parameters parameters)
 {
-	if (names.length() != values.length())
-	{
-		SPDLOG_ERROR("Size mismatch");
-		return;
-	}
+	cameraHandlerParametersWidgets["leftCameraIndex"]->setValue(QString::number(parameters.cameraHandlingParameters.cameraHandlerParameters.leftCameraIndex));
+	cameraHandlerParametersWidgets["rightCameraIndex"]->setValue(QString::number(parameters.cameraHandlingParameters.cameraHandlerParameters.rightCameraIndex));
 
-	for (int i = 0; i < names.size(); i++)
-	{
-		if (parameterWidgets.find(names[i]) == parameterWidgets.end())
-		{
-			SPDLOG_ERROR("Widget with name {} not found", names[i].toStdString());
-			continue;
-		}
-		parameterWidgets[names[i]]->setValue(values[i]);
-	}
+	configureParametersWidgets["gaussianFilterDimension"]->setValue(QString::number(parameters.configurationParameters.configureParameters.gaussianFilterDimension));
+	configureParametersWidgets["binaryThreshold"]->setValue(QString::number(parameters.configurationParameters.configureParameters.binaryThreshold));  // number?
+	configureParametersWidgets["closingFilterDimension"]->setValue(QString::number(parameters.configurationParameters.configureParameters.closingFilterDimension));
+	configureParametersWidgets["houghRoStepSize"]->setValue(QString::number(parameters.configurationParameters.configureParameters.houghRoStepSize));
+	configureParametersWidgets["houghThetaStepSize"]->setValue(QString::number(parameters.configurationParameters.configureParameters.houghThetaStepSize));
+	configureParametersWidgets["houghWindowSize"]->setValue(QString::number(parameters.configurationParameters.configureParameters.houghWindowSize));
+	configureParametersWidgets["houghNumberOfLines"]->setValue(QString::number(parameters.configurationParameters.configureParameters.houghNumberOfLines));
+	configureParametersWidgets["showImages"]->setValue((parameters.configurationParameters.configureParameters.showImages) ? "True" : "False");
+	configureParametersWidgets["concatImages"]->setValue((parameters.configurationParameters.configureParameters.concatImages) ? "True" : "False");
+
+	borderParametersWidgets["borderTop"]->setValue(QString::number(parameters.configurationParameters.borderParameters.borderTop));
+	borderParametersWidgets["borderRight"]->setValue(QString::number(parameters.configurationParameters.borderParameters.borderRight));
+	borderParametersWidgets["borderBottom"]->setValue(QString::number(parameters.configurationParameters.borderParameters.borderBottom));
+	borderParametersWidgets["borderLeft"]->setValue(QString::number(parameters.configurationParameters.borderParameters.borderLeft));
+
+	cropAndLabelParametersWidgets["showImages"]->setValue((parameters.configurationParameters.cropAndLabelParameters.showImages) ? "True" : "False");
+	cropAndLabelParametersWidgets["concatImages"]->setValue((parameters.configurationParameters.cropAndLabelParameters.concatImages) ? "True" : "False");
 }
 

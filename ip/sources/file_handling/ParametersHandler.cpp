@@ -1,9 +1,72 @@
 #include "../../headers/file_handling/ParametersHandler.h"
 
 
+// https://github.com/nlohmann/json?tab=readme-ov-file#simplify-your-life-with-macros
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
+	CameraHandlerParameters,
+	leftCameraIndex,
+	rightCameraIndex
+)
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
+	CameraHandlingParameters,
+	cameraHandlerParameters
+)
+
+/*
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
+	ClassificationParameters,
+	kNearestNeighborsParameters,
+	supportVectorMachineParameters,
+	convolutionalNeuralNetworkParameters
+)
+*/
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
+	ConfigureParameters,
+	gaussianFilterDimension,
+	binaryThreshold,
+	closingFilterDimension,
+	houghRoStepSize,
+	houghThetaStepSize,	
+	houghWindowSize,
+	houghNumberOfLines,
+	showImages,
+	concatImages
+)
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
+	BorderParameters,
+	borderTop,
+	borderRight,
+	borderBottom,
+	borderLeft
+)
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
+	CropAndLabelParameters,
+	showImages,
+	concatImages
+)
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
+	ConfigurationParameters,
+	configureParameters,
+	borderParameters,
+	cropAndLabelParameters
+)
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
+	Parameters,
+	cameraHandlingParameters,
+	//classificationParameters,
+	configurationParameters//,
+	//fileHandlingParameters
+)
+
 int ParametersHandler::loadFromJSON(Parameters& parameters)
 {
-	SPDLOG_INFO("Before loading: {}", parameters.parameters);
+	SPDLOG_INFO("Before loading: {}", parameters);
 	std::ifstream infile(JSON_PATH);
 
 	if (!infile.is_open())
@@ -19,61 +82,24 @@ int ParametersHandler::loadFromJSON(Parameters& parameters)
 	}
 	catch (json::exception& ex)
 	{
-		SPDLOG_ERROR("Possible error when parsing {}. See exception below.", JSON_PATH);
+		SPDLOG_ERROR("Error when reading/parsing {}. See exception below.", JSON_PATH);
 		SPDLOG_ERROR(ex.what());
 		return 2;
 	}
 
-	// iterate a copy of map. names the same, values change, types of values shall be the same
-	Parameters oldParameters = parameters;
-	for (const auto& pair : oldParameters.parameters)
+	try
 	{
-		std::string name = pair.first.toStdString();
-		Variant oldValue = pair.second;
-
-		if (!jsonBuffer.contains(name))
-		{
-			SPDLOG_ERROR("{} does not contain key {}", JSON_PATH, name);
-			continue;  // will leave it as default (or as it was), see Parameters.h
-		}
-
-		// extract new value, knowing type from old. exception thrown if types not matching
-		Variant newValue;
-		try
-		{
-			if (std::holds_alternative<bool>(oldValue))
-			{
-				newValue = jsonBuffer[name].template get<bool>();
-			}
-			else if (std::holds_alternative<int>(oldValue))
-			{
-				newValue = jsonBuffer[name].template get<int>();
-			}
-			else if (std::holds_alternative<double>(oldValue))
-			{
-				newValue = jsonBuffer[name].template get<double>();
-			}
-			else if (std::holds_alternative<std::string>(oldValue))
-			{
-				newValue = jsonBuffer[name].template get<std::string>();
-			}
-			else
-			{
-				SPDLOG_ERROR("Unsupported type");
-				return 4;
-			}
-		}
-		catch (json::exception& e)
-		{
-			SPDLOG_ERROR("Possible mismatch of old and new value for {}. See exception below.", name);
-			SPDLOG_ERROR(e.what());
-		}
-
-		// update map
-		parameters.setValue(pair.first, newValue);
+		parameters = jsonBuffer;  // implicitly uses from_json defined by macros
+	}
+	catch (json::exception& ex)
+	{
+		SPDLOG_ERROR("Error when converting jsonBuffer to parameters. See exception below.");
+		SPDLOG_ERROR(ex.what());
+		return 3;
 	}
 
-	SPDLOG_INFO("After loading: {}", parameters.parameters);
+	SPDLOG_INFO("After loading: {}", parameters);
+	
 	return 0;
 }
 
@@ -88,36 +114,10 @@ int ParametersHandler::saveToJSON(Parameters parameters)
 		return 1;
 	}
 
-	json jsonBuffer;
-	for (const auto& pair : parameters.parameters)  // iterate map
-	{
-		std::string name = pair.first.toStdString();
-		Variant value = pair.second;
-
-		if (std::holds_alternative<bool>(value))
-		{
-			jsonBuffer[name] = std::get<bool>(value);
-		}
-		else if (std::holds_alternative<int>(value))
-		{
-			jsonBuffer[name] = std::get<int>(value);
-		}
-		else if (std::holds_alternative<double>(value))
-		{
-			jsonBuffer[name] = std::get<double>(value);
-		}
-		else if (std::holds_alternative<std::string>(value))
-		{
-			jsonBuffer[name] = std::get<std::string>(value);
-		}
-		else
-		{
-			SPDLOG_ERROR("Unsupported type");
-			return 2;
-		}
-	}
+	json jsonBuffer = parameters; // implicitly uses to_json defined by macros
 
 	SPDLOG_INFO("Will write to file:\n{}", jsonBuffer.dump(4));
+
 	outfile << std::setw(4) << jsonBuffer;
 
 	return 0;

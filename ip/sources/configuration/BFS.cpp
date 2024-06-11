@@ -1,13 +1,5 @@
 #include "../../headers/configuration/BFS.h"
 
-#define IMAGE_EDGE_SIZE 3
-
-
-bool inline isImageEdgePixel(Mat img, int i, int j)
-{
-	return i < IMAGE_EDGE_SIZE || i >= img.rows - IMAGE_EDGE_SIZE || j < IMAGE_EDGE_SIZE || j >= img.cols - IMAGE_EDGE_SIZE;
-}
-
 
 Mat_<uchar> fillBFS(Mat_<uchar> img)
 {

@@ -123,12 +123,8 @@ void ImageProcessing::classifyBoardSlot()
 	}
 
 	// call on configurer - prepare cell images
-	const int borderTop = get<int>(parameters.parameters["borderTop"]);
-	const int borderRight = get<int>(parameters.parameters["borderRight"]);
-	const int borderBottom = get<int>(parameters.parameters["borderBottom"]);
-	const int borderLeft = get<int>(parameters.parameters["borderLeft"]);
-	if (configurerLeft->prepareCellImages(imgLeft, borderTop, borderRight, borderBottom, borderLeft) +
-		configurerRight->prepareCellImages(imgRight, borderTop, borderRight, borderBottom, borderLeft) != 0)
+	if (configurerLeft->prepareCellImages(imgLeft, parameters.configurationParameters.borderParameters) +
+		configurerRight->prepareCellImages(imgRight, parameters.configurationParameters.borderParameters) != 0)
 	{
 		emit classifyBoardReplySignal(false, "Preparing cell images failed. Make sure to run \"Configure\" beforehand.", QVector<QString>());
 		return;
@@ -181,10 +177,9 @@ void ImageProcessing::configure(bool isTest)
 		return;
 	}
 
-
 	// call on configurer
-	if (configurerLeft->configure(imgLeft, isTest, get<bool>(parameters.parameters["showImages"]), get<bool>(parameters.parameters["concatImages"])) +
-	    configurerRight->configure(imgRight, isTest, get<bool>(parameters.parameters["showImages"]), get<bool>(parameters.parameters["concatImages"])) != 0)
+	if (configurerLeft->configure(imgLeft, parameters.configurationParameters.configureParameters, isTest) +
+	    configurerRight->configure(imgRight, parameters.configurationParameters.configureParameters, isTest) != 0)
 	{
 		emit configureReplySignal(false, "Error when configuring");
 		return;
@@ -220,13 +215,10 @@ void ImageProcessing::cropAndLabel(QVector<QString> encodings, bool isTest)
 	}
 
 	// call on configurer
-	const bool concatImages = get<bool>(parameters.parameters["concatImages"]);
-	const int borderTop = get<int>(parameters.parameters["borderTop"]);
-	const int borderRight = get<int>(parameters.parameters["borderRight"]);
-	const int borderBottom = get<int>(parameters.parameters["borderBottom"]);
-	const int borderLeft = get<int>(parameters.parameters["borderLeft"]);
-	if (configurerLeft->cropAndLabel(imgLeft, encodings, isTest, concatImages, borderTop, borderRight, borderBottom, borderLeft) +
-		configurerRight->cropAndLabel(imgRight, encodings, isTest, concatImages, borderTop, borderRight, borderBottom, borderLeft) != 0)
+	CropAndLabelParameters cropAndLabelParameters = parameters.configurationParameters.cropAndLabelParameters;
+	BorderParameters borderParameters = parameters.configurationParameters.borderParameters;
+	if (configurerLeft->cropAndLabel(imgLeft, encodings, cropAndLabelParameters, borderParameters, isTest) +
+		configurerRight->cropAndLabel(imgRight, encodings, cropAndLabelParameters, borderParameters, isTest) != 0)
 	{
 		emit cropAndLabelReplySignal(false, "Error when configuring");
 		return;
@@ -288,24 +280,18 @@ void ImageProcessing::test()
 }
 
 
-void ImageProcessing::setParametersSlot(QVector<QString> names, QVector<QString> values)
+void ImageProcessing::setParametersSlot(Parameters newParameters)
 {
-	if (names.length() != values.length())
-	{
-		SPDLOG_ERROR("Size mismatch");
-		return;
-	}
-
 	// camera indices are special: they are used "non-stop" by camera handlers; so even though parameter gets updated
 	//   in parameters.parameters, we need to "update" the camera readers to see immediate effect
-	int oldLeftCameraIndex = get<int>(parameters.parameters["leftCameraIndex"]);
-	int oldRightCameraIndex = get<int>(parameters.parameters["rightCameraIndex"]);
+	int oldLeftCameraIndex = parameters.cameraHandlingParameters.cameraHandlerParameters.leftCameraIndex;
+	int oldRightCameraIndex = parameters.cameraHandlingParameters.cameraHandlerParameters.rightCameraIndex;
 
-	parameters.setValues(names, values);
+	parameters = newParameters;
 	ParametersHandler::saveToJSON(parameters);
 
-	int newLeftCameraIndex = get<int>(parameters.parameters["leftCameraIndex"]);
-	int newRightCameraIndex = get<int>(parameters.parameters["rightCameraIndex"]);
+	int newLeftCameraIndex = parameters.cameraHandlingParameters.cameraHandlerParameters.leftCameraIndex;
+	int newRightCameraIndex = parameters.cameraHandlingParameters.cameraHandlerParameters.rightCameraIndex;
 	if (newLeftCameraIndex != oldLeftCameraIndex)
 	{
 		SPDLOG_TRACE("Switching left camera index from {} to {}", oldLeftCameraIndex, newLeftCameraIndex);
@@ -321,14 +307,10 @@ void ImageProcessing::setParametersSlot(QVector<QString> names, QVector<QString>
 }
 
 
-void ImageProcessing::getParametersSlot(QVector<QString> names)
+void ImageProcessing::getParametersSlot()
 {
-	ParametersHandler::loadFromJSON(parameters);
-
-	QVector<QString> values(names.size());
-	parameters.getValues(names, values);
-	
-	emit getParametersReplySignal(names, values);
+	ParametersHandler::loadFromJSON(parameters);  // as there might be changes directly in the conf file	
+	emit getParametersReplySignal(parameters);
 }
 
 
@@ -351,7 +333,7 @@ void ImageProcessing::setupCameraHandlerLeft()
 
 	// replace thread and handler
 	cameraHandlerLeftThread = new QThread;
-	cameraHandlerLeft = new CameraHandler(get<int>(parameters.parameters["leftCameraIndex"]));
+	cameraHandlerLeft = new CameraHandler(parameters.cameraHandlingParameters.cameraHandlerParameters.leftCameraIndex);
 
 	// thread connections
 	QObject::connect(cameraHandlerLeftThread, &QThread::started, cameraHandlerLeft, &CameraHandler::doWork);
@@ -377,7 +359,7 @@ void ImageProcessing::setupCameraHandlerRight()
 
 	// replace thread and handler
 	cameraHandlerRightThread = new QThread;
-	cameraHandlerRight = new CameraHandler(get<int>(parameters.parameters["rightCameraIndex"]));
+	cameraHandlerRight = new CameraHandler(parameters.cameraHandlingParameters.cameraHandlerParameters.rightCameraIndex);
 
 	// thread connections
 	QObject::connect(cameraHandlerRightThread, &QThread::started, cameraHandlerRight, &CameraHandler::doWork);

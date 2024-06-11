@@ -69,7 +69,7 @@ signals:
 	void changeSettingsReplySignal(bool succeeded, QString message);
 
 	void setParametersReplySignal(bool succeeded, QString message);
-	void getParametersReplySignal(QVector<QString> names, QVector<QString> values);
+	void getParametersReplySignal(Parameters parameters);
 
 	void previewImageReadyLeftSignal(QImage image);
 	void previewImageReadyRightSignal(QImage image);
@@ -90,8 +90,8 @@ public slots:
 	void clearAllImagesSlot();
 	void changeSettingsSlot();
 
-	void setParametersSlot(QVector<QString> names, QVector<QString> values);
-	void getParametersSlot(QVector<QString> names);
+	void setParametersSlot(Parameters parameters);
+	void getParametersSlot();
 
 	void previewImageReadyLeftSlot(QImage image);
 	void previewImageReadyRightSlot(QImage image);

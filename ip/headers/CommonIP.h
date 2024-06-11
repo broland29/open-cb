@@ -12,6 +12,8 @@ using namespace cv;
 
 #define IMAGE_WIDTH			500
 #define IMAGE_HEIGHT		500
+#define IMAGE_EDGE_SIZE 3
+
 
 int inline cellWidth(int borderRight, int borderLeft)
 {
@@ -52,6 +54,8 @@ bool inline isInside(Mat img, int i, int j)
     return (i >= 0 && i < img.rows) && (j >= 0 && j < img.cols);
 }
 
-
-
-
+// Checks if pixel is on the edge of the image (does not imply isInside)
+bool inline isImageEdgePixel(Mat img, int i, int j)
+{
+    return i < IMAGE_EDGE_SIZE || i >= img.rows - IMAGE_EDGE_SIZE || j < IMAGE_EDGE_SIZE || j >= img.cols - IMAGE_EDGE_SIZE;
+}

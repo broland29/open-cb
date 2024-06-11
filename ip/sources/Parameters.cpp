@@ -1,177 +1,32 @@
 #include "../headers/Parameters.h"
 
 
-void Parameters::variantToQString(Variant variant, QString& qString)
+std::ostream& operator<<(std::ostream& os, const Parameters& parameters)
 {
-	if (std::holds_alternative<bool>(variant))
-	{
-		qString = (std::get<bool>(variant)) ? "True" : "False";
-	}
-	else if (std::holds_alternative<int>(variant))
-	{
-		qString = QString::number(std::get<int>(variant));
-	}
-	else if (std::holds_alternative<double>(variant))
-	{
-		qString = QString::number(std::get<double>(variant));
-	}
-	else if (std::holds_alternative<std::string>(variant))
-	{
-		qString = QString::fromStdString(std::get<std::string>(variant));
-	}
-	else
-	{
-		SPDLOG_ERROR("Error converting Variant to QString");
-	}
-}
+	os << std::endl << "cameraHandlerParameters:" << std::endl;
+	os << "    leftCameraIndex: " << parameters.cameraHandlingParameters.cameraHandlerParameters.leftCameraIndex << std::endl;
+	os << "    rightCameraIndex: " << parameters.cameraHandlingParameters.cameraHandlerParameters.rightCameraIndex << std::endl;
 
-void Parameters::variantToStdString(Variant variant, std::string& stdString)
-{
-	if (std::holds_alternative<bool>(variant))
-	{
-		stdString = (std::get<bool>(variant)) ? "True" : "False";
-	}
-	else if (std::holds_alternative<int>(variant))
-	{
-		stdString = std::to_string(std::get<int>(variant));
-	}
-	else if (std::holds_alternative<double>(variant))
-	{
-		stdString = std::to_string(std::get<double>(variant));
-	}
-	else if (std::holds_alternative<std::string>(variant))
-	{
-		stdString = std::get<std::string>(variant);
-	}
-	else
-	{
-		SPDLOG_ERROR("Error converting Variant to std::string");
-	}
-}
+	os << std::endl << "configureParameters:" << std::endl;
+	os << "    gaussianFilterDimension: " << parameters.configurationParameters.configureParameters.gaussianFilterDimension << std::endl;
+	os << "    binaryThreshold: " << static_cast<int>(parameters.configurationParameters.configureParameters.binaryThreshold) << std::endl;
+	os << "    closingFilterDimension: " << parameters.configurationParameters.configureParameters.closingFilterDimension << std::endl;
+	os << "    houghRoStepSize: " << parameters.configurationParameters.configureParameters.houghRoStepSize << std::endl;
+	os << "    houghThetaStepSize: " << parameters.configurationParameters.configureParameters.houghThetaStepSize << std::endl;
+	os << "    houghWindowSize: " << parameters.configurationParameters.configureParameters.houghWindowSize << std::endl;
+	os << "    houghNumberOfLines: " << parameters.configurationParameters.configureParameters.houghNumberOfLines << std::endl;
+	os << "    showImages: " << parameters.configurationParameters.configureParameters.showImages << std::endl;
+	os << "    concatImages: " << parameters.configurationParameters.configureParameters.concatImages << std::endl;
 
+	os << std::endl << "borderParameters:" << std::endl;
+	os << "    borderTop: " << parameters.configurationParameters.borderParameters.borderTop << std::endl;
+	os << "    borderRight: " << parameters.configurationParameters.borderParameters.borderRight << std::endl;
+	os << "    borderBottom: " << parameters.configurationParameters.borderParameters.borderBottom << std::endl;
+	os << "    borderLeft: " << parameters.configurationParameters.borderParameters.borderLeft << std::endl;
 
-std::ostream& operator << (std::ostream& os, const std::map<QString, Variant>& m)
-{
-	for (const auto& p : m)
-	{
-		std::string name = p.first.toStdString();
-		std::string value;
-		Parameters::variantToStdString(p.second, value);
-		os << std::endl << name << " " << value;
-	}
+	os << std::endl << "cropAndLabelParameters:" << std::endl;
+	os << "    showImages: " << parameters.configurationParameters.cropAndLabelParameters.showImages << std::endl;
+	os << "    concatImages: " << parameters.configurationParameters.cropAndLabelParameters.concatImages << std::endl;
+
 	return os;
-}
-
-
-void Parameters::getValue(QString name, QString& value)
-{
-	if (parameters.find(name) == parameters.end())
-	{
-		SPDLOG_ERROR("Parameter {} not registered", name.toStdString());
-		return;
-	}
-	variantToQString(parameters[name], value);
-}
-
-
-void Parameters::getValue(QString name, std::string& value)
-{
-	if (parameters.find(name) == parameters.end())
-	{
-		SPDLOG_ERROR("Parameter {} not registered", name.toStdString());
-		return;
-	}
-	variantToStdString(parameters[name], value);
-}
-
-
-void Parameters::setValue(QString name, QString value)
-{
-	if (parameters.find(name) == parameters.end())
-	{
-		SPDLOG_ERROR("Parameter {} not registered", name.toStdString());
-		return;
-	}
-
-	std::variant value_ = parameters[name];
-
-	bool success = true;  // since toStdString has no arg, assume success
-	if (std::holds_alternative<bool>(value_))
-	{
-		if (value == "True")
-		{
-			parameters[name] = true;
-		}
-		else if (value == "False")
-		{
-			parameters[name] = false;
-		}
-		else
-		{
-			SPDLOG_ERROR("Unknown value {}", value.toStdString());
-			return;
-		}
-	}
-	else if (std::holds_alternative<int>(value_))
-	{
-		parameters[name] = value.toInt(&success);
-	}
-	else if (std::holds_alternative<double>(value_))
-	{
-		parameters[name] = value.toDouble(&success);
-	}
-	else if (std::holds_alternative<std::string>(value_))
-	{
-		parameters[name] = value.toStdString();
-	}
-	else
-	{
-		SPDLOG_ERROR("Error setting parameter {}: variant type not handled", name.toStdString());
-		return;
-	}
-
-	if (!success)
-	{
-		SPDLOG_ERROR("Error converting parameter {}: conversion failed, bad input", name.toStdString());
-		return;
-	}
-}
-
-
-void Parameters::setValue(QString name, Variant value)
-{
-	parameters[name] = value;
-}
-
-
-void Parameters::getValues(QVector<QString> names, QVector<QString>& values)
-{
-	if (names.size() != values.size())
-	{
-		SPDLOG_ERROR("Got vectors of different length");
-		return;
-	}
-
-	for (int i = 0; i < names.size(); i++)
-	{
-		getValue(names[i], values[i]);
-	}
-}
-
-
-void Parameters::setValues(QVector<QString> names, QVector<QString> values)
-{
-	SPDLOG_INFO("Parameters before update: {}", parameters);
-	if (names.size() != values.size())
-	{
-		SPDLOG_ERROR("Got vectors of different length");
-		return;
-	}
-
-	for (int i = 0; i < names.size(); i++)
-	{
-		setValue(names[i], values[i]);
-	}
-
-	SPDLOG_INFO("Parameters after update: {}", parameters);
 }

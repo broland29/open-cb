@@ -12,6 +12,7 @@
 #include "ComboBoxParameter.h"
 #include "LineEditParameter.h"
 #include <iterator>
+#include "../ip/headers/Parameters.h"
 
 #include <spdlog/spdlog.h>
 
@@ -26,11 +27,12 @@ class SettingsDialog : public QDialog
 	Q_OBJECT
 
 public:
-	// could optimize not to get and set all values all the time. but for now, we call get/set on these
-	static QVector<QString> NAMES;
 
-private:	
-	std::map<QString, AbstractParameter*> parameterWidgets;
+private:
+	std::map<QString, AbstractParameter*> cameraHandlerParametersWidgets;
+	std::map<QString, AbstractParameter*> configureParametersWidgets;
+	std::map<QString, AbstractParameter*> borderParametersWidgets;
+	std::map<QString, AbstractParameter*> cropAndLabelParametersWidgets;
 
 	QLabel* messageLabel;
 
@@ -42,7 +44,7 @@ public:
 	SettingsDialog(QWidget* patent);
 
 private:
-	QWidget* wrapParameters(std::vector<AbstractParameter*> parameters, int columns = 3);
+	QWidget* wrapParameters(std::map<QString, AbstractParameter*> parameterWidgets, int columns = 3);
 
 public slots:
 	void saveButtonClicked();
@@ -50,8 +52,9 @@ public slots:
 	void cancelButtonClicked();
 
 	void setParametersReplySlot(bool succeeded, QString message);
-	void getParametersReplySlot(QVector<QString> names, QVector<QString> values);
+	void getParametersReplySlot(Parameters parameters);
+
 signals:
-	void setParametersSignal(QVector<QString> names, QVector<QString> values);
-	void getParametersSignal(QVector<QString> names);
+	void setParametersSignal(Parameters parameters);
+	void getParametersSignal();
 };

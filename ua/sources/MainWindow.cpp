@@ -355,9 +355,7 @@ void MainWindow::settingsButtonClicked()
     QObject::connect(this, &MainWindow::setParametersReplySignal, settingsDialog, &SettingsDialog::setParametersReplySlot);
     QObject::connect(this, &MainWindow::getParametersReplySignal, settingsDialog, &SettingsDialog::getParametersReplySlot);
 
-    // fill values
-    QVector<QString> names = SettingsDialog::NAMES;
-    getParametersSignal(names);
+    getParametersSignal();
 
     int ret = settingsDialog->exec();
     SPDLOG_TRACE("Got return value {} from settingDialog.exec()", ret);
@@ -554,18 +552,17 @@ void MainWindow::setParametersReplySlot(bool succeeded, QString message)
     emit setParametersReplySignal(succeeded, message);
 }
 
-void MainWindow::getParametersReplySlot(QVector<QString> names, QVector<QString> values)
+void MainWindow::getParametersReplySlot(Parameters parameters)
 {
-    emit getParametersReplySignal(names, values);
+    emit getParametersReplySignal(parameters);
 }
 
-void MainWindow::setParametersSlot(QVector<QString> names, QVector<QString> values)
+void MainWindow::setParametersSlot(Parameters parameters)
 {
-    emit setParametersSignal(names, values);
+    emit setParametersSignal(parameters);
 }
 
-void MainWindow::getParametersSlot(QVector<QString> names)
+void MainWindow::getParametersSlot()
 {
-    SPDLOG_INFO("here");
-    emit getParametersSignal(names);
+    emit getParametersSignal();
 }

@@ -9,7 +9,7 @@ Configurer::Configurer(CameraSide cameraSide, std::shared_ptr<QMutex> imshowMute
 }
 
 
-int Configurer::configure(Mat_<Vec3b> img, bool isTest, bool showImages, bool concatImages)
+int Configurer::configure(Mat_<Vec3b> img, ConfigureParameters configureParameters, bool isTest)
 {
 	// resize
 	Mat_<Vec3b> imgResizedColor;
@@ -20,17 +20,16 @@ int Configurer::configure(Mat_<Vec3b> img, bool isTest, bool showImages, bool co
 	cv::cvtColor(imgResizedColor, imgResizedGrayscale, cv::COLOR_BGR2GRAY);
 
 	// filter to reduce noise
-	Mat_<uchar> imgGauss = gaussianFilter(imgResizedGrayscale, 7);
+	Mat_<uchar> imgGauss = gaussianFilter(imgResizedGrayscale, configureParameters.gaussianFilterDimension);
 
 	// get binary image from filtered image
-	Mat_<uchar> imgBinary = grayscaleToBinary(imgGauss, binaryThreshold);
+	Mat_<uchar> imgBinary = grayscaleToBinary(imgGauss, configureParameters.binaryThreshold);
 
 	// fill "background noise"
 	Mat_<uchar> imgFilled = fillBFS(imgBinary);
 
 	// perform closing on binary image to remove unnecessarry details
-	uchar selPattern[DEFAULT_CLOSING_SIZE * DEFAULT_CLOSING_SIZE] = { 0 };
-	const cv::Mat_<uchar> sel = cv::Mat(DEFAULT_CLOSING_SIZE, DEFAULT_CLOSING_SIZE, CV_8UC1, selPattern);
+	const cv::Mat_<uchar> sel = Mat_<uchar>::zeros(configureParameters.closingFilterDimension, configureParameters.closingFilterDimension);
 	Mat_<uchar> imgClosed = closing(imgFilled, sel);
 
 	// perform canny edge detection on closed image
@@ -42,10 +41,10 @@ int Configurer::configure(Mat_<Vec3b> img, bool isTest, bool showImages, bool co
 		points,
 		imgResizedColor.rows,
 		imgResizedColor.cols,
-		DEFAULT_HOUGH_RO_STEP_SIZE,
-		DEFAULT_HOUGH_THETA_STEP_SIZE,
-		DEFAULT_HOUGH_WINDOW_SIZE,
-		DEFAULT_HOUGH_NUMBER_OF_LINES
+		configureParameters.houghRoStepSize,
+		configureParameters.houghThetaStepSize,
+		configureParameters.houghWindowSize,
+		configureParameters.houghNumberOfLines
 	);
 
 	// draw the resulting lines from Hough
@@ -74,6 +73,14 @@ int Configurer::configure(Mat_<Vec3b> img, bool isTest, bool showImages, bool co
 			if (!isInside(imgIntersections, intersection.y, intersection.x))
 			{
 				SPDLOG_TRACE("Lines [{},{}] and [{},{}] intersect outside of the image!",
+					lines[i].rho, lines[i].theta, lines[j].rho, lines[j].theta);
+				continue;
+			}
+
+			// sometimes "fake" points are found around the edge of the image (possible reason: padding?)
+			if (isImageEdgePixel(imgIntersections, intersection.y, intersection.x))
+			{
+				SPDLOG_TRACE("Lines [{},{}] and [{},{}] intersect on the edge of the image!",
 					lines[i].rho, lines[i].theta, lines[j].rho, lines[j].theta);
 				continue;
 			}
@@ -155,10 +162,10 @@ int Configurer::configure(Mat_<Vec3b> img, bool isTest, bool showImages, bool co
 	}
 
 	// visualize
-	if (showImages)
+	if (configureParameters.showImages)
 	{
 		imshowMutex->lock();
-		if (concatImages)
+		if (configureParameters.concatImages)
 		{
 			Mat_<uchar> grayscaleImages;
 			Mat_<Vec3b> colorImages;
@@ -204,11 +211,10 @@ int Configurer::configure(Mat_<Vec3b> img, bool isTest, bool showImages, bool co
 }
 
 
-int Configurer::cropAndLabel(Mat_<Vec3b> imgOriginal, QVector<QString> encodings, bool isTest, bool concatImages,
-	int borderTop, int borderRight, int borderBottom, int borderLeft)
+int Configurer::cropAndLabel(Mat_<Vec3b> imgOriginal, QVector<QString> encodings, CropAndLabelParameters cropAndLabelParameters, BorderParameters borderParameters, bool isTest)
 {
 	Mat_<Vec3b> imgWarped, imgNoBorder;
-	if (warpAndRemoveBorder(imgOriginal, imgWarped, imgNoBorder, borderTop, borderRight, borderBottom, borderLeft) != 0)
+	if (warpAndRemoveBorder(imgOriginal, imgWarped, imgNoBorder, borderParameters) != 0)
 	{
 		return 1;
 	}
@@ -233,7 +239,7 @@ int Configurer::cropAndLabel(Mat_<Vec3b> imgOriginal, QVector<QString> encodings
 			}
 
 			// extract based on camera's coord system (i,j), save with name based on main coord system (row,col)
-			Mat_<Vec3b> imgCell = extractCell(i, j, imgNoBorder, borderTop, borderRight, borderBottom, borderLeft);
+			Mat_<Vec3b> imgCell = extractCell(i, j, imgNoBorder, borderParameters);
 			if (isTest)
 			{
 				// corner images usually provide better overview
@@ -256,10 +262,10 @@ int Configurer::cropAndLabel(Mat_<Vec3b> imgOriginal, QVector<QString> encodings
 		}
 	}
 
-	if (isTest)
+	if (cropAndLabelParameters.showImages)
 	{
 		imshowMutex->lock();
-		if (concatImages)
+		if (cropAndLabelParameters.concatImages)
 		{
 			Mat_<Vec3b> wholeImages;
 			Mat_<Vec3b> filler = Mat_<Vec3b>::zeros(imgWarped.rows - imgNoBorder.rows, imgNoBorder.cols);  // padding for imgNoBorder height
@@ -298,10 +304,10 @@ int Configurer::cropAndLabel(Mat_<Vec3b> imgOriginal, QVector<QString> encodings
 }
 
 
-int Configurer::prepareCellImages(Mat_<Vec3b> imgOriginal, int borderTop, int borderRight, int borderBottom, int borderLeft)
+int Configurer::prepareCellImages(Mat_<Vec3b> imgOriginal, BorderParameters borderParameters)
 {
 	Mat_<Vec3b> imgWarped, imgNoBorder;
-	if (warpAndRemoveBorder(imgOriginal, imgWarped, imgNoBorder, borderTop, borderRight, borderBottom, borderLeft) != 0)
+	if (warpAndRemoveBorder(imgOriginal, imgWarped, imgNoBorder, borderParameters) != 0)
 	{
 		return 1;
 	}
@@ -325,7 +331,7 @@ int Configurer::prepareCellImages(Mat_<Vec3b> imgOriginal, int borderTop, int bo
 
 
 			// extract based on camera's coord system (i,j), save with name based on main coord system (row,col)
-			Mat_<Vec3b> imgCell = extractCell(i, j, imgNoBorder, borderTop, borderRight, borderBottom, borderLeft);
+			Mat_<Vec3b> imgCell = extractCell(i, j, imgNoBorder, borderParameters);
 			std::string path;
 			int ret = FileHandler::saveImage(imgCell, BOARD_FOLDER_PATH, path, false, FileHandler::boardImageName(row, col));
 			if (ret != 0)
@@ -340,10 +346,10 @@ int Configurer::prepareCellImages(Mat_<Vec3b> imgOriginal, int borderTop, int bo
 }
 
 
-Mat_<Vec3b> Configurer::extractCell(int i, int j, Mat_<Vec3b> img, int borderTop, int borderRight, int borderBottom, int borderLeft)
+Mat_<Vec3b> Configurer::extractCell(int i, int j, Mat_<Vec3b> img, BorderParameters borderParameters)
 {
-	int width = cellWidth(borderRight, borderLeft);
-	int height = cellHeight(borderTop, borderBottom);
+	int width = cellWidth(borderParameters.borderRight, borderParameters.borderLeft);
+	int height = cellHeight(borderParameters.borderTop, borderParameters.borderBottom);
 
 	return img(Rect{
 		width* j,			// x
@@ -368,8 +374,7 @@ void Configurer::rightToMain(int rr, int rc, int& mr, int& mc)
 }
 
 
-int Configurer::warpAndRemoveBorder(Mat_<Vec3b> imgOriginal, Mat_<Vec3b>& imgWarped, Mat_<Vec3b>& imgNoBorder,
-	int borderTop, int borderRight, int borderBottom, int borderLeft)
+int Configurer::warpAndRemoveBorder(Mat_<Vec3b> imgOriginal, Mat_<Vec3b>& imgWarped, Mat_<Vec3b>& imgNoBorder, BorderParameters borderParameters)
 {
 	if (!configured)
 	{
@@ -391,10 +396,10 @@ int Configurer::warpAndRemoveBorder(Mat_<Vec3b> imgOriginal, Mat_<Vec3b>& imgWar
 	warpPerspective(imgResizedColor, imgWarped, M, Size(500, 500));
 
 	imgNoBorder = imgWarped(Rect{
-		borderLeft,								// x
-		borderTop,									// y
-		IMAGE_WIDTH - borderLeft - borderRight,	// width
-		IMAGE_HEIGHT - borderTop - borderBottom	// height
+		borderParameters.borderLeft,												// x
+		borderParameters.borderTop,													// y
+		IMAGE_WIDTH - borderParameters.borderLeft - borderParameters.borderRight,	// width
+		IMAGE_HEIGHT - borderParameters.borderTop - borderParameters.borderBottom	// height
 		});
 
 	return 0;

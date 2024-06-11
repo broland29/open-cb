@@ -5,6 +5,8 @@ UserApplication::UserApplication(int argc, char* argv[])
 {
 	application = new QApplication(argc, argv);
 
+	qRegisterMetaType<Parameters>("Parameters");
+
 	mainWindow = new MainWindow();
 }
 
