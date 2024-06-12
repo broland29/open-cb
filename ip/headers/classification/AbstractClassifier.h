@@ -23,4 +23,7 @@ public:
 
 	// load classifier from disk
 	virtual int load() = 0;
+
+private:
+	bool debug;
 };

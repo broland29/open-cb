@@ -5,6 +5,7 @@ MainWindow::MainWindow(QWidget* parent) :
 {
     setWindowTitle("OpenCB");
     setFixedSize(800, 700);
+    this->setStyleSheet("background-color:" + Style::LIGHT);
 
     QWidget* centralWidget = new QWidget;
     QVBoxLayout* centralLayout = new QVBoxLayout();
@@ -13,12 +14,12 @@ MainWindow::MainWindow(QWidget* parent) :
     QWidget* bigWidget = new QWidget;
     QHBoxLayout* bigLayout = new QHBoxLayout(bigWidget);
     bigWidget->setFixedHeight(500);
-    bigWidget->setStyleSheet("background-color:blue");
+    bigWidget->setStyleSheet("background-color:" + Style::LIGHT);
 
     QWidget* bigLeftWidget = new QWidget;
     QVBoxLayout* middleLeftLayout = new QVBoxLayout(bigLeftWidget);
     bigLeftWidget->setFixedWidth(300);
-    bigLeftWidget->setStyleSheet("background-color:green");
+    bigLeftWidget->setStyleSheet("background-color:" + Style::LIGHTEST);
 
     cameraOneImageLabel = new QLabel();
     cameraOneImageLabel->setFixedHeight(200);
@@ -41,10 +42,10 @@ MainWindow::MainWindow(QWidget* parent) :
     QWidget* bigRightWidget = new QWidget;
     QVBoxLayout* bigRightLayout = new QVBoxLayout(bigRightWidget);
     bigRightWidget->setFixedWidth(450);
-    bigRightWidget->setStyleSheet("background-color:darkGreen");
+    bigRightWidget->setStyleSheet("background-color:" + Style::LIGHT);
 
     QWidget* chessGUIWidget = new QWidget;
-    chessGUIWidget->setStyleSheet("background-color:white");
+    chessGUIWidget->setStyleSheet("background-color:" + Style::DARKEST);
     QGridLayout* chessGUILayout = new QGridLayout(chessGUIWidget);
     chessGUIWidget->setFixedWidth(300);
     chessGUIWidget->setFixedHeight(300);
@@ -94,20 +95,32 @@ MainWindow::MainWindow(QWidget* parent) :
 
     QWidget* VARWidget = new QWidget;
     QGridLayout* VARLayout = new QGridLayout(VARWidget);
-    VARWidget->setFixedHeight(60);
-    VARWidget->setStyleSheet("background-color:magenta");
+    VARWidget->setFixedHeight(80);
+    VARWidget->setStyleSheet("background-color:" + Style::LIGHT);
     validateMoveButton = new QPushButton("Validate Move");
     discardMoveButton = new QPushButton("Discard Move");
+    openLogsButton = new QPushButton("Open Logs");
     newGameButton = new QPushButton("New Game");
+    surrenderButton = new QPushButton("Surrender");
+    drawButton = new QPushButton("Offer Draw");
+    validateMoveButton->setStyleSheet("background-color:" + Style::DARK);
+    discardMoveButton->setStyleSheet("background-color:" + Style::DARK);
+    openLogsButton->setStyleSheet("background-color:" + Style::DARK);
+    newGameButton->setStyleSheet("background-color:" + Style::DARK);
+    surrenderButton->setStyleSheet("background-color:" + Style::DARK);
+    drawButton->setStyleSheet("background-color:" + Style::DARK);
     VARLayout->addWidget(validateMoveButton, 0, 0);
     VARLayout->addWidget(discardMoveButton, 0, 1);
-    VARLayout->addWidget(newGameButton, 0, 2);
+    VARLayout->addWidget(openLogsButton, 0, 2);
+    VARLayout->addWidget(newGameButton, 1, 0);
+    VARLayout->addWidget(surrenderButton, 1, 1);
+    VARLayout->addWidget(drawButton, 1, 2);
     bigRightLayout->addWidget(VARWidget);
 
     QWidget* classificationWidget = new QWidget;
     QGridLayout* classificationLayout = new QGridLayout(classificationWidget);
     classificationWidget->setFixedHeight(80);
-    classificationWidget->setStyleSheet("background-color:yellow");
+    classificationWidget->setStyleSheet("background-color:" + Style::LIGHT);
     classifierComboBox = new QComboBox();
     classifierComboBox->addItem("KNN");
     classifierComboBox->addItem("SVM");
@@ -117,6 +130,12 @@ MainWindow::MainWindow(QWidget* parent) :
     trainClassifierButton = new QPushButton("Train");
     testClassifierButton = new QPushButton("Test");
     classifyBoardButton = new QPushButton("Classify Board");
+    classifierComboBox->setStyleSheet("background-color:" + Style::DARK);
+    saveClassifierButton->setStyleSheet("background-color:" + Style::DARK);
+    loadClassifierButton->setStyleSheet("background-color:" + Style::DARK);
+    trainClassifierButton->setStyleSheet("background-color:" + Style::DARK);
+    testClassifierButton->setStyleSheet("background-color:" + Style::DARK);
+    classifyBoardButton->setStyleSheet("background-color:" + Style::DARK);
     classificationLayout->addWidget(classifierComboBox, 0, 0);
     classificationLayout->addWidget(saveClassifierButton, 0, 1);
     classificationLayout->addWidget(loadClassifierButton, 0, 2);
@@ -133,8 +152,8 @@ MainWindow::MainWindow(QWidget* parent) :
     QWidget* messageWidget = new QWidget;
     QHBoxLayout* messageLayout = new QHBoxLayout(messageWidget);
     messageWidget->setFixedHeight(50);
-    messageWidget->setStyleSheet("background-color:cyan");
-    messageLabel = new QLabel("message");
+    messageWidget->setStyleSheet("background-color:" + Style::LIGHTEST);
+    messageLabel = new QLabel("Welcome to OpenCB!");
     messageLayout->addWidget(messageLabel);
 
     centralLayout->addWidget(messageWidget);
@@ -143,7 +162,7 @@ MainWindow::MainWindow(QWidget* parent) :
     QWidget* bottomWidget = new QWidget;
     QGridLayout* bottomLayout = new QGridLayout(bottomWidget);
     bottomWidget->setFixedHeight(80);
-    bottomWidget->setStyleSheet("background-color:gray");
+    //bottomWidget->setStyleSheet("background-color:" + Style::LIGHTEST);
     testConfigureButton = new QPushButton("Test Configure");
     configureButton = new QPushButton("Configure");
     testCropAndLabelButton = new QPushButton("Test Crop and Label");
@@ -152,6 +171,14 @@ MainWindow::MainWindow(QWidget* parent) :
     clearAllImagesButton = new QPushButton("Clear All Images");
     settingsButton = new QPushButton("Settings");
     helpButton = new QPushButton("Help");
+    testConfigureButton->setStyleSheet("background-color:" + Style::DARK);
+    configureButton->setStyleSheet("background-color:" + Style::DARK);
+    testCropAndLabelButton->setStyleSheet("background-color:" + Style::DARK);
+    cropAndLabelButton->setStyleSheet("background-color:" + Style::DARK);
+    shuffleAndSplitButton->setStyleSheet("background-color:" + Style::DARK);
+    clearAllImagesButton->setStyleSheet("background-color:" + Style::DARK);
+    settingsButton->setStyleSheet("background-color:" + Style::DARK);
+    helpButton->setStyleSheet("background-color:" + Style::DARK);
     bottomLayout->addWidget(testConfigureButton, 0, 0);
     bottomLayout->addWidget(configureButton, 1, 0);
     bottomLayout->addWidget(testCropAndLabelButton, 0, 1);

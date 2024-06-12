@@ -1,7 +1,8 @@
 #include "../../headers/classification/ConvolutionalNeuralNetwork.h"
 
-ConvolutionalNeuralNetwork::ConvolutionalNeuralNetwork()
+ConvolutionalNeuralNetwork::ConvolutionalNeuralNetwork(ConvolutionalNeuralNetworkParameters convolutionalNeuralNetworkParameters)
 {
+	epochs = convolutionalNeuralNetworkParameters.epochs;
 }
 
 

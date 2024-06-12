@@ -13,14 +13,29 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
 	cameraHandlerParameters
 )
 
-/*
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
+	KNearestNeighborsParameters,
+	k,
+	numberOfBins,
+	uniteFrees
+)
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
+	SupportVectorMachineParameters,
+	uniteFrees
+)
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
+	ConvolutionalNeuralNetworkParameters,
+	epochs
+)
+
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
 	ClassificationParameters,
 	kNearestNeighborsParameters,
 	supportVectorMachineParameters,
 	convolutionalNeuralNetworkParameters
 )
-*/
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
 	ConfigureParameters,
@@ -57,11 +72,23 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
 )
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
+	FileHandlerParameters,
+	trainSplit,
+	validationSplit,
+	testSplit
+)
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
+	FileHandlingParameters,
+	fileHandlerParameters
+)
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
 	Parameters,
 	cameraHandlingParameters,
-	//classificationParameters,
-	configurationParameters//,
-	//fileHandlingParameters
+	classificationParameters,
+	configurationParameters,
+	fileHandlingParameters
 )
 
 int ParametersHandler::loadFromJSON(Parameters& parameters)

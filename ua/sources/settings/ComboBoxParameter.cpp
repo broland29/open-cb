@@ -10,6 +10,8 @@ ComboBoxParameter::ComboBoxParameter(QString labelText, std::vector<QString> opt
 	{
 		comboBox->addItem(option);
 	}
+	comboBox->setMaximumWidth(150);
+	comboBox->setStyleSheet("background-color:" + Style::DARK);
 }
 
 

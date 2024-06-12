@@ -13,7 +13,7 @@ ImageProcessing::ImageProcessing()
 	setupCameraHandlerLeft();
 	setupCameraHandlerRight();
 
-	classifier = new Classifier();
+	classifier = new Classifier(parameters.classificationParameters);
 	configurerLeft = new Configurer(CameraSide::LEFT, imshowMutex);
 	configurerRight = new Configurer(CameraSide::RIGHT, imshowMutex);
 }
@@ -302,6 +302,9 @@ void ImageProcessing::setParametersSlot(Parameters newParameters)
 		SPDLOG_TRACE("Switching right camera index from {} to {}", oldRightCameraIndex, newRightCameraIndex);
 		setupCameraHandlerRight();
 	}
+
+	// refresh classifiers
+	classifier->updateParameters(parameters.classificationParameters);
 
 	emit setParametersReplySignal(true, "Modifications saved");
 }

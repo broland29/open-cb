@@ -5,13 +5,15 @@
 #include "KNearestNeighbors.h"
 #include "SupportVectorMachine.h"
 
+#include "../Parameters.h"
+
 #include <array>
 
 
 class Classifier
 {
 public:
-	Classifier();
+	Classifier(ClassificationParameters classificationParameters);
 
 private:
 	ConvolutionalNeuralNetwork* CNN;
@@ -28,5 +30,6 @@ public:
 	int testClassifier();
 	int classifyBoard(QVector<QString>& encodings);
 
+	void updateParameters(ClassificationParameters classificationParameters);
 private:
 };

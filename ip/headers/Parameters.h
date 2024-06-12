@@ -21,17 +21,19 @@ struct CameraHandlingParameters
 
 struct KNearestNeighborsParameters
 {
-
+	int k = 5;
+	int numberOfBins = 8;
+	bool uniteFrees = true;
 };
 
 struct SupportVectorMachineParameters
 {
-
+	bool uniteFrees = false;
 };
 
 struct ConvolutionalNeuralNetworkParameters
 {
-
+	int epochs = 20;
 };
 
 struct ClassificationParameters
@@ -82,18 +84,14 @@ struct ConfigurationParameters
 
 struct FileHandlerParameters
 {
-
-};
-
-struct ParametersHandlerParameters
-{
-
+	double trainSplit = 0.6;
+	double validationSplit = 0.2;
+	double testSplit = 0.2;
 };
 
 struct FileHandlingParameters
 {
 	FileHandlerParameters fileHandlerParameters;
-	ParametersHandlerParameters parametersHandlerParameters;
 };
 
 

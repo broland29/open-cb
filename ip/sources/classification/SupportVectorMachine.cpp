@@ -1,9 +1,9 @@
 #include "../../headers/classification/SupportVectorMachine.h"
 
 
-SupportVectorMachine::SupportVectorMachine()
+SupportVectorMachine::SupportVectorMachine(SupportVectorMachineParameters supportVectorMachineParameters)
 {
-	// todo
+	uniteFrees = supportVectorMachineParameters.uniteFrees;
 	trained = false;
 }
 
@@ -88,7 +88,7 @@ void SupportVectorMachine::getFeaturesAndLabels(std::vector<std::pair<Mat_<Vec3b
 	for (auto const& pair : images)
 	{
 		Mat_<Vec3b> image = pair.first;
-		int label = externalToInternal(pair.second);
+		int label = externalToInternal(pair.second);  // possible unification of frees done here
 
 		Mat_<float> feature = getFeatureFromImage(image);
 		_X.push_back(feature);
@@ -135,7 +135,7 @@ int SupportVectorMachine::train()
 
 	getFeaturesAndLabels(trainImages, X, y);
 
-	if (SVM_DEBUG)
+	if (debug)
 	{
 		SPDLOG_TRACE("Built {} features", X.rows);
 		logExampleFeatures();
@@ -201,7 +201,7 @@ int SupportVectorMachine::test()
 		}
 	}
 
-	KNearestNeighbors::calculateAndLogMetrics(confusionMatrix, testSize);
+	calculateAndLogMetrics(confusionMatrix, testSize);
 	
 	return 0;
 }
@@ -263,49 +263,6 @@ int SupportVectorMachine::load()
 	return 0;
 }
 
-
-int SupportVectorMachine::externalToInternal(QString encoding)
-{
-	if (encoding == "WF") { return 0; };
-	if (encoding == "WP") { return 1; };
-	if (encoding == "WB") { return 2; };
-	if (encoding == "WN") { return 3; };
-	if (encoding == "WR") { return 4; };
-	if (encoding == "WQ") { return 5; };
-	if (encoding == "WK") { return 6; };
-	if (encoding == "BF") { return 7; };
-	if (encoding == "BP") { return 8; };
-	if (encoding == "BB") { return 9; };
-	if (encoding == "BN") { return 10; };
-	if (encoding == "BR") { return 11; };
-	if (encoding == "BQ") { return 12; };
-	if (encoding == "BK") { return 13; };
-
-	SPDLOG_ERROR("Could not convert {}", encoding.toStdString());
-	return 0;
-}
-
-
-QString SupportVectorMachine::internalToExternal(int encoding)
-{
-	if (encoding == 0) { return "WF"; };
-	if (encoding == 1) { return "WP"; };
-	if (encoding == 2) { return "WB"; };
-	if (encoding == 3) { return "WN"; };
-	if (encoding == 4) { return "WR"; };
-	if (encoding == 5) { return "WQ"; };
-	if (encoding == 6) { return "WK"; };
-	if (encoding == 7) { return "BF"; };
-	if (encoding == 8) { return "BP"; };
-	if (encoding == 9) { return "BB"; };
-	if (encoding == 10) { return "BN"; };
-	if (encoding == 11) { return "BR"; };
-	if (encoding == 12) { return "BQ"; };
-	if (encoding == 13) { return "BK"; };
-
-	SPDLOG_ERROR("Could not convert {}", encoding);
-	return "WF";
-}
 
 
 void SupportVectorMachine::logExampleFeatures()

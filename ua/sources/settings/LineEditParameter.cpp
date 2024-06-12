@@ -6,6 +6,8 @@ LineEditParameter::LineEditParameter(QString labelText)
 	this->labelText = labelText;
 
 	lineEdit = new QLineEdit();
+	lineEdit->setMaximumWidth(150);
+	lineEdit->setStyleSheet("background-color:" + Style::LIGHTEST);
 }
 
 

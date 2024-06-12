@@ -6,6 +6,7 @@
 #include <QMouseEvent>
 #include <QPixmap>
 #include <QString>
+#include "Style.h"
 
 // https://wiki.qt.io/Clickable_QLabel
 class ClickableLabel : public QLabel

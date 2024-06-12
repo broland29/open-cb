@@ -13,6 +13,7 @@
 #include "LineEditParameter.h"
 #include <iterator>
 #include "../ip/headers/Parameters.h"
+#include "../Style.h"
 
 #include <spdlog/spdlog.h>
 
@@ -30,12 +31,17 @@ public:
 
 private:
 	std::map<QString, AbstractParameter*> cameraHandlerParametersWidgets;
+	std::map<QString, AbstractParameter*> KNNParametersWidgets;
+	std::map<QString, AbstractParameter*> SVMParametersWidgets;
+	std::map<QString, AbstractParameter*> CNNParametersWidgets;
 	std::map<QString, AbstractParameter*> configureParametersWidgets;
 	std::map<QString, AbstractParameter*> borderParametersWidgets;
 	std::map<QString, AbstractParameter*> cropAndLabelParametersWidgets;
+	std::map<QString, AbstractParameter*> fileHandlerParametersWidgets;
 
 	QLabel* messageLabel;
 
+	QPushButton* restoreDefaultsButton;
 	QPushButton* saveButton;
 	QPushButton* refreshButton;
 	QPushButton* cancelButton;

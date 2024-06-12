@@ -49,10 +49,10 @@ void ClickableLabel::modifyStyleSheet(QString string)
 {
     if ((row + col) % 2 == 0)
     {
-        setStyleSheet("background-color:mistyrose; " + string);
+        setStyleSheet("background-color:" + Style::LIGHTEST + "; " + string);
     }
     else
     {
-        setStyleSheet("background-color:brown; " + string);
+        setStyleSheet("background-color:" + Style::DARKEST + "; " + string);
     }
 }

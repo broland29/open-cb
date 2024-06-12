@@ -18,6 +18,7 @@
 #include <spdlog/fmt/ostr.h>
 
 #include "../Common.h"
+#include "Style.h"
 
 #if FMT_VERSION >= 90000
 // https://github.com/fmtlib/fmt/issues/2245
@@ -44,7 +45,10 @@ private:
     
     QPushButton* validateMoveButton;
     QPushButton* discardMoveButton;
+    QPushButton* openLogsButton;
     QPushButton* newGameButton;
+    QPushButton* surrenderButton;
+    QPushButton* drawButton;
 
     QComboBox* classifierComboBox;
     QPushButton* saveClassifierButton;

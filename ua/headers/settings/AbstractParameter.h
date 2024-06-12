@@ -2,6 +2,7 @@
 #include <string>
 #include <QWidget>
 #include <QString>
+#include "../Style.h"
 #include <spdlog/spdlog.h>
 
 

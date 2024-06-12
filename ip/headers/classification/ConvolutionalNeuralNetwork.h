@@ -3,6 +3,7 @@
 #include "AbstractClassifier.h"
 #include "../CommonIP.h"
 #include <fstream>
+#include "../Parameters.h"
 
 #define TRAIN_SCRIPT_PATH "C:\\open-cb\\ip\\sources\\classification\\cnn_train.py"
 #define TEST_SCRIPT_PATH "C:\\open-cb\\ip\\sources\\classification\\cnn_test.py"
@@ -11,11 +12,12 @@
 class ConvolutionalNeuralNetwork : public AbstractClassifier
 {
 public:
+	int epochs;
 
 private:
 
 public:
-	ConvolutionalNeuralNetwork();
+	ConvolutionalNeuralNetwork(ConvolutionalNeuralNetworkParameters convolutionalNeuralNetworkParameters);
 
 	int train() override;
 
