@@ -35,11 +35,17 @@ int main(int argc, char* argv[])
 
 	QObject::connect(mainWindow, &MainWindow::validateMoveSignal, validationAndResponse, &ValidationAndResponse::validateMoveSlot);
 	QObject::connect(mainWindow, &MainWindow::discardMoveSignal, validationAndResponse, &ValidationAndResponse::discardMoveSlot);
+	QObject::connect(mainWindow, &MainWindow::openLogsSignal, validationAndResponse, &ValidationAndResponse::openLogsSlot);
 	QObject::connect(mainWindow, &MainWindow::newGameSignal, validationAndResponse, &ValidationAndResponse::newGameSlot);
+	QObject::connect(mainWindow, &MainWindow::surrenderSignal, validationAndResponse, &ValidationAndResponse::surrenderSlot);
+	QObject::connect(mainWindow, &MainWindow::offerDrawSignal, validationAndResponse, &ValidationAndResponse::offerDrawSlot);
 
 	QObject::connect(validationAndResponse, &ValidationAndResponse::validateMoveReplySignal, mainWindow, &MainWindow::validateMoveReplySlot);
 	QObject::connect(validationAndResponse, &ValidationAndResponse::discardMoveReplySignal, mainWindow, &MainWindow::discardMoveReplySlot);
+	QObject::connect(validationAndResponse, &ValidationAndResponse::openLogsReplySignal, mainWindow, &MainWindow::openLogsReplySlot);
 	QObject::connect(validationAndResponse, &ValidationAndResponse::newGameReplySignal, mainWindow, &MainWindow::newGameReplySlot);
+	QObject::connect(validationAndResponse, &ValidationAndResponse::surrenderReplySignal, mainWindow, &MainWindow::surrenderReplySlot);
+	QObject::connect(validationAndResponse, &ValidationAndResponse::offerDrawReplySignal, mainWindow, &MainWindow::offerDrawReplySlot);
 
 	QObject::connect(mainWindow, &MainWindow::changeClassifierSignal, imageProcessing, &ImageProcessing::changeClassifierSlot);
 	QObject::connect(mainWindow, &MainWindow::saveClassifierSignal, imageProcessing, &ImageProcessing::saveClassifierSlot);

@@ -102,7 +102,7 @@ MainWindow::MainWindow(QWidget* parent) :
     openLogsButton = new QPushButton("Open Logs");
     newGameButton = new QPushButton("New Game");
     surrenderButton = new QPushButton("Surrender");
-    drawButton = new QPushButton("Offer Draw");
+    drawButton = new QPushButton("Draw");
     validateMoveButton->setStyleSheet("background-color:" + Style::DARK);
     discardMoveButton->setStyleSheet("background-color:" + Style::DARK);
     openLogsButton->setStyleSheet("background-color:" + Style::DARK);
@@ -195,7 +195,10 @@ MainWindow::MainWindow(QWidget* parent) :
 
     QObject::connect(validateMoveButton, &QPushButton::clicked, this, &MainWindow::validateMoveButtonClicked);
     QObject::connect(discardMoveButton, &QPushButton::clicked, this, &MainWindow::discardMoveButtonClicked);
+    QObject::connect(openLogsButton, &QPushButton::clicked, this, &MainWindow::openLogsButtonClicked);
     QObject::connect(newGameButton, &QPushButton::clicked, this, &MainWindow::newGameButtonClicked);
+    QObject::connect(surrenderButton, &QPushButton::clicked, this, &MainWindow::surrenderButtonClicked);
+    QObject::connect(drawButton, &QPushButton::clicked, this, &MainWindow::offerDrawButtonClicked);
 
     QObject::connect(classifierComboBox, &QComboBox::currentTextChanged, this, &MainWindow::classifierComboBoxChanged);
     QObject::connect(saveClassifierButton, &QPushButton::clicked, this, &MainWindow::saveClassifierButtonClicked);
@@ -288,11 +291,30 @@ void MainWindow::discardMoveButtonClicked()
     emit discardMoveSignal();
 }
 
+void MainWindow::openLogsButtonClicked()
+{
+    SPDLOG_TRACE("Emitting discardMoveSignal");
+    emit openLogsSignal();
+}
+
 void MainWindow::newGameButtonClicked()
 {
     SPDLOG_TRACE("Emitting newGameSignal");
     emit newGameSignal();
 }
+
+void MainWindow::surrenderButtonClicked()
+{
+    SPDLOG_TRACE("Emitting surrenderSignal");
+    emit surrenderSignal();
+}
+
+void MainWindow::offerDrawButtonClicked()
+{
+    SPDLOG_TRACE("Emitting offerDrawSignal");
+    emit offerDrawSignal();
+}
+
 
 
 void MainWindow::classifierComboBoxChanged()
@@ -333,6 +355,7 @@ void MainWindow::classifyBoardButtonClicked()
 }
 
 
+
 void MainWindow::testConfigureButtonClicked()
 {
     SPDLOG_TRACE("Emitting testConfigureSignal");
@@ -370,6 +393,7 @@ void MainWindow::clearAllImagesButtonClicked()
     SPDLOG_TRACE("Emitting clearAllImagesSignal");
     emit clearAllImagesSignal();
 }
+
 
 
 void MainWindow::settingsButtonClicked()
@@ -420,6 +444,15 @@ void MainWindow::discardMoveReplySlot(bool succeeded, QString message, QVector<Q
     }
 }
 
+void MainWindow::openLogsReplySlot(bool succeeded, QString message)
+{
+    if (!succeeded)
+    {
+        messageLabel->setText(message);
+    }
+    // in success case, no need to show a message
+}
+
 void MainWindow::newGameReplySlot(bool succeeded, QString message)
 {
     messageLabel->setText(message);
@@ -428,6 +461,17 @@ void MainWindow::newGameReplySlot(bool succeeded, QString message)
         setInitialSetup();
     }
 }
+
+void MainWindow::surrenderReplySlot(bool succeeded, QString message)
+{
+    messageLabel->setText(message);
+}
+
+void MainWindow::offerDrawReplySlot(bool succeeded, QString message)
+{
+    messageLabel->setText(message);
+}
+
 
 
 void MainWindow::changeClassifierReplySlot(bool succeeded, QString message)
@@ -470,6 +514,7 @@ void MainWindow::classifyBoardReplySlot(bool succeeded, QString message, QVector
 
     messageLabel->setText(message);
 }
+
 
 
 void MainWindow::testConfigureReplySlot(bool succeeded, QString message)

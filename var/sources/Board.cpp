@@ -1,20 +1,6 @@
 #include "../headers/Board.h"
 
 
-std::ostream& operator<<(std::ostream& os, const Color& color)
-{
-    if (color == Color::WHITE)
-    {
-        os << "WHITE";
-    }
-    else if (color == Color::BLACK)
-    {
-        os << "BLACK";
-    }
-    return os;
-}
-
-
 std::ostream& operator<<(std::ostream& os, const Castle& castle)
 {
     os << std::endl;

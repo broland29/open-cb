@@ -12,6 +12,8 @@ class Validator
     // shall not contain pointer fields since shallow copy used in validateBoard
 public:
     Validator();
+    int getMoveCount();
+    Color getLastMoveColor();
     void validateBoard(char board[8][8], bool& isValid, std::string& encoding, std::string& description);
     friend std::ostream& operator<<(std::ostream& os, const Validator& validator);
 

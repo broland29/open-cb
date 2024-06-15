@@ -6,16 +6,10 @@
 #include <spdlog/fmt/ostr.h>
 
 #include "Notation.h"
+#include "Color.h"
 
 
-enum class Color
-{
-    WHITE,
-    BLACK
-};
-#if FMT_VERSION >= 90000
-template <> struct fmt::formatter<Color> : ostream_formatter {};
-#endif
+
 
 
 // Everything related to castling
@@ -39,7 +33,7 @@ template <> struct fmt::formatter<Castle> : ostream_formatter {};
 struct Metadata
 {
     Color turn = Color::WHITE;
-    int moveCount = 1;
+    int moveCount = 0;  // incremented at each white turn
     int enPassantCol = -1;          // -1 if en passant not possible, 0-7 if en passant possible on given column
     Castle castle;
 

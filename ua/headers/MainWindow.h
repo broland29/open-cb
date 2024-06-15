@@ -84,7 +84,10 @@ public slots:
     // slots for raw qt signals
     void validateMoveButtonClicked();
     void discardMoveButtonClicked();
+    void openLogsButtonClicked();
     void newGameButtonClicked();
+    void surrenderButtonClicked();
+    void offerDrawButtonClicked();
 
     void classifierComboBoxChanged();
     void saveClassifierButtonClicked();
@@ -105,7 +108,10 @@ public slots:
     // reply slots for signals
     void validateMoveReplySlot(bool isValid, QString encoding, QString description);
     void discardMoveReplySlot(bool succeeded, QString message, QVector<QString> encodings);
+    void openLogsReplySlot(bool succeeded, QString message);
     void newGameReplySlot(bool succeeded, QString message);
+    void surrenderReplySlot(bool succeeded, QString message);
+    void offerDrawReplySlot(bool succeeded, QString message);
 
     void changeClassifierReplySlot(bool succeeded, QString message);
     void saveClassifierReplySlot(bool succeeded, QString message);
@@ -139,7 +145,10 @@ public slots:
 signals:
     void validateMoveSignal(QVector<QString> encodings);
     void discardMoveSignal();
+    void openLogsSignal();
     void newGameSignal();
+    void surrenderSignal();
+    void offerDrawSignal();
 
     void changeClassifierSignal(QString classifier);
     void saveClassifierSignal();

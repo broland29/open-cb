@@ -11,6 +11,18 @@ Validator::Validator()
 }
 
 
+int Validator::getMoveCount()
+{
+    return metadata.moveCount;
+}
+
+
+Color Validator::getLastMoveColor()
+{
+    return metadata.turn;
+}
+
+
 void Validator::validateBoard(char board[8][8], bool& isValid, std::string& encoding, std::string& description)
 {
     // every board should contain one white and one black king
@@ -40,6 +52,11 @@ void Validator::validateBoard(char board[8][8], bool& isValid, std::string& enco
     // https://stackoverflow.com/questions/5700204/does-the-implicit-copy-constructor-copy-array-data-members
     Validator oldValidator = *this;
 
+    if (metadata.turn == Color::WHITE)
+    {
+        metadata.moveCount++;
+    }
+
     // update boards
     copyBoard(prevBoard, currBoard);
     copyBoard(currBoard, board);
@@ -55,10 +72,6 @@ void Validator::validateBoard(char board[8][8], bool& isValid, std::string& enco
         return;
     }
 
-    if (metadata.turn == Color::BLACK)
-    {
-        metadata.moveCount++;
-    }
     metadata.changeTurn();
 
     // if no new pawn move, reset el passant; otherwise let it stay "updated"

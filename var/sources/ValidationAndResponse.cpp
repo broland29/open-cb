@@ -3,12 +3,27 @@
 
 ValidationAndResponse::ValidationAndResponse()
 {
-	validator = new Validator();
+	moveLogger = new MoveLogger();
+	newGame();
 }
 
 
+void ValidationAndResponse::newGame()
+{
+	validator = new Validator();
+	drawWasOffered = false;
+	isGameRunning = true;
+	moveLogger->newGame();
+}
+
 void ValidationAndResponse::validateMoveSlot(QVector<QString> encodings)
 {
+	if (!isGameRunning)
+	{
+		emit newGameReplySignal(false, "Game is over. Start a new game.");
+		return;
+	}
+
 	char board[8][8];
 	for (int i = 0; i < 8; i++)
 	{
@@ -40,6 +55,15 @@ void ValidationAndResponse::validateMoveSlot(QVector<QString> encodings)
 	bool isValid;
 	std::string encoding, description;
 	validator->validateBoard(board, isValid, encoding, description);
+
+	if (isValid)
+	{
+		// could check for addMove success, but not considered essential
+		moveLogger->addMove(validator->getMoveCount(), encoding);
+
+		// any correct move is a denial of a possible draw offer
+		drawWasOffered = false;
+	}
 
 	emit validateMoveReplySignal(isValid, QString::fromStdString(encoding), QString::fromStdString(description));
 }
@@ -73,10 +97,64 @@ void ValidationAndResponse::discardMoveSlot()
 }
 
 
+void ValidationAndResponse::openLogsSlot()
+{
+	if (moveLogger->openLog() != 0)
+	{
+		emit openLogsReplySignal(false, "Failed to open log.");
+		return;
+	}
+	emit openLogsReplySignal(true, "Log opened successfully.");
+}
+
+
 void ValidationAndResponse::newGameSlot()
 {
-	validator = new Validator();
+	if (isGameRunning)
+	{
+		emit newGameReplySignal(false, "Cannot start new game since current game is running.");
+		return;
+	}
+
+	newGame();
 	emit newGameReplySignal(true, "New game started");
+}
+
+
+void ValidationAndResponse::surrenderSlot()
+{
+	if (!isGameRunning)
+	{
+		emit newGameReplySignal(false, "Game is over. Start a new game.");
+		return;
+	}
+
+	std::string message;
+	isGameRunning = false;
+	moveLogger->endGame(EndGameReason::SURRENDER, validator->getLastMoveColor(), message);
+	emit surrenderReplySignal(true, QString::fromStdString(message));
+}
+
+
+void ValidationAndResponse::offerDrawSlot()
+{
+	if (!isGameRunning)
+	{
+		emit newGameReplySignal(false, "Game is over. Start a new game.");
+		return;
+	}
+
+	if (!drawWasOffered)
+	{
+		drawWasOffered = true;
+		emit offerDrawReplySignal(true, "Draw was offered. Press the Draw button to accept, ignore to \"reject\".");
+		return;
+	}
+
+	std::string message;
+	isGameRunning = false;
+	moveLogger->endGame(EndGameReason::INITIATED_DRAW, validator->getLastMoveColor(), message);
+	emit offerDrawReplySignal(true, QString::fromStdString(message));
 }
 
 
