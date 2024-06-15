@@ -45,20 +45,42 @@ dataset_val = load_images(directory_val, seed, image_size, batch_size, error_exi
 if debug:
     plot_samples(dataset_trn, "Samples from training data set")
     plot_samples(dataset_val, "Samples from validation data set")
+    print("Class names:", dataset_trn.class_names)
+
+
+# https://www.tensorflow.org/tutorials/images/data_augmentation
+# https://machinelearningmastery.com/image-augmentation-with-keras-preprocessing-layers-and-tf-image/
+augmentation_layers = tf.keras.Sequential([
+    tf.keras.layers.RandomFlip("horizontal"),
+    tf.keras.layers.RandomRotation(0.02),
+    tf.keras.layers.RandomContrast(0.5),
+    tf.keras.layers.RandomBrightness(0.3),
+])
+
+if debug:    
+    fig, ax = plt.subplots(5, 15, figsize=(10,6))
+    for images, labels in dataset_trn.take(1):
+        for i in range(15):
+            ax[0][i].imshow(images[i].numpy().astype("uint8"))
+            ax[0][i].axis("off")    
+            for j in range(4):
+                ax[j+1][i].imshow(augmentation_layers.layers[j](images[i]).numpy().astype("uint8"))
+                ax[j+1][i].axis("off")
+    fig.canvas.manager.set_window_title("Augmentation. From top to bottom: original, random flip, rotation, contrast, brightness")
+    fig.tight_layout(pad=0.5)
     plt.show()
-
-print("Class names:", dataset_trn.class_names)
-
 
 # some sparkle
 AUTOTUNE = tf.data.AUTOTUNE
 dataset_trn = dataset_trn.cache().prefetch(buffer_size=AUTOTUNE)
 dataset_val = dataset_val.cache().prefetch(buffer_size=AUTOTUNE)
 
+dataset_trn = dataset_trn.map(lambda x, y: (augmentation_layers(x), y), num_parallel_calls=AUTOTUNE)
 
 # create, compile and fit model
 model = tf.keras.Sequential([
     tf.keras.layers.Rescaling(1./255),
+    #augmentation_layers,
     tf.keras.layers.Conv2D(32, 3, activation='relu'),
     tf.keras.layers.MaxPooling2D(),
     tf.keras.layers.Conv2D(32, 3, activation='relu'),

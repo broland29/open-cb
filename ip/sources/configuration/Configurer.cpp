@@ -98,6 +98,12 @@ int Configurer::configure(Mat_<Vec3b> img, ConfigureParameters configureParamete
 		SPDLOG_TRACE("[{},{}]", intersection.x, intersection.y);
 	}
 
+	if (intersections.size() == 0)
+	{
+		SPDLOG_ERROR("No intersections found!");
+		return 1;
+	}
+
 	// get corners from intersections
 	Point2i cornerChessboardTL = intersections[0];
 	Point2i cornerChessboardTR = intersections[0];
