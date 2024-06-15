@@ -34,6 +34,7 @@ struct SupportVectorMachineParameters
 struct ConvolutionalNeuralNetworkParameters
 {
 	int epochs = 20;
+	bool applyAugmentation = true;
 };
 
 struct ClassificationParameters

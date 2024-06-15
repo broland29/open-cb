@@ -79,6 +79,10 @@ void Classifier::updateParameters(ClassificationParameters classificationParamet
 		SVM = new SupportVectorMachine(classificationParameters.supportVectorMachineParameters);
 	}
 
-	// changes in CNN parameters (currently) don't mean that CNN needs to be discarded
-	CNN->epochs = classificationParameters.convolutionalNeuralNetworkParameters.epochs;
+	// changes in CNN parameters mean old CNN can be discarded
+	if (classificationParameters.convolutionalNeuralNetworkParameters.applyAugmentation != CNN->applyAugmentation ||
+		classificationParameters.convolutionalNeuralNetworkParameters.epochs != CNN->epochs)
+	{
+		CNN = new ConvolutionalNeuralNetwork(classificationParameters.convolutionalNeuralNetworkParameters);
+	}
 }

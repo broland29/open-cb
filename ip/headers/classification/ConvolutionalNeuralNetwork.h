@@ -13,6 +13,7 @@ class ConvolutionalNeuralNetwork : public AbstractClassifier
 {
 public:
 	int epochs;
+	bool applyAugmentation;
 
 private:
 

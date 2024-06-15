@@ -13,6 +13,7 @@
 #include "settings/SettingsDialog.h"
 #include <QVector>
 #include <QString>
+#include <QDesktopServices>
 
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>

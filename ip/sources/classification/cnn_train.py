@@ -19,16 +19,20 @@ if debug:
     for arg in argv:
         print("   ", arg)
 
-if len(argv) != 4:
+if len(argv) != 6:
     print("Incorrect usage. Arguments should be as follows:")
-    print("   argv[1]   -   directory_trn    -   directory of labeled train folder")
-    print("   argv[2]   -   directory_val    -   directory of labeled validation folder")
-    print("   argv[3]   -   directory_model  -   where to save model")
+    print("   argv[1]   -   directory_trn       -   directory of labeled train folder")
+    print("   argv[2]   -   directory_val       -   directory of labeled validation folder")
+    print("   argv[3]   -   directory_model     -   where to save model")
+    print("   argv[4]   -   epochs              -   number of epochs to run training for") 
+    print("   argv[5]   -   apply_augmentation  -   \"true\" to apply data augmentation, \"false\" to not")
     sys.exit(2)
 
 directory_trn = pathlib.Path(argv[1])
 directory_val = pathlib.Path(argv[2])
 directory_model = pathlib.Path(argv[3])
+epochs = int(argv[4])
+apply_augmentation = True if argv[5] == "true" else False
 
 if debug:
     print("directory_trn:", directory_trn)
@@ -36,6 +40,8 @@ if debug:
     print("directory_trn jpeg count:", len(list(directory_trn.glob('*/*.jpeg'))))
     print("directory_val jpeg count:", len(list(directory_val.glob('*/*.jpeg'))))
     print("directory_model:", directory_model)
+    print("epochs:", epochs)
+    print("apply_augmentation:", apply_augmentation)
 
 
 # load datasets - error handling in load_images
@@ -57,30 +63,35 @@ augmentation_layers = tf.keras.Sequential([
     tf.keras.layers.RandomBrightness(0.3),
 ])
 
-if debug:    
-    fig, ax = plt.subplots(5, 15, figsize=(10,6))
-    for images, labels in dataset_trn.take(1):
-        for i in range(15):
-            ax[0][i].imshow(images[i].numpy().astype("uint8"))
-            ax[0][i].axis("off")    
-            for j in range(4):
-                ax[j+1][i].imshow(augmentation_layers.layers[j](images[i]).numpy().astype("uint8"))
-                ax[j+1][i].axis("off")
-    fig.canvas.manager.set_window_title("Augmentation. From top to bottom: original, random flip, rotation, contrast, brightness")
-    fig.tight_layout(pad=0.5)
-    plt.show()
 
 # some sparkle
 AUTOTUNE = tf.data.AUTOTUNE
 dataset_trn = dataset_trn.cache().prefetch(buffer_size=AUTOTUNE)
 dataset_val = dataset_val.cache().prefetch(buffer_size=AUTOTUNE)
 
-dataset_trn = dataset_trn.map(lambda x, y: (augmentation_layers(x), y), num_parallel_calls=AUTOTUNE)
+if apply_augmentation:
+    # visualize augmentation layers one by one
+    if debug:    
+        fig, ax = plt.subplots(5, 15, figsize=(10,6))
+        for images, labels in dataset_trn.take(1):
+            for i in range(15):
+                ax[0][i].imshow(images[i].numpy().astype("uint8"))
+                ax[0][i].axis("off")    
+                for j in range(4):
+                    ax[j+1][i].imshow(augmentation_layers.layers[j](images[i]).numpy().astype("uint8"))
+                    ax[j+1][i].axis("off")
+        fig.canvas.manager.set_window_title("Augmentation. From top to bottom: original, random flip, rotation, contrast, brightness")
+        fig.tight_layout(pad=0.5)
+
+    # applying augmentation this way seems faster, and allows us to apply it or not based on parameter (unlike adding it to the model)
+    dataset_trn = dataset_trn.map(lambda x, y: (augmentation_layers(x), y), num_parallel_calls=AUTOTUNE)
+
+if debug:
+    plt.show()
 
 # create, compile and fit model
 model = tf.keras.Sequential([
     tf.keras.layers.Rescaling(1./255),
-    #augmentation_layers,
     tf.keras.layers.Conv2D(32, 3, activation='relu'),
     tf.keras.layers.MaxPooling2D(),
     tf.keras.layers.Conv2D(32, 3, activation='relu'),
@@ -106,7 +117,7 @@ tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram
 model.fit(
   dataset_trn,
   validation_data=dataset_val,
-  epochs=20,
+  epochs=epochs,
   callbacks=[tensorboard_callback])
 
 model.save(directory_model)  # if dir not existing, it creates for himself

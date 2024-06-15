@@ -27,7 +27,8 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
 	ConvolutionalNeuralNetworkParameters,
-	epochs
+	epochs,
+	applyAugmentation
 )
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(

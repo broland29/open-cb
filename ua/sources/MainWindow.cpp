@@ -414,7 +414,7 @@ void MainWindow::settingsButtonClicked()
 
 void MainWindow::helpButtonClicked()
 {
-    SPDLOG_TRACE("TODO - help");
+    QDesktopServices::openUrl(QUrl("https://github.com/broland29/open-cb"));
 }
 
 

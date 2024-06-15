@@ -23,7 +23,8 @@ SettingsDialog::SettingsDialog(QWidget* parent)
 	};
 
 	CNNParametersWidgets = std::map<QString, AbstractParameter*>{
-		{ "epochs", new LineEditParameter("epochs") }
+		{ "epochs", new LineEditParameter("epochs") },
+		{ "applyAugmentation", new ComboBoxParameter("applyAugmentation", std::vector<QString>{"True", "False"}) }
 	};
 
 	configureParametersWidgets = std::map<QString, AbstractParameter*> {
@@ -170,6 +171,7 @@ void SettingsDialog::saveButtonClicked()
 	parameters.classificationParameters.supportVectorMachineParameters.uniteFrees = (SVMParametersWidgets["uniteFrees"]->getValue() == "True");
 
 	parameters.classificationParameters.convolutionalNeuralNetworkParameters.epochs = CNNParametersWidgets["epochs"]->getValue().toInt();
+	parameters.classificationParameters.convolutionalNeuralNetworkParameters.applyAugmentation = (CNNParametersWidgets["applyAugmentation"]->getValue() == "True");
 
 	parameters.configurationParameters.configureParameters.gaussianFilterDimension = configureParametersWidgets["gaussianFilterDimension"]->getValue().toInt();
 	parameters.configurationParameters.configureParameters.binaryThreshold = static_cast<uchar>(configureParametersWidgets["binaryThreshold"]->getValue().toInt());
@@ -208,6 +210,7 @@ void SettingsDialog::getParametersReplySlot(Parameters parameters)
 	SVMParametersWidgets["uniteFrees"]->setValue((parameters.classificationParameters.supportVectorMachineParameters.uniteFrees) ? "True" : "False");
 
 	CNNParametersWidgets["epochs"]->setValue(QString::number(parameters.classificationParameters.convolutionalNeuralNetworkParameters.epochs));
+	CNNParametersWidgets["applyAugmentation"]->setValue((parameters.classificationParameters.convolutionalNeuralNetworkParameters.applyAugmentation) ? "True" : "False");
 
 	configureParametersWidgets["gaussianFilterDimension"]->setValue(QString::number(parameters.configurationParameters.configureParameters.gaussianFilterDimension));
 	configureParametersWidgets["binaryThreshold"]->setValue(QString::number(parameters.configurationParameters.configureParameters.binaryThreshold));  // number?

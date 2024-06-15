@@ -7,6 +7,10 @@
 class AbstractClassifier
 {
 public:
+
+private:
+
+public:
 	// later: in constructor one could pass hyperparameters as arguments
 
 	// train the classifier. images in TRAIN_FOLDER_PATH and VALIDATION_FOLDER_PATH
@@ -25,5 +29,4 @@ public:
 	virtual int load() = 0;
 
 private:
-	bool debug;
 };

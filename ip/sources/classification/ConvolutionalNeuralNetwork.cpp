@@ -3,6 +3,7 @@
 ConvolutionalNeuralNetwork::ConvolutionalNeuralNetwork(ConvolutionalNeuralNetworkParameters convolutionalNeuralNetworkParameters)
 {
 	epochs = convolutionalNeuralNetworkParameters.epochs;
+	applyAugmentation = convolutionalNeuralNetworkParameters.applyAugmentation;
 }
 
 
@@ -14,7 +15,9 @@ int ConvolutionalNeuralNetwork::train()
 	std::string command = "conda run --no-capture-output -n rolienv2 python " + std::string(TRAIN_SCRIPT_PATH) +
 		std::string(" ") + std::string(TRAIN_FOLDER_PATH) +			// argv[1]
 		std::string(" ") + std::string(VALIDATION_FOLDER_PATH) +	// argv[2]
-		std::string(" ") + std::string(CNN_FOLDER_PATH);			// argv[3]
+		std::string(" ") + std::string(CNN_FOLDER_PATH) + 			// argv[3]
+		std::string(" ") + std::to_string(epochs) +					// argv[4]
+		std::string(" ") + (applyAugmentation ? "true" : "false");	// argv[5]
 	SPDLOG_TRACE("Executing command {}", command);
 
 	int ret = system(command.c_str());
