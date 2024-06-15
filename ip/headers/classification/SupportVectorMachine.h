@@ -1,24 +1,10 @@
 #pragma once
 
-#include "CxxClassifier.h"
-#include "KNearestNeighbors.h"
-#include "../file_handling/FileHandler.h"
-#include "../Common.h"
-#include "../Parameters.h"
-
 #include <opencv2/xfeatures2d.hpp>
 #include <opencv2/ml.hpp>
 
+#include "CxxClassifier.h"
 
-#define N_FEATURES		500
-#define SCALE_FACTOR	1.2f
-#define N_LEVELS		8
-#define EDGE_THRESHOLD	15					// default 31
-#define FIRST_LEVEL		0
-#define WTA_K			2
-#define SCORE_TYPE		ORB::HARRIS_SCORE
-#define PATCH_SIZE		31
-#define FAST_THRESHOLD	20
 
 class SupportVectorMachine : public CxxClassifier
 {
@@ -31,6 +17,17 @@ private:
 
 	Mat_<float> X;      // feature matrix	flattened ORB descriptors matrix							float for svm to accept it
 	Mat_<int> y;        // class labels		0, 1, ..., see internalToExternal, externalToInternal		int for svm to accept it
+
+	// https://docs.opencv.org/3.4/db/d95/classcv_1_1ORB.html#adc371099dc902a9674bd98936e79739c
+	const int N_FEATURES = 500;
+	const float SCALE_FACTOR = 1.2f;
+	const int N_LEVELS = 8;
+	const int EDGE_THRESHOLD = 15;  // default 31
+	const int FIRST_LEVEL = 0;
+	const int WTA_K = 2;
+	const ORB::ScoreType SCORE_TYPE = ORB::HARRIS_SCORE;
+	const int PATCH_SIZE = 31;
+	const int FAST_THRESHOLD = 20;
 
 public:
 	SupportVectorMachine(SupportVectorMachineParameters supportVectorMachineParameters);
@@ -46,11 +43,18 @@ public:
 	int load() override;
 
 private:
-	Mat_<float> getFeatureFromImage(Mat_<Vec3b> image);
+	// get ORB feature from image
+	Mat_<float> getFeatureFromImage(
+		Mat_<Vec3b> image  // original image
+	);
 
-	void getFeaturesAndLabels(std::vector<std::pair<Mat_<Vec3b>, QString>> images, Mat_<float>& X, Mat_<int>& y);
+	// based on images, fill X and y
+	void getFeaturesAndLabels(
+		std::vector<std::pair<Mat_<Vec3b>, QString>> images,    // training images and their labels
+		Mat_<float>& X,											// features matrix. Can differ from class' X, ex: when testing
+		Mat_<int>& y											// labels matrix. Can differ from class' y, ex: when testing
+	);
 
+	// log a few features as illustration
 	void logExampleFeatures();
-
-	inline std::string getPath() { return SVM_FOLDER_PATH + std::string("\\svm.txt"); }
 };

@@ -3,7 +3,7 @@
 #include <QVector>
 #include <QString>
 #include <spdlog/spdlog.h>
-#include <../ip/headers/Parameters.h>
+
 
 // "Standard behavior: Windows file system treats file and directory names as case-insensitive"
 //  so, unfortunately, cannot use P and p, must use WP and BP

@@ -1,5 +1,6 @@
 #include "../../headers/classification/ConvolutionalNeuralNetwork.h"
 
+
 ConvolutionalNeuralNetwork::ConvolutionalNeuralNetwork(ConvolutionalNeuralNetworkParameters convolutionalNeuralNetworkParameters)
 {
 	epochs = convolutionalNeuralNetworkParameters.epochs;
@@ -7,17 +8,17 @@ ConvolutionalNeuralNetwork::ConvolutionalNeuralNetwork(ConvolutionalNeuralNetwor
 }
 
 
-
 int ConvolutionalNeuralNetwork::train()
 {
 	// --no-capture-output for avoiding stdout buffering - https://github.com/conda/conda/issues/9412#issuecomment-719759077
 	// example: ...
-	std::string command = "conda run --no-capture-output -n rolienv2 python " + std::string(TRAIN_SCRIPT_PATH) +
-		std::string(" ") + std::string(TRAIN_FOLDER_PATH) +			// argv[1]
-		std::string(" ") + std::string(VALIDATION_FOLDER_PATH) +	// argv[2]
-		std::string(" ") + std::string(CNN_FOLDER_PATH) + 			// argv[3]
-		std::string(" ") + std::to_string(epochs) +					// argv[4]
-		std::string(" ") + (applyAugmentation ? "true" : "false");	// argv[5]
+	std::string command = "conda run --no-capture-output -n rolienv2 python " +
+		Paths::CNN_TRAIN_SCRIPT +										// argv[0]
+		std::string(" ") + std::string(Paths::TRAIN_FOLDER) +			// argv[1]
+		std::string(" ") + std::string(Paths::VALIDATION_FOLDER) +		// argv[2]
+		std::string(" ") + std::string(Paths::CNN_FOLDER) + 			// argv[3]
+		std::string(" ") + std::to_string(epochs) +						// argv[4]
+		std::string(" ") + (applyAugmentation ? "true" : "false");		// argv[5]
 	SPDLOG_TRACE("Executing command {}", command);
 
 	int ret = system(command.c_str());
@@ -29,9 +30,10 @@ int ConvolutionalNeuralNetwork::train()
 int ConvolutionalNeuralNetwork::test()
 {
 	// example: 
-	std::string command = "conda run --no-capture-output -n rolienv2 python " + std::string(TEST_SCRIPT_PATH) +
-		std::string(" ") + std::string(TEST_FOLDER_PATH) +			// argv[1]
-		std::string(" ") + std::string(CNN_FOLDER_PATH);			// argv[2]
+	std::string command = "conda run --no-capture-output -n rolienv2 python " +
+		Paths::CNN_TEST_SCRIPT +										// argv[0]
+		std::string(" ") + std::string(Paths::TEST_FOLDER) +			// argv[1]
+		std::string(" ") + std::string(Paths::CNN_FOLDER);				// argv[2]
 	SPDLOG_TRACE("Executing command {}", command);
 
 	int ret = system(command.c_str());
@@ -42,10 +44,11 @@ int ConvolutionalNeuralNetwork::test()
 
 int ConvolutionalNeuralNetwork::classifyBoard(QVector<QString>& encodings)
 {
-	std::string command = "conda run --no-capture-output -n rolienv2 python " + std::string(CLASSIFY_BOARD_SCRIPT_PATH) +
-		std::string(" ") + std::string(BOARD_FOLDER_PATH) +			// argv[1]
-		std::string(" ") + std::string(CNN_FOLDER_PATH) +			// argv[2]
-		std::string(" ") + std::string(CNN_FOLDER_PATH);			// argv[3]
+	std::string command = "conda run --no-capture-output -n rolienv2 python " +
+		Paths::CNN_CLASSIFY_BOARD_SCRIPT +								// argv[0]
+		std::string(" ") + std::string(Paths::BOARD_FOLDER) +			// argv[1]
+		std::string(" ") + std::string(Paths::CNN_FOLDER) +				// argv[2]
+		std::string(" ") + std::string(Paths::CNN_FOLDER);				// argv[3]
 	SPDLOG_TRACE("Executing command {}", command);
 	
 	int ret = system(command.c_str());
@@ -57,7 +60,7 @@ int ConvolutionalNeuralNetwork::classifyBoard(QVector<QString>& encodings)
 		return ret;
 	}
 
-	std::string path = CNN_FOLDER_PATH + std::string("\\pred.txt");
+	std::string path = Paths::CNN_FOLDER + std::string("\\pred.txt");
 	std::ifstream infile(path);
 	if (!infile.is_open())
 	{
@@ -109,6 +112,6 @@ QString ConvolutionalNeuralNetwork::internalToExternal(int encoding)
 	if (encoding == 12) { return "WQ"; };
 	if (encoding == 13) { return "WR"; };
 
-	SPDLOG_ERROR("Could not convert {}", encoding);
+	SPDLOG_ERROR("Could not convert {}, considering it WF", encoding);
 	return "WF";
 }

@@ -3,6 +3,9 @@
 #include <QVector>
 #include <QString>
 
+#include "../com/headers/Paths.h"
+#include "../com/headers/Parameters.h"
+
 
 class AbstractClassifier
 {
@@ -11,8 +14,6 @@ public:
 private:
 
 public:
-	// later: in constructor one could pass hyperparameters as arguments
-
 	// train the classifier. images in TRAIN_FOLDER_PATH and VALIDATION_FOLDER_PATH
 	virtual int train() = 0;
 

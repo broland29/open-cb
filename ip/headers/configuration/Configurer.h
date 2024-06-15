@@ -8,7 +8,8 @@
 #include "Hough.h"
 #include "Morphological.h"
 #include "../file_handling/FileHandler.h"
-#include "../Parameters.h"
+#include "../com/headers/Parameters.h"
+#include "../com/headers/Paths.h"
 
 #include <QObject>
 #include <QMutex>

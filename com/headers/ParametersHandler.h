@@ -1,13 +1,13 @@
 #pragma once
 
-#include "../Parameters.h"
-#include "../CommonIP.h"
-
 #include <fstream>
 #include <spdlog/spdlog.h>
 #include <nlohmann/json.hpp>
 #include <QVector>
 #include <QString>
+
+#include "Parameters.h"
+#include "Paths.h"
 
 
 using json = nlohmann::json;
@@ -15,7 +15,9 @@ using json = nlohmann::json;
 
 class ParametersHandler
 {
-	// no fields
+public:
+
+private:
 
 public:
 	// load parameters from PATH, if not found, do nothing

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "file_handling/ParametersHandler.h"
+#include "../com/headers/ParametersHandler.h"
 #include "camera_handling/CameraHandler.h"
 #include "camera_handling/SignalWaiter.h"
 #include "classification/Classifier.h"

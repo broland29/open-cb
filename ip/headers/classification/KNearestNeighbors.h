@@ -1,21 +1,17 @@
 #pragma once
 
 #include "CxxClassifier.h"
-#include "../file_handling/FileHandler.h"
-#include "../Common.h"
-#include "../Parameters.h"
-#include <fstream>
 
 
 class KNearestNeighbors : public CxxClassifier
 {
 public:
-    int k;              // number of neighbors
-    int numberOfBins;
+    int k;              // parameter
+    int numberOfBins;   // parameter
 
 private:
     Mat_<int> X;        // feature matrix (one row = one feature = one fixed-size color histogram)
-    Mat_<int> y;        // class labels (0, 1, ..., see internalToExternal, externalToInternal)
+    Mat_<int> y;        // class labels (see CxxClassifier::internalToExternal, CxxClassifier::externalToInternal)
 
 public:
     KNearestNeighbors(KNearestNeighborsParameters kNearestNeighborsParameters);
@@ -31,7 +27,7 @@ public:
     int load() override;
 
 private:
-    // sturct for one potential vote
+    // struct for one potential vote
     struct distanceAndLabel
     {
         double distance;
@@ -43,19 +39,23 @@ private:
         }
     };
 
-    // return one histogram
-    //  colorIndex:  0 = blue, 1 = green, 2 = red
-    //  m:           total number of bins
-    void getHistogram(Mat_<Vec3b> img, int colorIndex, Mat_<int> hist);
+    // return one histogram (related to one color channel)
+    void getHistogram(
+        Mat_<Vec3b> img,            // original image
+        int colorIndex,             // 0 = blue, 1 = green, 2 = red
+        Mat_<int> hist              // resulting histogram
+    );
     
     // return 3 color histograms "in a row" (basically image -> feature)
-    Mat_<int> getFeatureHistogram(Mat_<Vec3b> img);
+    Mat_<int> getFeatureHistogram(
+        Mat_<Vec3b> img             // original image
+    );
 
     // return the inferred label of image
-    int classify(Mat_<Vec3b> image);
+    int classify(
+        Mat_<Vec3b> image           // original image
+    );
 
-    // helper function to log distribution of samples
-    void logImagesDistribution(std::vector<std::pair<Mat_<Vec3b>, QString>> images, std::string imageType);
-
+    // log a few features as illustration
     void logExampleFeatures();
 };

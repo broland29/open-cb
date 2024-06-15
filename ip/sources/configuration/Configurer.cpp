@@ -256,7 +256,7 @@ int Configurer::cropAndLabel(Mat_<Vec3b> imgOriginal, QVector<QString> encodings
 			}
 			else
 			{
-				std::string folder = TEMPORARY_FOLDER_PATH + std::string("\\") + encodings[row * 8 + col].toStdString();
+				std::string folder = Paths::TEMPORARY_FOLDER + std::string("\\") + encodings[row * 8 + col].toStdString();
 				std::string path;
 				int ret = FileHandler::saveImage(imgCell, folder, path, true, FileHandler::boardImageName(row, col));
 				if (ret != 0)
@@ -339,7 +339,7 @@ int Configurer::prepareCellImages(Mat_<Vec3b> imgOriginal, BorderParameters bord
 			// extract based on camera's coord system (i,j), save with name based on main coord system (row,col)
 			Mat_<Vec3b> imgCell = extractCell(i, j, imgNoBorder, borderParameters);
 			std::string path;
-			int ret = FileHandler::saveImage(imgCell, BOARD_FOLDER_PATH, path, false, FileHandler::boardImageName(row, col));
+			int ret = FileHandler::saveImage(imgCell, Paths::BOARD_FOLDER, path, false, FileHandler::boardImageName(row, col));
 			if (ret != 0)
 			{
 				SPDLOG_ERROR("Saving cell image {} failed!", path);

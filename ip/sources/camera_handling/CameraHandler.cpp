@@ -52,7 +52,7 @@ void CameraHandler::doWork()
 		if (isImageRequested)
 		{
 			std::string path;
-			int ret = FileHandler::saveImage(frame, GRAB_FOLDER_PATH, path, true);  // don't care about naming, temporary anyways
+			int ret = FileHandler::saveImage(frame, Paths::GRAB_FOLDER, path, true);  // don't care about naming, temporary anyways
 			if (ret != 0)
 			{
 				emit requestImageReplySignal(false, "Grabbing image failed!");

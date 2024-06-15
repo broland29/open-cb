@@ -8,46 +8,187 @@ SupportVectorMachine::SupportVectorMachine(SupportVectorMachineParameters suppor
 }
 
 
-
-// put images in one big image, of size noOfRows * rowSize, noOfCols * colSize.
-// if not enough images to fill, padded with zeros. if more, just ignores the rest
-template <typename T>
-Mat_<T> concatImages(std::vector<Mat_<T>> images, int noOfRows, int noOfCols, int rowSize, int colSize)
+int SupportVectorMachine::train()
 {
-	Mat_<T> result = Mat_<T>::zeros(noOfRows * rowSize, noOfCols * colSize);
-	for (int i = 0; i < noOfRows; i++)
-	{
-		for (int j = 0; j < noOfCols; j++)
-		{
-			int flat = i * noOfCols + j;  // tricky but tested
-			if (flat >= images.size())
-			{
-				goto _skip;
-			}
-			Mat_<T> image = images[flat].clone();
+	SPDLOG_TRACE("Starting training");
 
-			for (int u = 0; u < image.rows; u++)
-			{
-				for (int v = 0; v < image.cols; v++)
-				{
-					result(i * rowSize + u, j * colSize + v) = image(u, v);
-				}
-			}
+	std::vector<std::pair<Mat_<Vec3b>, QString>> trainImages;
+	std::map<std::string, int> trainLabelsAndCounts;
+	if (FileHandler::readLabelFolderImages(Paths::TRAIN_FOLDER, trainImages, trainLabelsAndCounts) != 0)
+	{
+		return 1;
+	}
+
+	std::vector<std::pair<Mat_<Vec3b>, QString>> validationImages;
+	std::map<std::string, int> validationLabelsAndCounts;
+	if (FileHandler::readLabelFolderImages(Paths::VALIDATION_FOLDER, validationImages, validationLabelsAndCounts) != 0)
+	{
+		return 2;
+	}
+
+	// since validation not used in other ways, add to train images
+	trainImages.insert(trainImages.end(), validationImages.begin(), validationImages.end());
+
+	if (DEBUG)
+	{
+		for (auto const& validationLabelAndCount : validationLabelsAndCounts)
+		{
+			trainLabelsAndCounts[validationLabelAndCount.first] += validationLabelAndCount.second;
+		}
+		logDistribution(trainLabelsAndCounts, "train");
+	}
+
+	// get a vector with hardcoded key points, a "grid", same for each image
+	keyPoints.clear();
+	const int keyPointStepX = 10;
+	const int keyPointStepY = 10;
+	const int keyPointSize = 1;  // region around the point (idea: could set larger for central pixels since they are more important?)
+	for (int i = 0; i < trainImages[0].first.rows; i += keyPointStepY)
+	{
+		for (int j = 0; j < trainImages[0].first.cols; j += keyPointStepX)
+		{
+			keyPoints.push_back(KeyPoint{ static_cast<float>(j), static_cast<float>(i), 1 });
 		}
 	}
-_skip:
-	return result;
+
+	getFeaturesAndLabels(trainImages, X, y);
+
+	if (DEBUG)
+	{
+		SPDLOG_TRACE("Built {} features", X.rows);
+		logExampleFeatures();
+	}
+
+	// https://docs.opencv.org/4.x/d1/d73/tutorial_introduction_to_svm.html
+	svm = ml::SVM::create();
+	svm->setType(ml::SVM::C_SVC);
+	svm->setKernel(ml::SVM::LINEAR);
+	svm->setTermCriteria(TermCriteria(TermCriteria::MAX_ITER, 100, 1e-6));
+
+	svm->train(X, ml::ROW_SAMPLE, y);
+	trained = true;
+	SPDLOG_TRACE("Finished training");
+
+	return 0;
 }
 
-template <typename T>
-Mat_<T> extractAndConcatCellImages(std::vector<Mat_<T>> images, std::vector<int> indices)
+
+int SupportVectorMachine::test()
 {
-	std::vector<Mat_<T>> extractedImages;
-	for (int index : indices)
+	if (!trained)
 	{
-		extractedImages.push_back(images[index]);
+		SPDLOG_ERROR("Should train first");
+		return 1;
 	}
-	return concatImages(extractedImages, 3, 5, extractedImages[0].rows, extractedImages[0].cols);
+
+	std::vector<std::pair<Mat_<Vec3b>, QString>> testImages;
+	std::map<std::string, int> labelsAndCounts;
+	if (FileHandler::readLabelFolderImages(Paths::TEST_FOLDER, testImages, labelsAndCounts) != 0)
+	{
+		return 2;
+	}
+
+	if (DEBUG)
+	{
+		logDistribution(labelsAndCounts, "test");
+	}
+
+	int classCount = ENCODINGS.size();
+
+	// confustion matrix: on x axis we have predicted class, on y we have actual class
+	std::vector<std::vector<int>> confusionMatrix;
+
+	confusionMatrix.resize(classCount);
+	for (int i = 0; i < classCount; i++)
+	{
+		confusionMatrix[i].resize(classCount, 0);
+	}
+
+	Mat_<float> features;		// feature matrix
+	Mat_<int> actualClasses;	// class labels
+	getFeaturesAndLabels(testImages, features, actualClasses);
+
+	Mat_<int> predictedClasses;
+
+
+	const int testSize = testImages.size();
+	for (int i = 0; i < testSize; i++)
+	{
+		int predictedClass = svm->predict(features.row(i));
+
+		confusionMatrix[actualClasses(i, 0)][predictedClass]++;  // using class directly to access slot!
+
+		// just to keep the console interactive
+		if (i % 100 == 0)
+		{
+			SPDLOG_TRACE("{}/{}", i, testSize);
+		}
+	}
+
+	std::vector<std::string> encodings(classCount);
+	for (int i = 0; i < classCount; i++)
+	{
+		encodings[i] = internalToExternal(i).toStdString();
+	}
+	calculateAndLogMetrics(confusionMatrix, encodings);
+
+	return 0;
+}
+
+
+int SupportVectorMachine::classifyBoard(QVector<QString>& encodings)
+{
+	if (!trained)
+	{
+		SPDLOG_ERROR("Should train first");
+		return 1;
+	}
+
+	// read cell images
+	std::array<std::array<Mat_<Vec3b>, 8>, 8> boardImages;
+	if (FileHandler::readBoardImages(boardImages) != 0)
+	{
+		return 2;
+	}
+
+	// compose encodings by successive classifications
+	encodings.resize(64);
+	for (int i = 0; i < 8; i++)
+	{
+		for (int j = 0; j < 8; j++)
+		{
+			encodings[i * 8 + j] = internalToExternal(svm->predict(getFeatureFromImage(boardImages[i][j])));
+		}
+	}
+
+	return 0;
+}
+
+
+int SupportVectorMachine::save()
+{
+	if (!trained)
+	{
+		SPDLOG_ERROR("Should train first");
+		return 1;
+	}
+
+	std::string path = Paths::SVM_FOLDER + std::string("\\svm.txt");
+	SPDLOG_TRACE("Saving to {}", path);
+	svm->save(path);
+
+	return 0;
+}
+
+
+int SupportVectorMachine::load()
+{
+	std::string path = Paths::SVM_FOLDER + std::string("\\svm.txt");
+	SPDLOG_TRACE("Loading from {}", path);
+	svm = Algorithm::load<ml::SVM>(path);
+	trained = true;  // since saving only works if trained
+
+	return 0;
 }
 
 
@@ -82,7 +223,7 @@ void SupportVectorMachine::getFeaturesAndLabels(std::vector<std::pair<Mat_<Vec3b
 	int d = getFeatureFromImage(images[0].first).cols;
 
 	// unknown number of images -> unknown number of rows -> start with 0 and push_back
-	Mat_<int> _X(0, d);  // feature matrix
+	Mat_<float> _X(0, d);  // feature matrix
 	Mat_<int> _y(0, 1);   // class labels
 
 	for (auto const& pair : images)
@@ -99,170 +240,6 @@ void SupportVectorMachine::getFeaturesAndLabels(std::vector<std::pair<Mat_<Vec3b
 	X = _X.clone();
 	y = _y.clone();
 }
-
-
-
-
-
-int SupportVectorMachine::train()
-{
-	std::vector<std::pair<Mat_<Vec3b>, QString>> trainImages;
-	if (FileHandler::readLabelFolderImages(TRAIN_FOLDER_PATH, trainImages) != 0)
-	{
-		return 1;
-	}
-
-	// since validation not used in other ways, for SVM I use those images as train images as well
-	std::vector<std::pair<Mat_<Vec3b>, QString>> _validationImages;
-	if (FileHandler::readLabelFolderImages(VALIDATION_FOLDER_PATH, _validationImages) != 0)
-	{
-		return 2;
-	}
-	trainImages.insert(trainImages.end(), _validationImages.begin(), _validationImages.end());
-
-	// get a vector with hardcoded key points, a "grid", same for each image
-	keyPoints.clear();
-	const int keyPointStepX = 10;
-	const int keyPointStepY = 10;
-	const int keyPointSize = 1;  // region around the point (idea: could set larger for central pixels since they are more important?)
-	for (int i = 0; i < trainImages[0].first.rows; i += keyPointStepY)
-	{
-		for (int j = 0; j < trainImages[0].first.cols; j += keyPointStepX)
-		{
-			keyPoints.push_back(KeyPoint{ static_cast<float>(j), static_cast<float>(i), 1 });
-		}
-	}
-
-	getFeaturesAndLabels(trainImages, X, y);
-
-	if (debug)
-	{
-		SPDLOG_TRACE("Built {} features", X.rows);
-		logExampleFeatures();
-	}
-
-	// https://docs.opencv.org/4.x/d1/d73/tutorial_introduction_to_svm.html
-	svm = ml::SVM::create();
-	svm->setType(ml::SVM::C_SVC);
-	svm->setKernel(ml::SVM::LINEAR);
-	svm->setTermCriteria(TermCriteria(TermCriteria::MAX_ITER, 100, 1e-6));
-	
-	svm->train(X, ml::ROW_SAMPLE, y);
-	trained = true;
-	SPDLOG_TRACE("Finished training");
-	
-	return 0;
-}
-
-
-int SupportVectorMachine::test()
-{
-	if (!trained)
-	{
-		SPDLOG_ERROR("Should train first");
-		return 1;
-	}
-
-	std::vector<std::pair<Mat_<Vec3b>, QString>> testImages;
-	if (FileHandler::readLabelFolderImages(TEST_FOLDER_PATH, testImages) != 0)
-	{
-		return 2;
-	}
-
-	int classCount = ENCODINGS.size();
-
-	// confustion matrix: on x axis we have predicted class, on y we have actual class
-	std::vector<std::vector<int>> confusionMatrix;
-
-	confusionMatrix.resize(classCount);
-	for (int i = 0; i < classCount; i++)
-	{
-		confusionMatrix[i].resize(classCount, 0);
-	}
-
-	Mat_<float> features;		// feature matrix
-	Mat_<int> actualClasses;	// class labels
-	getFeaturesAndLabels(testImages, features, actualClasses);
-
-	Mat_<int> predictedClasses;
-	
-
-	const int testSize = testImages.size();
-	for (int i = 0; i < testSize; i++)
-	{
-		int predictedClass = svm->predict(features.row(i));
-
-		confusionMatrix[actualClasses(i, 0)][predictedClass]++;  // using class directly to access slot!
-
-		// just to keep the console interactive
-		if (i % 100 == 0)
-		{
-			SPDLOG_TRACE("{}/{}", i, testSize);
-		}
-	}
-
-	calculateAndLogMetrics(confusionMatrix, testSize);
-	
-	return 0;
-}
-
-
-int SupportVectorMachine::classifyBoard(QVector<QString>& encodings)
-{
-	if (!trained)
-	{
-		SPDLOG_ERROR("Should train first");
-		return 1;
-	}
-
-	// read cell images
-	std::array<std::array<Mat_<Vec3b>, 8>, 8> boardImages;
-	if (FileHandler::readBoardImages(boardImages) != 0)
-	{
-		return 2;
-	}
-
-	// compose encodings by successive classifications
-	encodings.resize(64);
-	for (int i = 0; i < 8; i++)
-	{
-		for (int j = 0; j < 8; j++)
-		{
-			encodings[i * 8 + j] = internalToExternal(svm->predict(getFeatureFromImage(boardImages[i][j])));
-		}
-	}
-	
-	return 0;
-}
-
-
-
-int SupportVectorMachine::save()
-{
-	if (!trained)
-	{
-		SPDLOG_ERROR("Should train first");
-		return 1;
-	}
-
-	std::string path = getPath();
-	SPDLOG_TRACE("Saving to {}", path);
-	svm->save(path);
-	
-	return 0;
-}
-
-
-int SupportVectorMachine::load()
-{
-	std::string path = getPath();
-	SPDLOG_TRACE("Loading from {}", path);
-	svm = Algorithm::load<ml::SVM>(path);
-	trained = true;  // since saving only works if trained
-
-	return 0;
-}
-
 
 
 void SupportVectorMachine::logExampleFeatures()

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../com/headers/Paths.h"
 #include "../CommonIP.h"
 #include "../../../Common.h"
 
@@ -45,7 +46,8 @@ public:
 
 	static int readLabelFolderImages(
 		std::string labelFolderBasePath,						    // TEMPORARY/TRAIN/VALIDATION/TEST_FOLDER_PATH
-		std::vector<std::pair<Mat_<Vec3b>, QString>>& imagesAndLabels	// <image, label> pairs
+		std::vector<std::pair<Mat_<Vec3b>, QString>>& imagesAndLabels,	// <image, label> pairs
+		std::map<std::string, int>& labelsAndCounts  // additional information about how many images are grouped by labels
 	);
 
 	// get all cell images of the board saved beforehand, using boardImageName

@@ -31,7 +31,7 @@ set(IP_DIR "${CMAKE_SOURCE_DIR}/ip")
 set(UA_DIR "${CMAKE_SOURCE_DIR}/ua")
 set(VAR_DIR "${CMAKE_SOURCE_DIR}/var")
 set(TEST_DIR "${CMAKE_SOURCE_DIR}/test")
-set(LOG_DIR "${CMAKE_SOURCE_DIR}/log")
+set(COM_DIR "${CMAKE_SOURCE_DIR}/com")
 
 include_directories(${IP_DIR})
 include_directories(${UA_DIR})
@@ -47,8 +47,8 @@ file(GLOB_RECURSE SOURCES
     "${UA_DIR}/*.qrc"  # tick "Show All Files" in Solution Explorer to see
     "${VAR_DIR}/*.cpp"
     "${VAR_DIR}/*.h"
-    "${LOG_DIR}/*.cpp"
-    "${LOG_DIR}/*.h"
+    "${COM_DIR}/*.cpp"
+    "${COM_DIR}/*.h"
     "Main.cpp"
     "Common.h"
 )
@@ -57,8 +57,8 @@ file(GLOB_RECURSE TEST_SOURCES
     "${TEST_DIR}/*.h"
     "${VAR_DIR}/*.cpp"  # tests need to see tested functions
     "${VAR_DIR}/*.h"
-    "${LOG_DIR}/*.cpp"
-    "${LOG_DIR}/*.h"
+    "${COM_DIR}/*.cpp"
+    "${COM_DIR}/*.h"
 )
 add_executable (OpenCB ${SOURCES})
 

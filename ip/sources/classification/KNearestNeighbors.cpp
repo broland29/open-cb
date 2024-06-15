@@ -15,13 +15,15 @@ int KNearestNeighbors::train()
     SPDLOG_TRACE("Starting training");
     
     std::vector<std::pair<Mat_<Vec3b>, QString>> trainImages;
-    if (FileHandler::readLabelFolderImages(TRAIN_FOLDER_PATH, trainImages) != 0)
+    std::map<std::string, int> trainLabelsAndCounts;
+    if (FileHandler::readLabelFolderImages(Paths::TRAIN_FOLDER, trainImages, trainLabelsAndCounts) != 0)
     {
         return 1;
     }
 
     std::vector<std::pair<Mat_<Vec3b>, QString>> validationImages;
-    if (FileHandler::readLabelFolderImages(VALIDATION_FOLDER_PATH, validationImages) != 0)
+    std::map<std::string, int> validationLabelsAndCounts;
+    if (FileHandler::readLabelFolderImages(Paths::VALIDATION_FOLDER, validationImages, validationLabelsAndCounts) != 0)
     {
         return 2;
     }
@@ -29,9 +31,13 @@ int KNearestNeighbors::train()
     // since validation not used in other ways, add to train images
     trainImages.insert(trainImages.end(), validationImages.begin(), validationImages.end());
 
-    if (debug)
+    if (DEBUG)
     {
-        logImagesDistribution(trainImages, "train");
+        for (auto const& validationLabelAndCount : validationLabelsAndCounts)
+        {
+            trainLabelsAndCounts[validationLabelAndCount.first] += validationLabelAndCount.second;
+        }
+        logDistribution(trainLabelsAndCounts, "train");
     }
 
     const int m = numberOfBins;     // number of bins in histogram(s)
@@ -58,7 +64,7 @@ int KNearestNeighbors::train()
     this->X = X.clone();
     this->y = y.clone();
 
-    if (debug)
+    if (DEBUG)
     {
         SPDLOG_TRACE("Built {} features", X.rows);
         logExampleFeatures();
@@ -81,14 +87,15 @@ int KNearestNeighbors::test()
     }
 
     std::vector<std::pair<Mat_<Vec3b>, QString>> testImages;
-    if (FileHandler::readLabelFolderImages(TEST_FOLDER_PATH, testImages) != 0)
+    std::map<std::string, int> labelsAndCounts;
+    if (FileHandler::readLabelFolderImages(Paths::TEST_FOLDER, testImages, labelsAndCounts) != 0)
     {
         return 2;
     }
 
-    if (debug)
+    if (DEBUG)
     {
-        logImagesDistribution(testImages, "test");
+        logDistribution(labelsAndCounts, "test");
     }
 
     int classCount = (uniteFrees) ? 13 : 14;
@@ -116,7 +123,12 @@ int KNearestNeighbors::test()
         }
     }
 
-    calculateAndLogMetrics(confusionMatrix, testSize);
+    std::vector<std::string> encodings(classCount);
+    for (int i = 0; i < classCount; i++)
+    {
+        encodings[i] = internalToExternal(i).toStdString();
+    }
+    calculateAndLogMetrics(confusionMatrix, encodings);
 
     return 0;
 }
@@ -159,7 +171,7 @@ int KNearestNeighbors::save()
         return 1;
     }
 
-    std::string path = KNN_FOLDER_PATH + std::string("\\knn.txt");
+    std::string path = Paths::KNN_FOLDER + std::string("\\knn.txt");
     std::ofstream outfile(path);
     if (!outfile.is_open())
     {
@@ -198,7 +210,7 @@ int KNearestNeighbors::save()
 
 int KNearestNeighbors::load()
 {
-    std::string path = KNN_FOLDER_PATH + std::string("\\knn.txt");
+    std::string path = Paths::KNN_FOLDER + std::string("\\knn.txt");
     std::ifstream infile(path);
     if (!infile.is_open())
     {
@@ -239,7 +251,41 @@ int KNearestNeighbors::load()
 }
 
 
-// ---------- private (helper) functions ---------- //
+void KNearestNeighbors::getHistogram(Mat_<Vec3b> img, int colorIndex, Mat_<int> hist)
+{
+    for (int i = 0; i < numberOfBins; i++)
+    {
+        hist(0, i) = 0;
+    }
+
+    int binSize = 256 / numberOfBins;
+    for (int i = 0; i < img.rows; i++)
+    {
+        for (int j = 0; j < img.cols; j++)
+        {
+            hist(0, img.at<Vec3b>(i, j)[colorIndex] / binSize)++;
+        }
+    }
+}
+
+
+Mat_<int> KNearestNeighbors::getFeatureHistogram(Mat_<Vec3b> img)
+{
+    Mat_<int> feature(1, numberOfBins * 3);
+
+    for (int i = 0; i < 3; i++)  // colors
+    {
+        Mat_<int> histogram(1, numberOfBins);
+        getHistogram(img, i, histogram);
+        for (int j = 0; j < numberOfBins; j++)
+        {
+            feature(0, i * numberOfBins + j) = histogram(0, j);
+        }
+    }
+
+    return feature;
+}
+
 
 int KNearestNeighbors::classify(Mat_<Vec3b> image)
 {
@@ -287,61 +333,6 @@ int KNearestNeighbors::classify(Mat_<Vec3b> image)
 }
 
 
-
-void KNearestNeighbors::getHistogram(Mat_<Vec3b> img, int colorIndex, Mat_<int> hist)
-{
-    for (int i = 0; i < numberOfBins; i++)
-    {
-        hist(0, i) = 0;
-    }
-
-    int binSize = 256 / numberOfBins;
-    for (int i = 0; i < img.rows; i++)
-    {
-        for (int j = 0; j < img.cols; j++)
-        {
-            hist(0, img.at<Vec3b>(i, j)[colorIndex] / binSize) ++;
-        }
-    }
-}
-
-
-
-Mat_<int> KNearestNeighbors::getFeatureHistogram(Mat_<Vec3b> img)
-{
-    Mat_<int> feature(1, numberOfBins * 3);
-
-    for (int i = 0; i < 3; i++)  // colors
-    {
-        Mat_<int> histogram(1, numberOfBins);
-        getHistogram(img, i, histogram);
-        for (int j = 0; j < numberOfBins; j++)
-        {
-            feature(0, i * numberOfBins + j) = histogram(0, j);
-        }
-    }
-
-    return feature;
-}
-
-
-
-void KNearestNeighbors::logImagesDistribution(std::vector<std::pair<Mat_<Vec3b>, QString>> images, std::string imageType)
-{
-    SPDLOG_TRACE("Loaded {} {} images, out of which:", images.size(), imageType);
-    std::vector<int> counts;
-    counts.resize(ENCODINGS.size(), 0);
-    for (auto const& pair : images)
-    {
-        counts[externalToInternal(pair.second)]++;
-    }
-    for (int i = 0; i < counts.size(); i++)
-    {
-        SPDLOG_TRACE("{} of class {}", counts[i], i);
-    }
-}
-
-
 void KNearestNeighbors::logExampleFeatures()
 {
     SPDLOG_TRACE("Example features:");
@@ -355,6 +346,3 @@ void KNearestNeighbors::logExampleFeatures()
         SPDLOG_TRACE("Sample {}:\n\tfeature: {}\n\tlabel: {}", _index, _feature, _label);
     }
 }
-
-
-

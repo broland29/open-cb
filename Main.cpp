@@ -1,5 +1,5 @@
 #include "ip/headers/ImageProcessing.h"
-#include "log/headers/Logger.h"
+#include "com/headers/Logger.h"
 #include "ua/headers/UserApplication.h"
 #include "var/headers/ValidationAndResponse.h"
 

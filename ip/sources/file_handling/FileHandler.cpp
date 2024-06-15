@@ -14,10 +14,10 @@ int FileHandler::shuffleAndSplit(double trainSplit, double validationSplit, doub
 
 	// get paths and label folders of all images
 	std::vector<PathInfo> temporaryPathInfosOld, trainPathInfosOld, validationPathInfosOld, testPathInfosOld;
-	if (readLabelFolderPathInfos(TEMPORARY_FOLDER_PATH, temporaryPathInfosOld) +
-		readLabelFolderPathInfos(TRAIN_FOLDER_PATH, trainPathInfosOld) +
-		readLabelFolderPathInfos(VALIDATION_FOLDER_PATH, validationPathInfosOld) +
-		readLabelFolderPathInfos(TEST_FOLDER_PATH, testPathInfosOld) != 0)
+	if (readLabelFolderPathInfos(Paths::TEMPORARY_FOLDER, temporaryPathInfosOld) +
+		readLabelFolderPathInfos(Paths::TRAIN_FOLDER, trainPathInfosOld) +
+		readLabelFolderPathInfos(Paths::VALIDATION_FOLDER, validationPathInfosOld) +
+		readLabelFolderPathInfos(Paths::TEST_FOLDER, testPathInfosOld) != 0)
 	{
 		return 1;
 	}
@@ -52,15 +52,15 @@ int FileHandler::shuffleAndSplit(double trainSplit, double validationSplit, doub
 		std::string labelFolderBasePathNew;
 		if (i < splitOne)
 		{
-			labelFolderBasePathNew = TRAIN_FOLDER_PATH;
+			labelFolderBasePathNew = Paths::TRAIN_FOLDER;
 		}
 		else if (i < splitTwo)
 		{
-			labelFolderBasePathNew = VALIDATION_FOLDER_PATH;
+			labelFolderBasePathNew = Paths::VALIDATION_FOLDER;
 		}
 		else
 		{
-			labelFolderBasePathNew = TEST_FOLDER_PATH;
+			labelFolderBasePathNew = Paths::TEST_FOLDER;
 		}
 
 		std::string oldPath = pathInfosOld[i].wholePath;
@@ -86,12 +86,12 @@ int FileHandler::shuffleAndSplit(double trainSplit, double validationSplit, doub
 
 int FileHandler::clearAllImages()
 {
-	if (clearLabeledFolder(TEMPORARY_FOLDER_PATH) +
-		clearLabeledFolder(TRAIN_FOLDER_PATH) +
-		clearLabeledFolder(VALIDATION_FOLDER_PATH) +
-		clearLabeledFolder(TEST_FOLDER_PATH) +
-		clearSimpleFolder(BOARD_FOLDER_PATH) + 
-		clearSimpleFolder(GRAB_FOLDER_PATH) != 0)
+	if (clearLabeledFolder(Paths::TEMPORARY_FOLDER) +
+		clearLabeledFolder(Paths::TRAIN_FOLDER) +
+		clearLabeledFolder(Paths::VALIDATION_FOLDER) +
+		clearLabeledFolder(Paths::TEST_FOLDER) +
+		clearSimpleFolder(Paths::BOARD_FOLDER) + 
+		clearSimpleFolder(Paths::GRAB_FOLDER) != 0)
 	{
 		return 1;
 	}
@@ -100,8 +100,13 @@ int FileHandler::clearAllImages()
 }
 
 
-int FileHandler::readLabelFolderImages(std::string labelFolderBasePath, std::vector<std::pair<Mat_<Vec3b>, QString>>& imagesAndLabels)
+int FileHandler::readLabelFolderImages(std::string labelFolderBasePath, std::vector<std::pair<Mat_<Vec3b>, QString>>& imagesAndLabels, std::map<std::string, int>& labelsAndCounts)
 {
+	for (QString encoding : ENCODINGS)
+	{
+		labelsAndCounts.insert({ encoding.toStdString(), 0 });
+	}
+
 	for (QString encoding : ENCODINGS)
 	{
 		std::string labelFolder = encoding.toStdString();
@@ -109,6 +114,7 @@ int FileHandler::readLabelFolderImages(std::string labelFolderBasePath, std::vec
 		std::string labelFolderPath = labelFolderBasePath + std::string("\\") + labelFolder;
 		for (const auto& dirEntry : fs::directory_iterator(labelFolderPath))
 		{
+			labelsAndCounts[labelFolder]++;
 			std::string imagePath = dirEntry.path().string();
 			Mat_<Vec3b> img = imread(imagePath, IMREAD_COLOR);
 			if (img.empty())
@@ -133,7 +139,7 @@ int FileHandler::readBoardImages(std::array<std::array<Mat_<Vec3b>, 8>, 8>& boar
 	{
 		for (int j = 0; j < 8; j++)
 		{
-			std::string imagePath = BOARD_FOLDER_PATH + std::string("\\") + boardImageName(i, j) + EXTENSION;
+			std::string imagePath = Paths::BOARD_FOLDER + std::string("\\") + boardImageName(i, j) + EXTENSION;
 
 			Mat_<Vec3b> img = imread(imagePath, IMREAD_COLOR);
 			if (img.empty())

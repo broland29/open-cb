@@ -1,6 +1,13 @@
 #pragma once
 
-#include "CommonIP.h"
+#include <iostream>
+#include <spdlog/spdlog.h>
+#include <spdlog/fmt/ostr.h>
+
+
+// just like in opencv2/core/hal/interface.h
+typedef unsigned char uchar;
+
 
 
 // ---------- package camera_handling ---------- //

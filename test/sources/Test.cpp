@@ -1,5 +1,5 @@
 #include "../headers/Test.h"
-#include "../log/headers/Logger.h"
+#include "../com/headers/Logger.h"
 
 
 int main(int argc, char* argv[])

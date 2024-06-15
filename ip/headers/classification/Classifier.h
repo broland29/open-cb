@@ -5,15 +5,12 @@
 #include "KNearestNeighbors.h"
 #include "SupportVectorMachine.h"
 
-#include "../Parameters.h"
-
-#include <array>
+#include "../com/headers/Parameters.h"
 
 
 class Classifier
 {
 public:
-	Classifier(ClassificationParameters classificationParameters);
 
 private:
 	ConvolutionalNeuralNetwork* CNN;
@@ -23,13 +20,27 @@ private:
 	AbstractClassifier* activeClassifier;
 
 public:
-	int changeClassifier(std::string newClassifierName);
-	int saveClassifier();
-	int loadClassifier();
-	int trainClassifier();
-	int testClassifier();
-	int classifyBoard(QVector<QString>& encodings);
+	Classifier(ClassificationParameters classificationParameters);
 
-	void updateParameters(ClassificationParameters classificationParameters);
+	int changeClassifier(
+		std::string newClassifierName  // "KNN", "SVM", "CNN" 
+	);
+
+	int saveClassifier();
+
+	int loadClassifier();
+
+	int trainClassifier();
+
+	int testClassifier();
+
+	int classifyBoard(
+		QVector<QString>& encodings  // "flattened 8x8 matrix" of encodings will be returned through this parameter
+	);
+
+	void updateParameters(
+		ClassificationParameters classificationParameters  // parameters with possible changes
+	);
+
 private:
 };

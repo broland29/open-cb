@@ -1,4 +1,4 @@
-#include "../../headers/file_handling/ParametersHandler.h"
+#include "../headers/ParametersHandler.h"
 
 
 // https://github.com/nlohmann/json?tab=readme-ov-file#simplify-your-life-with-macros
@@ -95,11 +95,11 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
 int ParametersHandler::loadFromJSON(Parameters& parameters)
 {
 	SPDLOG_INFO("Before loading: {}", parameters);
-	std::ifstream infile(JSON_PATH);
+	std::ifstream infile(Paths::JSON_PARAMETERS);
 
 	if (!infile.is_open())
 	{
-		SPDLOG_INFO("Could not open infile {}", JSON_PATH);
+		SPDLOG_INFO("Could not open infile {}", Paths::JSON_PARAMETERS);
 		return 1;
 	}
 
@@ -110,7 +110,7 @@ int ParametersHandler::loadFromJSON(Parameters& parameters)
 	}
 	catch (json::exception& ex)
 	{
-		SPDLOG_ERROR("Error when reading/parsing {}. See exception below.", JSON_PATH);
+		SPDLOG_ERROR("Error when reading/parsing {}. See exception below.", Paths::JSON_PARAMETERS);
 		SPDLOG_ERROR(ex.what());
 		return 2;
 	}
@@ -134,11 +134,11 @@ int ParametersHandler::loadFromJSON(Parameters& parameters)
 
 int ParametersHandler::saveToJSON(Parameters parameters)
 {
-	std::ofstream outfile(JSON_PATH);
+	std::ofstream outfile(Paths::JSON_PARAMETERS);
 
 	if (!outfile)
 	{
-		SPDLOG_INFO("Could not open outfile {}", JSON_PATH);
+		SPDLOG_INFO("Could not open outfile {}", Paths::JSON_PARAMETERS);
 		return 1;
 	}
 

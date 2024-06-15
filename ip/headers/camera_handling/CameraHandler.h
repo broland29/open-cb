@@ -2,6 +2,7 @@
 
 #include "../CommonIP.h"
 #include "../file_handling/FileHandler.h"
+#include "../com/headers/Paths.h"
 
 #include <QThread>
 #include <QImage>

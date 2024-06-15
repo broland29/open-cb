@@ -1,19 +1,13 @@
 #pragma once
 
 #include "AbstractClassifier.h"
-#include "../CommonIP.h"
-#include <fstream>
-#include "../Parameters.h"
 
-#define TRAIN_SCRIPT_PATH "C:\\open-cb\\ip\\sources\\classification\\cnn_train.py"
-#define TEST_SCRIPT_PATH "C:\\open-cb\\ip\\sources\\classification\\cnn_test.py"
-#define CLASSIFY_BOARD_SCRIPT_PATH "C:\\open-cb\\ip\\sources\\classification\\cnn_classify_board.py"
 
 class ConvolutionalNeuralNetwork : public AbstractClassifier
 {
 public:
-	int epochs;
-	bool applyAugmentation;
+	int epochs;  // parameter
+	bool applyAugmentation;  // parameter
 
 private:
 
@@ -31,6 +25,6 @@ public:
 	int load() override;
 
 private:
-	// map internal encoding (0, 1, ...) to external (see ENCODINGS in Common.h)
+	// map internal encoding (0, 1, ...) to external ("WF", "WP", ...) based on how script encodes!
 	QString internalToExternal(int encoding);
 };

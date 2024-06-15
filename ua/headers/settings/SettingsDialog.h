@@ -12,7 +12,7 @@
 #include "ComboBoxParameter.h"
 #include "LineEditParameter.h"
 #include <iterator>
-#include "../ip/headers/Parameters.h"
+#include "../com/headers/Parameters.h"
 #include "../Style.h"
 
 #include <spdlog/spdlog.h>
