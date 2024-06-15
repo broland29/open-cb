@@ -33,12 +33,46 @@ int ConvolutionalNeuralNetwork::test()
 	std::string command = "conda run --no-capture-output -n rolienv2 python " +
 		Paths::CNN_TEST_SCRIPT +										// argv[0]
 		std::string(" ") + std::string(Paths::TEST_FOLDER) +			// argv[1]
-		std::string(" ") + std::string(Paths::CNN_FOLDER);				// argv[2]
+		std::string(" ") + std::string(Paths::CNN_FOLDER) +				// argv[2]
+		std::string(" ") + std::string(Paths::CNN_PATH_CONF_MATRIX);	// argv[3]
 	SPDLOG_TRACE("Executing command {}", command);
 
 	int ret = system(command.c_str());
 	SPDLOG_TRACE("Command returned {}", ret);
-	return ret;
+
+	if (ret != 0)
+	{
+		return ret;
+	}
+
+	std::ifstream infile(Paths::CNN_PATH_CONF_MATRIX);
+	if (!infile.is_open())
+	{
+		SPDLOG_ERROR("Could not open {}", Paths::CNN_PATH_CONF_MATRIX);
+		return 1;
+	}
+
+	int classCount;
+	infile >> classCount;
+
+	std::vector<std::string> encodings(classCount);
+	for (int i = 0; i < classCount; i++)
+	{
+		infile >> encodings[i];
+	}
+
+	std::vector<std::vector<int>> confusionMatrix(classCount, std::vector<int>(classCount));
+	for (int i = 0; i < classCount; i++)
+	{
+		for (int j = 0; j < classCount; j++)
+		{
+			infile >> confusionMatrix[i][j];
+		}
+	}
+
+	calculateAndLogMetrics(confusionMatrix, encodings);
+
+	return 0;
 }
 
 

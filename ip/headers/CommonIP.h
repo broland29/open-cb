@@ -1,18 +1,18 @@
 #pragma once
 
+#include <opencv2/opencv.hpp>
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
-#include <opencv2/opencv.hpp>
 #include <QString>
 #include <QVector>
 
 using namespace cv;
 
-#define PI 3.14159265
+const double PI = 3.14159265;
 
-#define IMAGE_WIDTH			500
-#define IMAGE_HEIGHT		500
-#define IMAGE_EDGE_SIZE 3
+const int IMAGE_WIDTH = 500;
+const int IMAGE_HEIGHT = 500;
+const int IMAGE_EDGE_SIZE = 3;
 
 
 int inline cellWidth(int borderRight, int borderLeft)
@@ -24,15 +24,6 @@ int inline cellHeight(int borderTop, int borderBottom)
 {
     return (IMAGE_HEIGHT - borderTop - borderBottom) / 8;
 }
-
-
-
-
-
-
-
-
-
 
 
 // Checks if pixel (i,j) is inside img's boundaries

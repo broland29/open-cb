@@ -16,9 +16,10 @@ namespace Paths
 	const std::string BOARD_FOLDER      = "C:\\open-cb\\mem\\img\\brd";  // images for actual classification (cells from one image/board)
 	const std::string GRAB_FOLDER       = "C:\\open-cb\\mem\\img\\grb";  // images grabbed by CameraReader, but not yet used
 
-	const std::string CNN_TRAIN_SCRIPT = "C:\\open-cb\\ip\\sources\\classification\\cnn_train.py";
-	const std::string CNN_TEST_SCRIPT = "C:\\open-cb\\ip\\sources\\classification\\cnn_test.py";
+	const std::string CNN_TRAIN_SCRIPT			= "C:\\open-cb\\ip\\sources\\classification\\cnn_train.py";
+	const std::string CNN_TEST_SCRIPT			= "C:\\open-cb\\ip\\sources\\classification\\cnn_test.py";
 	const std::string CNN_CLASSIFY_BOARD_SCRIPT = "C:\\open-cb\\ip\\sources\\classification\\cnn_classify_board.py";
+	const std::string CNN_PATH_CONF_MATRIX		= "C:\\open-cb\\mem\\cnn\\conf_matrix.txt";
 
 	const std::string JSON_PARAMETERS = "C:\\open-cb\\mem\\per\\persistence.json";
 }

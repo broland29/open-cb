@@ -2,6 +2,8 @@
 
 #include <QVector>
 #include <QString>
+#include <sstream>
+#include <iomanip>
 
 #include "../com/headers/Paths.h"
 #include "../com/headers/Parameters.h"
@@ -30,4 +32,10 @@ public:
 	virtual int load() = 0;
 
 private:
+
+protected:
+	void calculateAndLogMetrics(
+		std::vector<std::vector<int>> confusionMatrix,		// confusionMatrix[actualClass][predictedClass]
+		std::vector<std::string> encodings					// encodings to be printed in logging (associated by index)
+	);
 };

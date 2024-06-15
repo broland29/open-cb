@@ -39,9 +39,4 @@ protected:
 		std::map<std::string, int> labelsAndCounts,			// number of images grouped by labels
 		std::string setType									// "train", "validation", "test"
 	);
-
-	void calculateAndLogMetrics(
-		std::vector<std::vector<int>> confusionMatrix,		// confusionMatrix[actualClass][predictedClass]
-		std::vector<std::string> encodings					// encodings to be printed in logging (associated by index)
-	);
 };
