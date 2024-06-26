@@ -30,8 +30,8 @@ int main(int argc, char* argv[])
 	QThread* imageProcessingThread = new QThread;
 
 	// cross - thread communication
-	QObject::connect(imageProcessing, &ImageProcessing::previewImageReadyLeftSignal, mainWindow, &MainWindow::previewImageReadySlotLeft);
-	QObject::connect(imageProcessing, &ImageProcessing::previewImageReadyRightSignal, mainWindow, &MainWindow::previewImageReadySlotRight);
+	QObject::connect(imageProcessing, &ImageProcessing::previewImageReadyLeftSignal, mainWindow, &MainWindow::previewImageReadyLeftSlot);
+	QObject::connect(imageProcessing, &ImageProcessing::previewImageReadyRightSignal, mainWindow, &MainWindow::previewImageReadyRightSlot);
 
 	QObject::connect(mainWindow, &MainWindow::validateMoveSignal, validationAndResponse, &ValidationAndResponse::validateMoveSlot);
 	QObject::connect(mainWindow, &MainWindow::discardMoveSignal, validationAndResponse, &ValidationAndResponse::discardMoveSlot);

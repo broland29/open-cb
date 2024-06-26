@@ -1,24 +1,6 @@
 \chapter{Detailed Design and Implementation}
 \pagestyle{fancy}
 
-{\color{blue}Together with the previous and next chapter takes about 70\% of the paper.\\}
-
-
-The purpose of this chapter is to document the developed application such a way that it
-can be maintained and developed later. A reader should be able (from what you have written
-here) to identify the main functions of the application.
-
-The chapter should contain (but not limited to):
-\begin{itemize}
-	\item  a general application sketch/scheme,
-    \item  a description of every component implemented, at module level,
-    \item  class diagrams, important classes and methods from key classes.
-\end{itemize}
-
-\section{High Level Overview}
-\subsection{Black Box}
-\subsection{Users}
-
 \subsection{Users and Use Cases}
 
 From the Vision we can derive that we have two types of users. The main one will simply be called \b{User}. By this, we refer to people who download the software, set it up and want to use it. One such user can use the system for many use cases, which can be grouped into categories:
@@ -54,34 +36,117 @@ These two actors and the associated use cases can be seen on Figure \ref{fig:use
 \end{figure}
 
 
-\section{Dependencies}
-\section{Module Overview and Communication}
+
+% ------------------------------------------------------------------------------------------- %
+% --------------------------------- User Application Module --------------------------------- %
+% ------------------------------------------------------------------------------------------- %
+
+\section{Modules and Communication}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{figs/black-box.png}
+    \caption{Black box of the system and its modules}
+    \label{fig:black-box}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figs/signals-slots.png}
+    \caption{Important signals and slots}
+    \label{fig:signals-slots}
+\end{figure}
+
 \section{User Application Module}
 
+The User Application Module provides a Graphical User Interface for the user, as well as serves as the main module, given that our application is a Qt-based desktop application. As a result of this, class \t{UserApplication} is more than just a wrapper of other UI-related classes: the main loop of the whole application is the event loop provided by its \t{run} method. The UI package on itself is simple, see Figure \ref{fig:class-ua}. Two separate windows are available, the main window and the settings window, which will be described in the next paragraphs.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figs/class_ua.png}
+    \caption{Classes of package \t{ua}}
+    \label{fig:class-ua}
+\end{figure}
 
+As mentioned before, everything starts in \t{UserApplication}. This application uses an instance of the \t{MainWindow} class. Figure \ref{fig:main-window} shows how this appears to the user. \t{MainWindow} inherits from \t{QMainWindow}, and is a \t{Q\_OBJECT}, since it has signals and slots. The goal is to have a simple UI, so I tried to use the simplest and most suitable widgets to build up this window. Unmodifiable texts (text which might change through code but not through the user directly editing it) are displayed in \t{QLabel}s. Buttons are of type \t{QPushButton}. Dropdowns in Qt come in the form of \t{QComboBox}es. And with some trickery, these elements were enough.
 
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{figs/main-window.PNG}
+    \caption{The main window}
+    \label{fig:main-window}
+\end{figure}
+
+All the elements are grouped in layouts so that they are placed as intended. There are three kinds of layouts used, \t{QHBoxLayout} for horizontal, \t{QVBoxLayout} for vertical alignment of widgets, and \t{QGridLayout} for matrix-like organization. These are not declared in the header file. The header contains only the elements that need to be accessed later, and layouts are not part of this category. To make layouts have backgrounds (which is important for aesthetics, but also for debugging), a typical Qt pattern is used, associating each layout with a ``dummy'' widget. The steps for adding widgets to the application/ building up one block of the window typically are:
+
+\begin{enumerate}
+    \item Find an existing layout and associated widget, or define new ones. \\
+    \t{newWidget = new QWidget();} \\
+    \t{newLayout = new QVBoxLayout(newWidget);}
+
+    \item If you chose the second option and it is needed, define the layout's size and color. \\
+    \t{newWidget->setFixedHeight(height);} \\
+    \t{newWidget->setFixedWidth(width);} \\
+    \t{newWidget->setFixedSize(width, height);} \\
+    \t{newWidget->setStyleSheet(styleSheetName);}
+    
+    \item Instantiate your widgets. Different types of widgets have different signature constructors. \\
+    \t{newLabel = new QLabel("text");} \\
+    \t{newComboBox = new QComboBox();} \\
+    \t{newComboBox->addItem("option");} \\
+    \t{newButton = new QPushButton("text");}
+    
+    \item Add the widgets to the layout. \\    
+    \t{newLayout->addWidget(newLabel);} \\
+    \t{newLayout->addWidget(newComboBox);} \\
+    \t{newLayout->addWidget(newButton);} \\
+
+    \item If a new layout was defined, add it to a higher-level layout.\\
+    \t{higherLevelLayout->addWidget(newWidget);}
+\end{enumerate}
+
+In the project, there are examples of all layouts and widgets necessary. Figure \ref{fig:main-window-skeleton} shows a ``skeleton'' version of the main window - this is the programmer's perspective. Widgets are grouped by the functionality they serve to make the GUI more intuitive.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{figs/main-window-skeleton.png}
+    \caption{The skeleton of the main window}
+    \label{fig:main-window-skeleton}
+\end{figure}
+
+The camera previews are shown in \t{cameraOneImageLabel} and \t{cameraTwoImageLabel}. As their name suggests, they are \t{QLabel}s, but without text. One may set a picture as ``the background'' of a label by calling \t{label->setPixmap(pixmap)}, where pixmap is of type \t{QPixmap}, which we can get from a \t{QImage}. The flow of updating the image labels is the following:
+\begin{enumerate}
+    \item \t{previewImageReadySignal(QImage(...))} in \t{CameraHandler (IP)}
+    \item 
+\end{enumerate}
+
+% ------------------------------------------------------------------------------------------- %
+% --------------------------------- Image Processing Module --------------------------------- %
+% ------------------------------------------------------------------------------------------- %
 
 \section{Image Processing Module}
 
-IP is responsible for everything related to images: getting, processing, saving and deleting them. The main class \t{ImageProcessing} provides an entry point for all these functionalities. \t{ImageProcessing} should not do too much on itself. It should wait for signals from the User Application Module, delegate the task of processing the request to the right subcomponent and send back the response from these. In the middle, there might be some mapping needed, but this should be minimal and for a reason.
+In the source code, the Image Processing Module can be found in a package/folder called \t{ip} that is responsible for everything related to images: getting, processing, saving and deleting them. The main class \t{ImageProcessing} provides an entry point for all these functionalities. The \t{ImageProcessing} does not do lots of computations, it rather serves as a wrapper for other, more specific IP classes. So the main goal is to wait for user requests in the form of signals from UA and call the appropriate subcomponent. 
 
-Class \t{ImageProcessing} has two \t{CameraHandler}s and two \t{QThread} for them, a \t{Parameters} field containing parameters and utilities, a \t{Classifier} and two \t{Configurer} fields. There is also a mutex for \t{cv::imshow}, but this is just a small detail. In the following, all these subcomponents will be discussed in detail.
+The main classes of IP can be seen in Figure \ref{fig:class-ip}. Here, the simple arrows show the ``uses'' relation, for example, \t{ImageProcessing} uses the \t{Configurer} class, \t{Configurer} uses the \t{BFS} class. The empty-headed arrows show ``implements'' relations, like \t{CxxClassifier} implements \t{AbstractClassifier}, \t{KNearestNeighbors} implements \t{CxxClassifier}.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{figs/class_ip.png}
     \caption{Classes of package \t{ip}}
-    \label{fig:classip}
+    \label{fig:class-ip}
 \end{figure}
 
-% ------------------------------------------------------------------------------------------------------%
+Now let's take a more detailed look at each subcomponent and see what functionalities they provide.
+
+
+% --- Camera Handling --- %
 
 \subsection{Camera Handling}
 
 Camera handling is the process of dealing with cameras with the help of OpenCV, listening to requests for images, fulfilling these requests, and continuously providing images for the GUI as a preview of what cameras see.
 
-An instance of the \t{CameraHandler} is capable of handling one camera. Its field index is directly used as an input for OpenCV's \t{VideoCapture}. The field \t{isRunning} is self-explanatory. Field \t{isImageRequested} is the flag through which a request to save a frame can be made. After constructing, the \t{doWork} function shall be called. It is expected that a \t{CameraHandler} instance is run in a separate thread. 
+An instance of the \t{CameraHandler} is capable of handling one camera. Its field index is directly used as an input for OpenCV's \t{VideoCapture} object. The field \t{isRunning} is self-explanatory. Field \t{isImageRequested} is the flag through which a request to save a frame can be made. After constructing, the \t{doWork} function shall be called. It is expected that a \t{CameraHandler} instance is run in a separate thread, which executes this \t{doWork} function. 
 
 The steps of getting an image through \t{CameraHandler} are the following:
 
@@ -89,7 +154,7 @@ The steps of getting an image through \t{CameraHandler} are the following:
     \item Create a \t{SignalWaiter} instance: pass the \t{CameraHandler}, where to save the image, and additionally a \t{signalWaiterName}, for debugging.
     \item Call \t{start} on the \t{SignalWaiter} instance.
     \item Check the return value of start, if 0, continue.
-    \item Try reading the image from path given by the \t{SignalWaiter} instance. If successful, done.
+    \item Try reading the image from the path given by the \t{SignalWaiter} instance. If successful, done.
 \end{itemize}
 
 For convenience, all this is wrapped in \t{ImageProcessing}'s \t{getImage} method. You may ask, what is all this hassle for? Well, there are many ways in which getting an image can go wrong. The request may be made and a response might never come, or come too late. For this, there is a timer embedded in \t{SignalWaiter}. Also, getting the image is the same for every process, but what we do with it, including where we save it, differs in every use case. So this is a unified way of getting the image, which can then be moved or processed in any way. The big goal is to reduce the overhead of \t{CameraHandler}, since it also has to send frames periodically to the GUI, and low frame rates are visible to the human eye and very annoying.
@@ -97,7 +162,7 @@ For convenience, all this is wrapped in \t{ImageProcessing}'s \t{getImage} metho
 Since concurrency might appear, access to \t{isImageRequested} is synchronized with \t{isImageRequestedLock}. Signal \t{previewImageReadySignal} is emitted periodically, without waiting for a request. If we have a frame, we send it to the preview panel. There will be two \t{CameraHandler} instances, one for each camera. While requests might come somewhat at the same time, the preview frames do not need to be synchronized.
 
 
-% ------------------------------------------------------------------------------------------------------%
+% --- Configuration --- %
 
 \subsection{Configuration}
 
@@ -106,20 +171,19 @@ Configuration refers to getting the corners of the chessboard. This is a prelimi
 Class \t{Configurer} represents a subcomponent which wraps every functionality through three functions:
 \begin{itemize}
 	\item \t{configure}: gets the corners of the chessboard
-    \item \t{cropAndLabel}: cuts the board image into cells and puts them in folders based on provided information (known encodings)
-    \item \t{prepareCellImages}: cuts the board, but this time to prepare for the classification of the board (unknown encodings)
+    \item \t{cropAndLabel}: cuts the board image into cells and puts them in folders based on provided information (known encodings, which will come from the user, as later explained)
+    \item \t{prepareCellImages}: cuts the board, but this time to prepare for the classification of the board (unknown encodings, these will need to be guessed)
 \end{itemize}
 
 In the following, we will talk about the classes wrapped inside \t{Configurer}, by going through these three functions and what happens in them.
 
 
-
 \subsubsection{Function \t{configure}}
 \paragraph{Filtering}
 
-First, we get the source image. This is a color image, however, for Canny, we will need a preprocessed binary image. The first step \t{Configurer} does in \t{configure} is to resize the image to a fixed size (500x500), convert it to grayscale and apply a Gaussian filter to reduce the noise (\t{Filter}). The results are self-explanatory:
+First, we get the source image. This is a color image, however, for Canny, we will need a preprocessed binary image. The first step \t{Configurer} does in \t{configure} is to resize the image to a fixed size (500x500), convert it to grayscale and apply a Gaussian filter to reduce the noise (\t{Filter}). The result is a slightly blurred image as shown in Figure \ref{fig:conf_initial}:
 
-\begin{figure}[H]
+\begin{figure}[ht]
     \centering
     \begin{subfigure}[b]{0.475\textwidth}
         \centering
@@ -137,13 +201,14 @@ First, we get the source image. This is a color image, however, for Canny, we wi
 \end{figure}
 
 
-\paragraph{Conversion, morphological Operations}
+\paragraph{Conversion, Morphological Operations}
 
-Next, we take the image from the previous step and convert it to a binary image (\t{Conversion}). While a binary image could be stored in a boolean matrix, or a bitmap, or whatever fanciness, it is easier to use a \t{Mat\_<char>}, just as in the case of the grayscale images, but with values ``restricted'' to either 0 (object pixel) or 255 (non-object, background pixel). This way it can be easily visualized with \t{imshow}.
+Next, we take the image from the previous step and convert it to a binary image (class \t{Conversion}). While a binary image could be stored in a boolean matrix, or a bitmap, or whatever fanciness, it is easier to use a \t{Mat\_<char>}, just as in the case of the grayscale images, but with values ``restricted'' to either 0 (object pixel) or 255 (non-object, background pixel). This way it can be easily visualized with \t{imshow}.
 
-To further reduce the noise, we apply the closing operation (\t{Morphological}). This is no more than a dilation followed by an erosion. This helps to get rid of smaller noise created by illumination and smaller details of the chessboard border which are irrelevant anyway.
+To remove possible background noise, an interesting enhancement was added at a late stage of the project. The notion of image edge pixels is defined as pixels that are at IMAGE\_EDGE\_SIZE (3 pixels) distance from the edge of the image. It is a precondition for the algorithm to have the whole chessboard visible, and to have it on a light uniform background. However, the background might not cover the whole image, and in this case, the BFS step might remove the possible noises: the image edge pixels are iterated, and where a black pixel is found, it is assumed that it is noise, and a BFS is started from it, transforming all the nearby black pixels into white ones.
+
+After this step, to further reduce the noise, we apply the closing operation (class \t{Morphological}). This is no more than a dilation followed by an erosion. This helps to get rid of smaller noise created by illumination and smaller details of the chessboard border which are irrelevant. The results are shown in Figure \ref{fig:prep_canny}.
  
-
 \begin{figure}[H]
     \centering
     \begin{subfigure}[b]{0.475\textwidth}
@@ -163,7 +228,7 @@ To further reduce the noise, we apply the closing operation (\t{Morphological}).
 
 \paragraph{Canny}
 
-Class \t{Canny} contains the implementation of Canny Edge Detection, based on Image Processing, Laboratory Works\cite{ip_labs}. The input of the method is assumed to be an already noise-filtered grayscale image (in my case, I applied a simple Gaussian filter). I get the magnitude and gradient of pixels from the gradients, which are achieved by applying convolution with a Sobel matrix (in both directions). The angles are quantized into eight numbers, which later on are used for eliminating pixels that do not represent a local maximum based on their magnitude and neighbors in the gradient and opposite gradient direction.
+Class \t{Canny} contains the implementation of Canny Edge Detection, based on Image Processing, Laboratory Works \cite{ip_labs}. The input of the method is assumed to be an already noise-filtered grayscale image, just as described in previous steps. The magnitude and gradient of pixels from the gradients are extracted, which are achieved by applying convolution with a Sobel matrix, in both x and y directions. The angles are quantized into eight numbers, which later on are used for eliminating pixels that do not represent a local maximum based on their magnitude and neighbors in the gradient and opposite gradient direction.
 
 After this, two-level thresholding is done (on the image of magnitudes), with hard-coded values 100 and 200. These could be adaptive or user-defined, but for now, they are hardcoded. Based on these thresholds, pixels are re-evaluated and given a ``naming'', as shown in Table \ref{tab:two-level-thresholding}. The new value could have been arbitrary, but the chosen convention must be respected further on. These values are nice since if we would like to, we could display the thresholded image, in a way that makes sense.
 
@@ -192,7 +257,7 @@ All this is necessary for the edge extension step, in which weak edge pixels are
 
 \paragraph{Hough}
 
-As simple as it might seem, the implementation of the Hough line detection algorithm came with more trouble than expected. First, the signature of the base method was hard to define. After multiple changes, the current form of the method returns a vector of \t{lineRhoTheta} structures. One such structure encapsulates the two integer values describing a line (as explained in section Hough \ref{analysis:hough}), as well as two methods for easy handling of the lines: \t{drawLine} to illustrate the result, and \t{getIntersection}, since the intersection of the lines is important for us.
+As simple as it might seem, the implementation of the Hough line detection algorithm came with more trouble than expected. First, the signature of the base method was hard to define. After multiple changes, the current form of the method returns a vector of \t{lineRhoTheta} structures. One such structure encapsulates the two integer values describing a line (as explained in Subsection \ref{analysis:hough}), as well as two methods for easy handling of the lines: \t{drawLine} to illustrate the result, and \t{getIntersection} since the intersections of the lines are important for us.
 
 You may ask, why are these intersections important? Well, initially I wanted to use the Hough algorithm to detect all the lines of a chessboard, and the intersection points of these lines would have served as the corner points of the cells. In practice, perfect detection of 18 lines cannot be consistently achieved, especially with my setup. Chess boards also come in all forms and shapes, and most of them have borders (the part around the cells that are not cells, just ``decoration''), so this adds at least 4 unwanted lines in the formulae.
 
@@ -224,16 +289,15 @@ The last steps of configuration are done directly in method \t{configure}. We bu
         \caption {Getting corners}
     \end{subfigure}
     \caption{Intersection of lines from Hough}
-    \label{fig:prep_canny}
+    \label{fig:corner-extraction}
 \end{figure}
-
 
 
 \subsubsection{Function \t{cropAndLabel}}
 
-This function has the purpose of building a training set. The user sets up the chess GUI to resemble what he/ she sees on the board, then presses the \t{cropAndLabel} button. The information from the chess GUI is extracted and passed on to this function through the \t{encodings} parameter. The function has to crop \t{imgOriginal} into cell images and give them names. If parameter \t{isTest} is false, a save operation request is made for each cell image, with the correct folder path. Otherwise the cell images are not saved, they are just displayed.
+This function has the purpose of building a training set. The user sets up the chess GUI to resemble what he/ she sees on the board, then presses the \t{cropAndLabel} button. The information from the chess GUI is extracted and passed on to this function through the \t{encodings} parameter. The function has to crop \t{imgOriginal} into cell images and give them names. If parameter \t{isTest} is false, a save operation request is made for each cell image, with the correct folder path. Otherwise, the cell images are not saved, they are just displayed, enabling the user to test if border sizes are appropriate without messing up the dataset. These functionalities map to two different buttons on the GUI.
 
-At this point, we must assume that corner extraction worked well, and we have the four corner points available. By calling a utility function \t{warpAndRemoveBorder}, we extract from the image the warped region of interest. This is done by using OpenCV's \t{getPerspectiveTransform} and \t{warpPerspective} functions. From the resulting image, we can remove the borders, since the border dimensions are given by the user (or default values are used). For a code snippet, see Appendix \ref{appendix:rectification}. The results look like in Figure \ref{fig:rectification}.
+At this point, we must assume that corner extraction worked well, and we have the four corner points available. By calling a utility function \t{warpAndRemoveBorder}, we extract from the image the warped region of interest. This is done by using OpenCV's \t{getPerspectiveTransform} and \t{warpPerspective} functions. From the resulting image, we can remove the borders, since the border dimensions are given by the user (or default values are used). The results look like in Figure \ref{fig:rectification}.
 
 \begin{figure}[H]
     \centering
@@ -253,7 +317,7 @@ At this point, we must assume that corner extraction worked well, and we have th
     \label{fig:rectification}
 \end{figure}
 
-The name of the files could be arbitrary, as long as it is not repeating (otherwise images would overwrite each other). I chose to compose a meaningful name, so it could help with debugging. The name contains the row and column of the cell, in the main coordinate system. This is achieved through mapping the camera's coordinate system, as explained in Representation and Coordinate Systems \ref{analysis:representation}. The folder path comes from the parameter \t{encodings}, and \t{FileHandler}'s \t{saveImage} utility is called, which will be described later. Some examples of cell pictures can be seen in Figure \ref{fig:cells}.
+The name of the files could be arbitrary, as long as it is not repeating (otherwise images would overwrite each other). I chose to compose a meaningful name, so it could help with debugging. The name contains the row and column of the cell, in the main coordinate system, alongside a timestamp to ensure uniqueness. This is achieved through mapping the camera's coordinate system, as explained in Representation and Coordinate Systems \ref{analysis:representation}. The folder path comes from the parameter \t{encodings}, and \t{FileHandler}'s \t{saveImage} utility is called, which will be described later. Some examples of cell pictures can be seen in Figure \ref{fig:cells}.
 
 \begin{figure}[H]
     \centering
@@ -263,110 +327,101 @@ The name of the files could be arbitrary, as long as it is not repeating (otherw
 \end{figure}
 
 
-
 \subsubsection{Function \t{prepareCellImages}}
 
-This function is very similar to the previous one since it also crops the cell images and saves them. However, this time, the images are saved to a different path, defined by \t{BOARD\_FOLDER\_PATH}, and in their name only contains the string ``board'' and the row and column. This convention is used so that the classifiers can read them later and know which image is tied to which cell; they can later unite the classifications and return a matrix of predictions.
+This function is very similar to the previous one since it also crops the cell images and saves them. However, this time, the images are saved to a different path, defined by \t{Paths::BOARD\_FOLDER}, and in their name only contains the string ``board'' and the row and column. This convention is used so that the classifiers can read them later and know which image is tied to which cell; they can later unite the classifications and return a matrix of predictions.
 
 
-% ------------------------------------------------------------------------------------------------------%
+% --------------------------------- Classification --------------------------------- %
 
 \subsection{Classification}
 
-Classification refers to the classification of cell images and preceding operations, like training and testing the active classifier.
+Classification refers to the classification of cell images and preceding operations, like training and testing the active classifier. This subcomponent's wrapper is called \t{Classifier}. It holds one instance of each classifier: \t{KNearestNeighbors}, \t{SupportVectorMachine} and \t{ConvolutionalNeuralNetwork}. These classifiers implement the \t{AbstarctClassifier} class. Since there were multiple similarities between KNN and SVM implementation, both being written in C++ and directly using OpenCV, the intermediary \t{CxxClassifier} was added to avoid repeating code.
 
-Class \t{AbstarctClassifier} provides a blueprint for classifiers. It specifies methods \t{train}, \t{test}, \t{classifyBoard}, \t{save} and \t{load}. These are linked to direct functionalities, and every classifier is expected to provide an overridden version of these functions.
+At each moment, one of the three classifiers is selected as active. By default, this is KNN. If changes are made to the classification parameters, the affected classifiers are re-instantiated. The user might make a backup for these classifiers to avoid re-training them each session, however, currently, only one backup per type is allowed.
 
-Class \t{Classifier}, similarly to \t{Configurer}, serves as a wrapper for every functionality provided by the underlying classifiers, and servers as an interface for \t{ImageProcessing} to use. Classifiers are instantiated in this class, and there is an active classifier, depending on what the user opts for. Currently, there are three classifiers supported, based on three different algorithms: K Nearest Neighbors, Support Vector Machine and Convolutional Neural Network.
 
+% --- K Nearest Neighbors --- %
 
 \subsubsection{K Nearest Neighbors}
 
-This classifier is the simplest option a user can choose. It is based on the KNN presented in Pattern Recognition Systems. For features, it uses the color histogram, more precisely the three color histograms (blue, green, red) with a given resolution, put ``one after another''. The resolution of the histograms is given by the number of bins, which currently is set to 8. This means that the color value of one channel, ranging from 0 to 255, gets mapped into one of the eight bins, based on where it lies on the scale. The labels are from 0 to 13 or 14, depending if one specifies to unite the free classes or not, but more on this later.
+This classifier is the simplest option a user can choose. It is based on the KNN presented in Pattern Recognition Systems. For features, it uses the color histogram, more precisely the three color histograms (blue, green, red) with a given resolution, put ``one after another''. The resolution of the histograms is given by the \t{numberOfBins} parameter, which by default is set to 8. This means that the color value of one channel, ranging from 0 to 255, gets mapped into one of the eight bins, based on where it lies on the scale. This will result in a feature of length $8 x 3 = 24$.
 
-Both the feature matrix and label matrix are of type \t{int}. This is good for simplicity, but also has other reasons. The class label is used directly as index in many cases. Both matrices are written to and read from the file system using simple \t{ofstream} operations. This way one can see the actual values, and there is no need to artificially convert to images, which when converted back would most probably result in loss of information.
+Such a feature gives acceptable results if the colors of the image hold valuable information regardless of the underlying shape. In our case, we can assume that images of pieces of the same class will have similar features, but we cannot expect a really good outcome, since with such features we completely use the notion of dimensionality. One can imagine that a White Free and a Black Free cell would result in very similar outcomes since one is the vertically flipped version of the other. However, this particular mistake is not a mistake: in the long run, we do not care about the color of a free cell, since this can be deduced from its position, and as the rules of chess go, a free cell is a free cell regardless of its color.
 
-As we know, KNN does not need actual training, it just loads the images and builds the feature matrix and label matrix from it. This happens relatively fast for the tested amount of images. Since the validation set is not used in any form, and the number of images is already low, I chose to append the validation images to the training set. As previously said, the number of classes, and hence the labels may vary. This is because I provided the option to treat classes WF and BF the same way. Both of these classes will be used as free in VAR anyways, and for KNN, the separation just brings a great amount of confusion. Since we talk about color histograms, we completely lose the notion of dimensionality. An image with bottom half black and upper half white (BF) and one like this but flipped horizontally (WF) are pretty much the same for this classifier. This can be seen in the confusion matrix if both classes are used:
+Then why collect white and black free cells in differently labeled folders? Well, for other classification algorithms, this might be desirable. In the testing section, the metrics and outcomes will be discussed. We will see how, to make a fair comparison, at the moment of evaluation white and black free cells will be considered the same class, even if during classification they were separated. The parameter \t{uniteFrees} lets the user decide whether to put these into one category from the beginning or only after the classification, but in the final ``merged'' results it does not make much difference.
 
-\begin{figure}[ht]
-    \centering
-    \includegraphics[width=0.7\textwidth]{figs/design_implementation/confusion_matrix_two_frees.PNG}
-    \caption{Confusion matrix: two frees}
-    \label{fig:confusion_matrix_two_frees}
-\end{figure}
+Depending on this \t{uniteFrees} parameter, the internal labels used by KNN might lie in the range [0,12] or [0,13]. Mapping happens at an upper level, at \t{CxxClassifier}'s \t{externalToInternal} and \t{internalToExternal} methods; this code will be reused in the SVM source code.
 
-The testing phase consists of running the classification on the test set, computing the confusion matrix, and from that computing the total accuracy, as well as per-class precision and recall. After getting the confusion matrix, it is enough to iterate it once: for precision (at class \t{i}) we need the sum on row \text{i}, for recall we need the sum on column \t{i}, and for accuracy we need ``everything''. As expected, the results are not at all impressive: this is a very naive approach, and the biggest drawback is the feature selected. Chess pieces are distinguished by their form, not their color.
+During training, the images are loaded, transformed into features, and stored. This is not a conventional training, KNN can be considered a ``lazy'' model, and a very memory-hungry one. While this step might go relatively fast, at the moment of prediction, a distance from each input image's feature has to be calculated and sorted. With the increase in the number of images, the waiting time increases considerably as well. 
 
+Overall, I chose this model to have one classifier done fast, to help me think of how it needs to be integrated and which are the functionalities that could be extracted into an interface, to deal with changes (i.e. addition of new models, low coupling). The KNN algorithm is not necessarily the one to get blamed here, the choice of feature is what makes this solution inferior compared to SVM and CNN.
+
+
+% --- Support Vector Machine --- %
 
 \subsubsection{Support Vector Machine}
 
-Implementing a Support Vector Machine classifier implies dealing with advanced mathematics. If there had been only two classes, and two features, like the classical example of red and blue points, I would have given it a run. However, we have 14 classes and features of high dimensions. There is a high chance that the input is not linearly separable. It is hard to visualize things at this complexity, so debugging is very hard. Since this classifier is only a small part of the project, I chose to use an already implemented SVM, namely the one given by OpenCV.
+While it looks like support vector machines are getting out of fashion, they still hold their ground. Implementing an SVM involves high-level mathematics, which comes with the risk of introducing hard-to-find mistakes and requires extensive study. Instead of implementing my own SVM and writing code to extract features to feed it, I chose to experiment with OpenCV's implementation of SVM and the ORB features.
 
-To use the OpenCV SVM, one has to include the header \t{opencv2/ml.hpp}. This interface gives a simple method \t{ml::SVM::create} to get a \t{Ptr<ml::SVM>}. if I understood correctly, this \t{Ptr} is OpenCV's implementation of smart pointers. So I have a field of this type in class \t{SupportVectorMachine}, and create is called when training (we want to avoid doing things in the constructor since the constructor gets called all the time, while the \t{train} method might never be invoked during a session). After creation, you have to set the type, the kernel and the term criteria. Having the SVM and the training images ready, a simple high-level function called \t{train} does all the job for us.
+Unfortunately, OpenCV's features and classifiers are poorly documented, and it is hard to find resources that truly explain how to use them. A kind Stack Overflow user explains \href{https://stackoverflow.com/questions/29870726/brief-implementation-with-opencv-2-4-10}{in a question thread} that using one such classifier usually involves the following steps:
 
-For testing, I used the \t{predict} method on the whole test set, then computed the confusion matrix from this. This way, I had the chance to use the same \t{calculateAndLogMetrics} function as in the case of KNN, so this is a somewhat ``fair'' comparison. I could have used the utilities given by \t{ml::SVM} to calculate metrics, but, at least for me, it seemed that these are very superficially documented and, hence hard to set up.
+\begin{enumerate}
+    \item \b{Finding some interesting (feature) points in an image.} Usually, this is done with \t{FeatureDetector}s that return a vector of key points based on different criteria. I experimented with SIFT detectors using the \t{SIFT::create} method. The problem was that this yielded different amounts of key points for different images. This means variable length features, which is not desirable. The workaround suggested by the assistant teacher was to hardcode a grid of key points. While this might sound weird at first, it makes sense: we will look at fixed-distance pixels and see what ``significance'' they have.
+     
+    \item \b{Finding a way to describe the key points.} For this task, \t{DescriptorExtractor}s come in serve. Trial and error led to the choice of ORB. Such a descriptor can be instantiated using \t{ORB::create}, returning a \t{Ptr<ORB>}, which is OpenCV's implementation of smart pointers. We can then directly call \t{compute} on this instance, giving us a descriptor (we previously called this a feature vector).
+    
+    \item \b{Using the features and feeding it to an algorithm.} While OP mentions feature matching using \t{DescriptorMatcher}, I found a way to feed these feature vectors to the OpenCV SVM. We get an SVM instance with \t{ml::SVM::create}, and set different parameters, like a linear kernel, a maximum number of iterations and an accuracy threshold.
+\end{enumerate}
 
-Both the training and the testing are done not directly on the images, but on features extracted by a feature extractor. Header \t{opencv2/xfeatures2d.hpp} comes with a set of such feature extractors. To get it to work, one has to install \t{opencv4[contrib]}. I chose ORB since it was the easiest to get to work and seemed to get more features than BRIEF. Even like this, there was one huge problem: feature extractors needed a set of key points to extract features, and keypoint detectors gave a different amount of key points for different images, and in some cases, found no key points at all. Since we want to use these descriptors as features in classification, this is unacceptable.
+To compile and run all this, the \t{opencv2/ml.hpp} header had to be included, alonside the \t{opencv2/xfeatures2d.hpp} header, which required \t{opencv4[contrib]} installation. There were some sacrifices I had to make to fit all the premade interfaces. For example, the features had to be of type float for SVM to accept it. This meant that I could not fit the feature matrix and class labels into \t{CxxClassifier}, and I had to write some very similar code in both the KNN and SVM source code due to slight type differences. While the used SVM has many high-level functions, for evaluation I chose to go with a naive implementation of calling predict separately on each image and building my confusion matrix, since the available functions were too high-level and not transparent enough.
 
-The workaround I did was the idea of my thesis supervisor: instead of using a key point detector, I hard-coded a matrix of key points. This matrix is used on every (grayscale) image, when training or when testing. This way the feature is of fixed length, the feature matrix is a proper matrix, and \t{ml::SVM} is happy.
 
-I have to admit that this classifier is my least favorite from the project since I could not deep dive into its implementation to fully understand and fine-tune it. Also, there is a bug when calling \t{load}, about which I could not find any information on the internet. It is indeed a big implementation, giving a lot of options, but what are these used for, remains a mystery.
-
+% --- Support Vector Machine --- %
 
 \subsubsection{Convolutional Neural Network}
 
-As a programmer, when I hear about Artificial Intelligence, I immediately think about Python, Tensorflow and Keras. For the problem of multi-class classification of images, Convolutional Neural Networks are the winners. Even though my project started as a pure C++ program, when I reached the point of adding a CNN to the project, I had to go with Python. I had some previous experience with these libraries, and I know that many people are going through the same struggles trying to set up and use a CNN in Python.
+Although there are C++ alternatives, for implementing a Convolution Neural Network I chose to use Python and Keras/Tensorflow. This means a slight overhead since the C++ code has to call a Python script (through a \t{system} call). While in some cases I found it enough to use the console for printing messages, in the case of board classification and testing it was necessary to return more than just an integer to the C++ code. This was done through files, which is another overhead, but since we talk about small files and C++, this mostly goes unseen.
 
-There are three Python scripts, each one fulfilling a functionality: \t{cnn\_train.py}, \t{cnn\_test.py} and \t{cnn\_classify\_board.py}. We need two-way interaction: a modality to call these scripts and pass arguments to them, and a way to get a response from them. For the first issue, I used the \t{system} method. As this is from C and executes commands directly like in a command line, many people suggest avoiding it. However, I chose it because of its simplicity, and because the user does not influence the command executed, as it is known at compile-time (hardcoded).
+The three scripts \t{cnn\_train.py}, \t{cnn\_test.py} and \t{cnn\_classify\_board.py} along with \t{cnn\_common.py} for methods and libraries used in multiple scripts compose the CNN classifier. To successfully run these scripts, one needs to set up an environment with the proper packages and versions, which often is a hassle. GPU usage is recommended as well, although we have a small model here.
 
-The \t{system} command also returns the return value from the scripts. This is good for error checking. But in the case of \t{cnn\_classify\_board.py}, we need to retrieve a whole matrix of encodings, and for this, we need something extra. I chose the easiest solution I could have come up with, which is storing the result in a text file. Then, if the script returns a success code of 0, the C++ function can go on and read the values from the given text file.
+\begin{enumerate}
+    \item \b{cnn\_train.py} takes five arguments: the training images' directory, the validation images' directory, the directory where the model needs to be saved, the number of epochs training should go on and if augmentation shall be applied. The last two are user-defined parameters. The augmentation layers include random horizontal flipping (vertical makes no sense in this context), slight random rotations, and contrast and brightness changes. Since we are in the Python world, we can use \t{pyplot} to visualize the data and some sample augmentations. The model is taken directly from the Tensorflow tutorials page. From my experience, changing and fine-tuning such models requires advanced knowledge of CNNs and plenty of time, usually with not-so-satisfying results from amateurs like me. The model is saved implicitly since the other scripts need to load it somehow.
+    
+    \item \b{cnn\_test.py} loads the images in a similar fashion as \t{cnn\_train.py}. Evaluation of the model is done with \t{predict}, however, for building the confusion matrix, a \t{predict} call was needed as well. With predictions and real labels one near another, the confusion matrix was manually built to obey the rules imposed by \t{AbstractClassifier}. Special care had to be taken since the internal encodings were based on the folder names ordered alphabetically, not in the order they were processed in the C++ code. With such a confusion matrix written to a text file, when returning to the C++ world we can call the same \t{calculateAndLogMetrics} functions as for KNN and SVM, in the hope of equal treatment.
+    
+    \item \b{cnn\_classify\_board.py} is simple if the previous two scripts are understood. It just takes the board images and writes the predictions into a file.
+\end{enumerate}
 
-Since training and testing happen in different scripts, the model has to be saved after training, so we can load it in the test script. This was, functionalities ``save'' and ``load'' for the CNN are implicit.
-
-Some things are needed in multiple scripts, like libraries \t{tensorflow} and \t{sys}, parameters \t{img\_width} and \t{img\_height}, or functions \t{load\_images} and \t{plot\_samples}. These are put in a separate script \t{cnn\_common.py} and included in all other scripts.
+It was a good idea to include a CNN into the project since nowadays this is the go-to solution for image classification. The drawbacks were that I am far less familiar with Python, and every line of code required three googling. Even with such a powerful classifier we will see that the results are not the brightest, and this is due to the nature of the classification: 13 classes with small images and a tiny handmade dataset - no wonders should be expected.
 
 
-% ------------------------------------------------------------------------------------------------------%
+% --------------------------------- File Handling --------------------------------- %
 
 \subsection{File Handling}
 
-Since there are reoccurring patterns when file handling is needed, and this is a part of the project that is (unfortunately) highly OS dependent, operations on files are grouped in classes \t{FileHandler} and \t{ParametersHandler}. Every function they provide is static, so there is no need to have an instance of them to call them.
+The operations on file systems are often OS-specific and represent volatility. While some save/load operations can be done easily with higher-level functions, error handling requires complex logic. So it is worth grouping these operations into a separate module. The \t{file\_handling} submodule currently only contains one class, \t{FileHandler}.
+
+
+% --- FileHandler --- %
 
 \subsubsection{Class \t{FileHandler}}
 
-This class mainly specializes in handling images, in labeled and simple folders. Labeled folder refers to folders that have as structure a base folder, which has 14 subfolders, with the names identical to the labels (\t{WF}, \t{WP}...). A simple folder has just one base folder and files directly in it. An example would be the folder for board images. The methods provided come in different shapes and forms, to read to and write from the disk, as well as manipulate the files.
+Heavily relying on \t{Paths}, class \t{FileHandler} does operations on OpenCV images organized into a special hierarchy. We call folders\t{TEMPORARY\_FOLDER}, \t{TRAIN\_FOLDER}, \t{VALIDATION\_FOLDER} and \t{TEST\_FOLDER} label folders. This is because they all share the same internal structure: each one has 14 subfolders, containing images belonging to one known label. This is how images are prepared for classification. \t{TEMPORARY\_FOLDER} contains images that are labeled due to the structuring, but not yet associated with a data set.
 
-The function \t{shuffleAndSplit} does exactly what its name suggests. It gathers all the (``labeled'') images and re-distributes them. Images are taken from folders \t{TEMPORARY\_FOLDER\_PATH}, \t{TRAIN\_FOLDER\_PATH}, \t{VALIDATION\_FOLDER\_PATH}, \t{TEST\_FOLDER\_PATH}. Images are shuffled randomly, then based on parameters \t{trainSplit}, \t{validationSplit} and \t{testSplit}, x percentage of photos are put in every respective folder. The actual movement of files is just renaming them, and images are not loaded, just their names are shuffled and used in the renaming process.
+The function \t{shuffleAndSplit} gathers all the images from all of the label folders in one vector, shuffles the vector and then distributes the images in training, validation and testing sets. The amount of images put into one ``partition'' depends on the input parameters, which should represent percentages, and are manipulable by the user. The moving operation is done optimally: instead of save and delete operations, the files are simply renamed. To avoid parsing (which often leads to hard-to-trace errors), I settled with some redundancy and used a structure called \t{PathInfo} to store all the information needed for the renaming operations ready to be used directly.
 
-The function \t{clearAllImages} deletes all images from every folder. \t{readLabelFolderImages} returns a vector of image-label pairs, while \t{readBoardImages} returns an 8 by 8 array of (cell) images. \t{FileHandler} also provides a wrapper for \t{imwrite} called \t{saveImage}, with all the necessary error checking, and a function \t{boardImageName} to be used as a convention by every component saving or loading a board image. The other functions are just helpers.
-
-\subsubsection{Class \t{ParametersHandler}}
-
-Similarly to \t{FileHandler}, \t{ParametersHandler} is an all-static class. Parameters in OpenCB refer to variables that might be changed by the user, through \t{SettingsDialog}. These parameters shall be saved when requested and when the application closes (better safe than sorry), and loaded when the application starts. You can also call this the persistence of the application.
-
-I chose to save the parameters in a human-readable way. This is more memory-heavy, but we are talking about a few bytes only. My choice was JSON format since it is well-known among programmers, and it looks nicer than XML (personal preference). This way, the user may edit the file \t{persistence.json} directly, and it will affect the application. So it also serves as a configuration file.
-
-I used the Niels Lohmann's JSON for Modern C++ library \cite{nlohmann}. Only two functionalities are needed: reading and writing. Functions \t{loadFromJSON} and \t{saveToJSON} do exactly this. Class \t{Parameters} has a field \t{parameters} which models the JSON file. It is a mapping from \t{QString} to \t{Variant}, a custom type equivalent to \t{std::variant<bool, int, double, std::string>}. This might already be overkill, but it works and makes the addition of new parameters easy and standardized. \t{ParametersHandler}'s \t{loadFromJSON} updates one such parameter. I say updates, not returns, because it relies on previously set parameter types to cast and check for errors as needed. We might want to be extra safe in this code segment since we are dealing with user input.
-
-The function \t{saveToJSON} is less precoutious since at this point we have a valid \t{parameters} map which we just want to save to disk. It has a lot of resemblance with the previous function.  
+The function \t{clearAllImages} erases every image from \t{TEMPORARY\_FOLDER}, \t{TRAIN\_FOLDER}, \t{VALIDATION\_FOLDER}, \t{TEST\_FOLDER}, \t{BOARD\_FOLDER} and \t{GRAB\_FOLDER}. \t{readLabelFolderImages} is a high-level wrapper to get a list of image-label pairs from a labeled folder. \t{readBoardImages} is the same, just for the \t{BOARD\_FOLDER}, since this can be considered a ``simple folder'' (it does not obey the label folder structure). To ensure some uniformity throughout the project, \t{saveImage} provides an error-handling wrapper for OpenCV's \t{imwrite}, while \t{boardImageName} composes what name should a given cell image have based on its row and column in the main coordinate system.
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+% -------------------------------------------------------------------------------------------------- %
+% --------------------------------- Validation and Response Module --------------------------------- %
+% -------------------------------------------------------------------------------------------------- %
 
 \section{Validation and Response Module}
+
+
 
 All files of the VAR module can be found in folder \t{var}. The entry point is \t{ValidationAndResponse}. This is a \t{Q\_OBJECT}, since it has signals and slots to communicate with UA. Its three functionalities are implemented by its three slots, namely \t{validateMoveSlot}, \t{discardMoveSlot} and \t{newGameSlot}. When these are done with their job, they send replies through \t{validateMoveReplySignal}, \t{discardMoveReplySignal} and \t{newGameReplySignal}.
 

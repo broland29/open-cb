@@ -1,7 +1,16 @@
 #include "../../headers/classification/CxxClassifier.h"
 
 
-int CxxClassifier::externalToInternal(QString encoding)
+CxxClassifier::CxxClassifier(bool uniteFrees)
+{
+	this->uniteFrees = uniteFrees;
+	classCount = (uniteFrees) ? 13 : 14;
+	trained = false;
+}
+
+
+
+int CxxClassifier::externalToInternal(std::string encoding)
 {
 	if (!uniteFrees)
 	{
@@ -38,7 +47,7 @@ int CxxClassifier::externalToInternal(QString encoding)
 		if (encoding == "BK") { return 12; };
 	}
 	
-	SPDLOG_ERROR("Could not convert {}, considering it 0", encoding.toStdString());
+	SPDLOG_ERROR("Could not convert {}, considering it 0", encoding);
 	return 0;
 }
 
@@ -76,6 +85,7 @@ QString CxxClassifier::internalToExternal(int encoding)
 		if (encoding == 9) { return "BN"; };
 		if (encoding == 10) { return "BR"; };
 		if (encoding == 11) { return "BQ"; };
+		if (encoding == 12) { return "BK"; };
 	}
 
 	SPDLOG_ERROR("Could not convert {}", encoding);

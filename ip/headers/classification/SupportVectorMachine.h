@@ -50,7 +50,7 @@ private:
 
 	// based on images, fill X and y
 	void getFeaturesAndLabels(
-		std::vector<std::pair<Mat_<Vec3b>, QString>> images,    // training images and their labels
+		std::vector<std::pair<Mat_<Vec3b>, std::string>> images,    // training images and their labels
 		Mat_<float>& X,											// features matrix. Can differ from class' X, ex: when testing
 		Mat_<int>& y											// labels matrix. Can differ from class' y, ex: when testing
 	);

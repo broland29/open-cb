@@ -9,8 +9,6 @@
 #include <QPushButton>
 #include <QRadioButton>
 #include <QCheckBox>
-#include "ClickableLabel.h"
-#include "settings/SettingsDialog.h"
 #include <QVector>
 #include <QString>
 #include <QDesktopServices>
@@ -18,8 +16,10 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
 
-#include "../Common.h"
+#include "ClickableLabel.h"
+#include "settings/SettingsDialog.h"
 #include "Style.h"
+
 
 #if FMT_VERSION >= 90000
 // https://github.com/fmtlib/fmt/issues/2245
@@ -30,15 +30,16 @@ template<> struct fmt::formatter<QString> : formatter<const char*> {
 };
 #endif
 
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget* parent = nullptr);
-    ~MainWindow();
-    void closeEvent(QCloseEvent* event);
+
 private:
+    const QVector<QString> pieceResourceNames = { "FR", "WP", "WB", "WN", "WR", "WQ", "WK", "BP", "BB", "BN", "BR", "BQ", "BK" };
+
     QLabel* cameraOneImageLabel;
     QLabel* cameraTwoImageLabel;
 
@@ -58,9 +59,7 @@ private:
     QPushButton* testClassifierButton;
     QPushButton* classifyBoardButton;
 
-
     QLabel* messageLabel;
-
 
     QPushButton* testConfigureButton;
     QPushButton* configureButton;
@@ -71,14 +70,22 @@ private:
     QPushButton* settingsButton;
     QPushButton* helpButton;
 
-
     // clicking logic
     std::map<QString, QPixmap> nameToPixmap;
     int lastRow = -1;
     int lastCol = -1;
     QString lastPieceName;
 
+public:
+    explicit MainWindow(QWidget* parent = nullptr);
+
+    ~MainWindow();
+
+    void closeEvent(QCloseEvent* event);
+
+private:
     void setInitialSetup();
+
     QVector<QString> getEncodingsFromChessGUI();
 
 public slots:
@@ -134,8 +141,8 @@ public slots:
     void rightClickedSlot(int row, int col, QString pieceName);
 
     // getting a new frame
-    void previewImageReadySlotLeft(QImage previewImage);
-    void previewImageReadySlotRight(QImage previewImage);
+    void previewImageReadyLeftSlot(QImage previewImage);
+    void previewImageReadyRightSlot(QImage previewImage);
 
     // delegating to dialog since inexistent at the beginning
     void setParametersReplySlot(bool succeeded, QString message);

@@ -242,7 +242,11 @@ void ImageProcessing::cropAndLabelSlot(QVector<QString> encodings)
 
 void ImageProcessing::shuffleAndSplitSlot()
 {
-	if (FileHandler::shuffleAndSplit() != 0)
+	const int trainSplit = parameters.fileHandlingParameters.fileHandlerParameters.trainSplit;
+	const int testSplit = parameters.fileHandlingParameters.fileHandlerParameters.testSplit;
+	const int validationSplit = parameters.fileHandlingParameters.fileHandlerParameters.validationSplit;
+
+	if (FileHandler::shuffleAndSplit(trainSplit, testSplit, validationSplit) != 0)
 	{
 		emit shuffleAndSplitReplySignal(false, "Error shuffling and splitting!");
 		return;

@@ -30,14 +30,13 @@ void ValidationAndResponse::validateMoveSlot(QVector<QString> encodings)
 		for (int j = 0; j < 8; j++)
 		{
 			QString encoding = encodings[i * 8 + j];
-			if (encoding == "WF") { board[i][j] = FR; continue; }
+			if (encoding == "FR") { board[i][j] = FR; continue; }
 			if (encoding == "WP") { board[i][j] = WP; continue; }
 			if (encoding == "WB") { board[i][j] = WB; continue; }
 			if (encoding == "WN") { board[i][j] = WN; continue; }
 			if (encoding == "WR") { board[i][j] = WR; continue; }
 			if (encoding == "WQ") { board[i][j] = WQ; continue; }
 			if (encoding == "WK") { board[i][j] = WK; continue; }
-			if (encoding == "BF") { board[i][j] = FR; continue; }
 			if (encoding == "BP") { board[i][j] = BP; continue; }
 			if (encoding == "BB") { board[i][j] = BB; continue; }
 			if (encoding == "BN") { board[i][j] = BN; continue; }
@@ -77,8 +76,9 @@ void ValidationAndResponse::discardMoveSlot()
 	{
 		for (int j = 0; j < 8; j++)
 		{
-			if (validator->currBoard[i][j] == FR && (i + j) % 2 == 0) { encodings[i * 8 + j] = "WF"; continue; }
-			if (validator->currBoard[i][j] == FR && (i + j) % 2 == 1) { encodings[i * 8 + j] = "BF"; continue; }
+#pragma warning(push)
+#pragma warning(disable:26451)
+			if (validator->currBoard[i][j] == FR) { encodings[i * 8 + j] = "FR"; continue; }
 			if (validator->currBoard[i][j] == WP) { encodings[i * 8 + j] = "WP"; continue; }
 			if (validator->currBoard[i][j] == WB) { encodings[i * 8 + j] = "WB"; continue; }
 			if (validator->currBoard[i][j] == WN) { encodings[i * 8 + j] = "WN"; continue; }
@@ -91,6 +91,7 @@ void ValidationAndResponse::discardMoveSlot()
 			if (validator->currBoard[i][j] == BR) { encodings[i * 8 + j] = "BR"; continue; }
 			if (validator->currBoard[i][j] == BQ) { encodings[i * 8 + j] = "BQ"; continue; }
 			if (validator->currBoard[i][j] == BK) { encodings[i * 8 + j] = "BK"; continue; }
+#pragma warning pop
 		}									  
 	}
 	emit discardMoveReplySignal(true, "Discarded successfully", encodings);

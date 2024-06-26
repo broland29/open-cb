@@ -1,12 +1,10 @@
 #include "../../headers/classification/KNearestNeighbors.h"
 
 
-KNearestNeighbors::KNearestNeighbors(KNearestNeighborsParameters kNearestNeighborsParameters)
+KNearestNeighbors::KNearestNeighbors(KNearestNeighborsParameters kNearestNeighborsParameters) : CxxClassifier(kNearestNeighborsParameters.uniteFrees)
 {
     k = kNearestNeighborsParameters.k;
     numberOfBins = kNearestNeighborsParameters.numberOfBins;
-    uniteFrees = kNearestNeighborsParameters.uniteFrees;
-    trained = false;
 }
 
 
@@ -14,14 +12,14 @@ int KNearestNeighbors::train()
 {
     SPDLOG_TRACE("Starting training");
     
-    std::vector<std::pair<Mat_<Vec3b>, QString>> trainImages;
+    std::vector<std::pair<Mat_<Vec3b>, std::string>> trainImages;
     std::map<std::string, int> trainLabelsAndCounts;
     if (FileHandler::readLabelFolderImages(Paths::TRAIN_FOLDER, trainImages, trainLabelsAndCounts) != 0)
     {
         return 1;
     }
 
-    std::vector<std::pair<Mat_<Vec3b>, QString>> validationImages;
+    std::vector<std::pair<Mat_<Vec3b>, std::string>> validationImages;
     std::map<std::string, int> validationLabelsAndCounts;
     if (FileHandler::readLabelFolderImages(Paths::VALIDATION_FOLDER, validationImages, validationLabelsAndCounts) != 0)
     {
@@ -47,10 +45,11 @@ int KNearestNeighbors::train()
     Mat_<int> X(0, d);  // feature matrix
     Mat_<int> y(0, 1);   // class labels
 
-    for (auto const& pair : trainImages)
+    const int trainSize = trainImages.size();
+    for (int i = 0; i < trainSize; i++)
     {
-        Mat_<Vec3b> image = pair.first;
-        int label = externalToInternal(pair.second);  // possible unification of frees done here
+        Mat_<Vec3b> image = trainImages[i].first;
+        int label = externalToInternal(trainImages[i].second);  // possible unification of frees done here
 
         Mat_<int> feature = getFeatureHistogram(image);
         X.push_back(feature);
@@ -58,6 +57,12 @@ int KNearestNeighbors::train()
         Mat_<int> label_(1, 1);
         label_(0, 0) = label;
         y.push_back(label);
+
+        // just to keep the console interactive
+        if (i % 100 == 0)
+        {
+            SPDLOG_TRACE("{}/{}", i, trainSize);
+        }
     }
 
     // store X and y, since will need it later
@@ -86,7 +91,7 @@ int KNearestNeighbors::test()
         return 1;
     }
 
-    std::vector<std::pair<Mat_<Vec3b>, QString>> testImages;
+    std::vector<std::pair<Mat_<Vec3b>, std::string>> testImages;
     std::map<std::string, int> labelsAndCounts;
     if (FileHandler::readLabelFolderImages(Paths::TEST_FOLDER, testImages, labelsAndCounts) != 0)
     {
@@ -102,7 +107,7 @@ int KNearestNeighbors::test()
 
     // confustion matrix: on x axis we have predicted class, on y we have actual class
     std::vector<std::vector<int>> confusionMatrix(classCount);
-       for (int i = 0; i < classCount; i++)
+    for (int i = 0; i < classCount; i++)
     {
         confusionMatrix[i].resize(classCount, 0);
     }
@@ -123,12 +128,37 @@ int KNearestNeighbors::test()
         }
     }
 
-    std::vector<std::string> encodings(classCount);
-    for (int i = 0; i < classCount; i++)
+    // even if BF and WF are treated separately, in the long run, they end up as the same "category". so it
+        // is only fair to unite the rows and columns of the confusion matrix with BF and WF before calculating metrics
+    if (!uniteFrees)
     {
-        encodings[i] = internalToExternal(i).toStdString();
+        std::vector<std::vector<int>> confusionMatrixNew(13, std::vector<int>(13));
+
+        // unite WF and BF on first row/col "as FR"
+        const int indexWF = externalToInternal("WF");
+        const int indexBF = externalToInternal("BF");
+        confusionMatrixNew[0][0] = confusionMatrix[indexWF][indexWF] + confusionMatrix[indexBF][indexBF];
+        for (int i = 0; i < 13; i++)
+        {
+            if (i == indexWF || i == indexBF)
+            {
+                continue;
+            }
+            confusionMatrixNew[0][i] = confusionMatrix[indexWF][i] + confusionMatrix[indexBF][i];
+            confusionMatrixNew[i][0] = confusionMatrix[i][indexWF] + confusionMatrix[i][indexBF];
+        }
+
+        // the rest of the encodings from AbstractClassifier::labels is identical with FileHandler::labelFolderNames and can be "copied"
+        for (int i = 1; i < 13; i++)
+        {
+            for (int j = 1; j < 13; j++)
+            {
+                confusionMatrixNew[i][j] = confusionMatrix[externalToInternal(labels[i])][externalToInternal(labels[j])];
+            }
+        }
+        confusionMatrix = confusionMatrixNew;
     }
-    calculateAndLogMetrics(confusionMatrix, encodings);
+    calculateAndLogMetrics(confusionMatrix);
 
     return 0;
 }
@@ -310,7 +340,7 @@ int KNearestNeighbors::classify(Mat_<Vec3b> image)
 
     // check k nearest neighbors, each neighbor's label counts as a vote, highest vote wins
     std::vector<int> votes;
-    for (int i = 0; i < ENCODINGS.size(); i++)
+    for (int i = 0; i < classCount; i++)
     {
         votes.push_back(0);
     }

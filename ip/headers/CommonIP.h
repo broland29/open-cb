@@ -3,8 +3,6 @@
 #include <opencv2/opencv.hpp>
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
-#include <QString>
-#include <QVector>
 
 using namespace cv;
 

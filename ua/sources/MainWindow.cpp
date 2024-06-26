@@ -17,24 +17,24 @@ MainWindow::MainWindow(QWidget* parent) :
     bigWidget->setStyleSheet("background-color:" + Style::LIGHT);
 
     QWidget* bigLeftWidget = new QWidget;
-    QVBoxLayout* middleLeftLayout = new QVBoxLayout(bigLeftWidget);
+    QVBoxLayout* bigLeftLayout = new QVBoxLayout(bigLeftWidget);
     bigLeftWidget->setFixedWidth(300);
     bigLeftWidget->setStyleSheet("background-color:" + Style::LIGHTEST);
 
     cameraOneImageLabel = new QLabel();
     cameraOneImageLabel->setFixedHeight(200);
     cameraOneImageLabel->setScaledContents(true);
-    middleLeftLayout->addWidget(cameraOneImageLabel);
+    bigLeftLayout->addWidget(cameraOneImageLabel);
     QLabel* cameraOneTextLabel = new QLabel("Camera one - left");
-    middleLeftLayout->addWidget(cameraOneTextLabel);
+    bigLeftLayout->addWidget(cameraOneTextLabel);
 
     QPixmap cameraTwoPlaceholder = QPixmap(":/UserApplicationModule/placeholder.jpeg");
     cameraTwoImageLabel = new QLabel();
     cameraTwoImageLabel->setFixedHeight(200);
     cameraTwoImageLabel->setScaledContents(true);
-    middleLeftLayout->addWidget(cameraTwoImageLabel);
+    bigLeftLayout->addWidget(cameraTwoImageLabel);
     QLabel* cameraTwoTextLabel = new QLabel("Camera two - right");
-    middleLeftLayout->addWidget(cameraTwoTextLabel);
+    bigLeftLayout->addWidget(cameraTwoTextLabel);
 
     bigLayout->addWidget(bigLeftWidget);
 
@@ -65,18 +65,9 @@ MainWindow::MainWindow(QWidget* parent) :
         }
     }
 
-    for (QString encoding : ENCODINGS)
+    for (QString pieceResourceName : pieceResourceNames)
     {
-        QString resourcePath;
-        if (encoding == "WF" || encoding == "BF")
-        {
-            resourcePath = ":pieceImages/FR.png";  // same empty png used for both frees
-        }
-        else
-        {
-            resourcePath = ":pieceImages/" + encoding + ".png";
-        }
-
+        QString resourcePath = ":pieceImages/" + pieceResourceName + ".png";
         QPixmap piecePixmap;
         if (!piecePixmap.load(resourcePath))
         {
@@ -87,7 +78,7 @@ MainWindow::MainWindow(QWidget* parent) :
             SPDLOG_TRACE("Succesfully loaded {}", resourcePath);
         }
         piecePixmap = piecePixmap.scaled(30, 30, Qt::KeepAspectRatio);
-        nameToPixmap.insert(std::pair(encoding, piecePixmap));
+        nameToPixmap.insert(std::pair(pieceResourceName, piecePixmap));
     }
 
     setInitialSetup();
@@ -604,14 +595,14 @@ _found:
 
 
 // ---------- getting a new frame ---------- // 
-void MainWindow::previewImageReadySlotLeft(QImage previewImage)
+void MainWindow::previewImageReadyLeftSlot(QImage previewImage)
 {   
     QPixmap pixmap = QPixmap::fromImage(previewImage);
     //cameraOneImageLabel->setPixmap(pixmap.scaled(cameraOneImageLabel->width(), cameraOneImageLabel->height(), Qt::KeepAspectRatio));
     cameraOneImageLabel->setPixmap(pixmap);
 }
 
-void MainWindow::previewImageReadySlotRight(QImage previewImage)
+void MainWindow::previewImageReadyRightSlot(QImage previewImage)
 {
     QPixmap pixmap = QPixmap::fromImage(previewImage);
     cameraTwoImageLabel->setPixmap(pixmap.scaled(cameraTwoImageLabel->width(), cameraTwoImageLabel->height(), Qt::KeepAspectRatio));

@@ -1,10 +1,10 @@
 #pragma once
 
+#include <QApplication>
+
 #include "MainWindow.h"
 #include "TestWindow.h"
 #include "../com/headers/Parameters.h"
-#include <QApplication>
-#include <iostream>
 
 
 class UserApplication
@@ -17,7 +17,9 @@ private:
 
 public:
 	UserApplication(int argc, char* argv[]);
+	
 	int run();
+	
 	static int test(int argc, char* argv[]);
 	
 private:	

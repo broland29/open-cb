@@ -86,3 +86,4 @@ target_link_libraries(Tests Qt::Core)           # since tests also contain var, 
 target_link_libraries(Tests spdlog::spdlog)     # since tests also contain var, dependent on spdlog
 
 
+add_executable(BoardSetupsGenerator "misc/BoardSetupsGenerator.cpp")

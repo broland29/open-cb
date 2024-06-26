@@ -27,7 +27,7 @@ The project uses two cameras. These are mounted on the two sides of the board wh
 We need a global coordinate system, and it makes sense to use the one we started with. So the coordinates the cameras see are translated to the white player's coordinate system, which we will refer to as the main coordinate system from now on. If we observe the pattern, we realize that this translation is trivial. If we convert from left to main, $mainRow = leftCol, mainCol = 7 - leftRow$. If we go from right to main, $mainRow = 7 - rightCol, mainCol = rightRow$.
 
 
-\subsection{Notations}
+\subsection{Notations} \label{subsec:notations}
 
 We need a modality to represent chess pieces. This is needed throughout the project for multiple reasons, such as classification, representation of board states, and saving images to specific folders (labeling). In a perfect world, it would be nice to have one notation in the whole project, but this is not the case currently.
 
@@ -187,7 +187,6 @@ We do not need exact values of the gradients. An approximation is enough. And to
 \end{bmatrix}
 \end{equation}
 
-\subsection{Perspective Transform}
 
 
 
@@ -263,7 +262,6 @@ What happens if the data is not linearly separable? There are multiple approache
 
 The other solution to inseparable sets is to map the input to a higher dimensional space, where it can be linearly separated. After doing this and finding the boundary, we can map back to the input dimension. This results in boundaries being ``projected'', which might have circular or other weird shapes.
 
-\subsection{Convolutional Neural Network}
 
 
 
@@ -324,7 +322,7 @@ Some important considerations:
 
 
 
-\subsection{Approach} \label{analysis:approach}
+\subsection{Approach to Validate a Movement} \label{analysis:approach}
 
 To validate a move, first, we need to get it. The information we can take for granted is the previous and the current state of the board, i.e. two chessboard positions. To extract information from these, we need to see the difference between the two states. After getting the different cells, based on how many are there, we can further narrow our search. There are valid moves of two, three and four changes. No change means no movement, and any other number means we can already conclude that the move is illegal.
 

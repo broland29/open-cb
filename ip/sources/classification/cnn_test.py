@@ -74,13 +74,26 @@ actual_labels = np.concatenate([y for x, y in dataset_tst], axis=0)  # https://s
 print("Predicted labels:", predicted_labels)
 print("Actual labels:", actual_labels)
 
-# build the confusion matrix with labels in a "more natural order" than alphabetical
-new_labels_order = ['WF', 'WP', 'WB', 'WN', 'WR', 'WQ', 'WK', 'BF', 'BP', 'BB', 'BN', 'BR', 'BQ', 'BK']
+# confusion matrix shall obey AbstractClassifier::labels format. unite frees and reorder the rest
+new_labels_order = ['FR', 'WP', 'WB', 'WN', 'WR', 'WQ', 'WK', 'BP', 'BB', 'BN', 'BR', 'BQ', 'BK']
 labels_order_len = len(new_labels_order)
 
 conf_matrix = [[0 for col in range(labels_order_len)] for row in range(labels_order_len)]  # https://stackoverflow.com/questions/4056768/how-to-declare-array-of-zeros-in-python-or-an-array-of-a-certain-size
+
+indexWF = old_labels_order.index('WF')
+indexBF = old_labels_order.index('BF')
 for i in range(predicted_labels_len):
-    conf_matrix[new_labels_order.index(old_labels_order[actual_labels[i]])][new_labels_order.index(old_labels_order[predicted_labels[i]])] += 1
+    if actual_labels[i] in [indexWF, indexBF]:
+        rowIndex = 0
+    else:
+        rowIndex = new_labels_order.index(old_labels_order[actual_labels[i]])
+    
+    if predicted_labels[i] in [indexWF, indexBF]:
+        colIndex = 0
+    else:
+        colIndex = new_labels_order.index(old_labels_order[predicted_labels[i]])
+
+    conf_matrix[rowIndex][colIndex] += 1
 
 print(conf_matrix)
 

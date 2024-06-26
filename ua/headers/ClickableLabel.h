@@ -6,29 +6,38 @@
 #include <QMouseEvent>
 #include <QPixmap>
 #include <QString>
+
 #include "Style.h"
 
-// https://wiki.qt.io/Clickable_QLabel
-class ClickableLabel : public QLabel
+
+class ClickableLabel : public QLabel  // https://wiki.qt.io/Clickable_QLabel
 {
     Q_OBJECT
 
 public:
-    explicit ClickableLabel(QWidget* parent = Q_NULLPTR, Qt::WindowFlags f = Qt::WindowFlags());
-    ~ClickableLabel();
     int row;
     int col;
+
+private:
+    QString pieceName;
+
+public:
+    explicit ClickableLabel(QWidget* parent = Q_NULLPTR, Qt::WindowFlags f = Qt::WindowFlags());
+    
+    ~ClickableLabel();
+    
     void setPiece(QString pieceName, QPixmap piecePixmap);
+    
     QString getPieceName();
+    
     void modifyStyleSheet(QString string);
 
-signals:
-    void leftClicked(int row, int col, QString pieceName);
-    void rightClicked(int row, int col, QString pieceName);
+private:
 
 protected:
     void mousePressEvent(QMouseEvent* event);
 
-private:
-    QString pieceName;
+signals:
+    void leftClicked(int row, int col, QString pieceName);
+    void rightClicked(int row, int col, QString pieceName);
 };

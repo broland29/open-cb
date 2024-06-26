@@ -5,6 +5,7 @@ UserApplication::UserApplication(int argc, char* argv[])
 {
 	application = new QApplication(argc, argv);
 
+	// required so that we can directly pass Parameters type through signals and slots
 	qRegisterMetaType<Parameters>("Parameters");
 
 	mainWindow = new MainWindow();

@@ -1,59 +1,173 @@
 \chapter{Testing and Validation}
 \pagestyle{fancy}
 
-{\noindent\color{blue}Together with the previous two chapters should take about 70\% of the paper.}
+As the size of the project grew, the importance of testing and validating different modules became more and more obvious. Although not every module can and needs to be tested, certain parts of the project naturally required this seemingly extra effort. Two such parts were the classification methods and the movement validation. These will be detailed in the next sections, with a description of the used technology, metrics, and expected and actual results.
 
-\section{User Application Module}
 
-\section{Image Processing Module}
+% --------------------------------- Testing of Validation and Response Module --------------------------------- %
 
-\section{Validation and Response Module}
+\section{Testing of Validation and Response Module}
 
-This module can be and is supposed to be tested, since it is composed of small components, one depending on another. Discovering bugs by playing chess games is an option, however there is no guarantee that this results in correctness, and it is not automated. For testing VAR, I used Google Test (GTest). There is a separate executable for testing only, so this can be built only when needed. A list of tests of \t{Attack} functions can be found below:
+As described in previous sections, the VAR module consists of multiple submodules, which wrap around each other ``like a cabbage''. This means that unit testing can be applied efficiently. Testing manually by playing games and writing down the found bugs is tedious and unprofessional. For a more systematic, organized testing, I used the Google Test (GTest) framework.
 
-% generated using https://www.tablesgenerator.com/#
-% table can be saved and loaded
-% Default table style, Split table in multiple pages
-% disable word wrap (alt-z) to see properly
-\begin{longtable}{|l|l|l|}
+The Google Test framework is huge since it is designed to be versatile and suitable for commercial products. I only used a minimal subset of its functionality, mainly to keep the code simple and easy to understand. To get started with Google Test, one needs to set it up and include the \t{gtest/test.h} header. As with any other C/C++ executable, the entry point will be the \t{main} function. Here we call \t{::testing::InitGoogleTest}, and end our main function with \t{return RUN\_ALL\_TESTS();}.
+
+This way, the tests will be automatically run. I used the simplest method, \t{TEST}, which has two parameters, the test suite name and the test name. This provides us a way to define a hierarchical structuring of tests, the test suite name being the higher level one. My ``convention'' was to use test suite names based on the C++ file they test (\t{AttackTest}, \t{MoveTest}, \t{ValidatorTest}), and define test names based on the specific thing they aim to test. In the \t{CMakeLists.txt} file, tests are grouped under a separate executable, i.e. the test executable \t{Test.exe} is different from the main executable \t{OpenCB.exe} and is run independently. In Figure \ref{fig:gtest} a snippet of its output is shown.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{figs/gtest.PNG}
+    \caption{Snippet from the output when running \t{Tests.exe}}
+    \label{fig:gtest}
+\end{figure}
+
+The test belonging to test suit \t{AttackTest} are as follows:
+
+\begin{itemize}
+    \item \t{checkPath} Checking if different pieces can reach from one cell to another. This means nothing is in their way, and their movement rule specified as x and y increments allow this:
+    \begin{itemize}
+        \item the path is free and the movement rule allows it
+        \item the path is not free although the movement rule allows
+        \item the path is free but the movement rule does not allow it
+    \end{itemize}
+    
+    \item \t{canWhitePawnAttackCell}, \t{canBlackPawnAttackCell} Checking corner cases for pawns of both colors:
+    \begin{itemize}
+        \item simple move possible
+        \item double move possible
+        \item diagonal capture possible
+        \item simple move blocked
+        \item cannot move diagonally without capturing
+        \item long jump blocked
+        \item moving backward
+    \end{itemize}
+
+    \item \t{canBishopAttackCell} Checking different corner cases for bishops:
+    \begin{itemize}
+        \item diagonal move possible
+        \item diagonal move not possible 
+        \item move not even diagonal 
+    \end{itemize}
+
+    \item \t{canKnightAttackCell} Checking the horse movement patterns in all 8 directions, and some bad cases:
+    \begin{itemize}
+        \item good moves
+        \item cell occupied
+        \item not respecting the rule
+    \end{itemize}
+
+    \item \t{canRookAttackCell} Checking different corner cases for rooks:
+    \begin{itemize}
+        \item horizontal/vertical move possible
+        \item horizontal/vertical move not possible
+        \item move not ever horizontal/vertical
+    \end{itemize}
+
+    \item \t{canQueenAttackCell} Checking different corner cases for queens:
+    \begin{itemize}
+        \item good moves
+        \item cell occupied
+        \item not respecting the rule
+    \end{itemize}
+
+    \item \t{canKingAttackCell} Checking different corner cases for kings:
+    \begin{itemize}
+        \item good moves
+        \item cell occupied
+        \item not respecting the rule
+    \end{itemize}
+
+    \item {canPieceAttackCell} Taking a real board example (\href{https://www.chess.com/article/view/best-chess-moves#kholmov}{Kholmov's Combination Against Bronstein}), picking some random pieces and calling their respective methods.
+    
+    \item \t{isCellInCheck} Some simple tests for checking cell status:
+    \begin{itemize}
+        \item cell in check
+        \item cell not in check
+    \end{itemize}
+
+    \item \t{getKingSituation} Taking some examples from the article \href{https://www.thesprucecrafts.com/check-checkmate-and-stalemate-611546}{Check, Checkmate, and Stalemate Chess Moves on thesprucecrafts.com} and putting them in tests
+    \begin{itemize}
+        \item check case
+        \item checkmate case
+        \item stalemate case
+        \item free case
+    \end{itemize}
+\end{itemize}
+
+The tests of suite \t{MoveTest} rely on \t{AttackTest}s to be correct in a way, but also could catch flaws of the attack submodule. Here we start to see more realistic setups. Each test calls \t{processMove}, and checks for its return values \t{isValid}, \t{encoding} and \t{description} to be as expected. Rather than going through each possibility (which would be an exaggeration), there were a few specific situations selected. The examples mentioned in Section \ref{subsec:notations}. Also this is a great place to add tests covering bugs found on-the-run.
+
+\begin{itemize}
+    \item \t{WhitePawnMove} 
+    \item \t{WhiteKnightMove}
+    \item \t{WhiteBishopCapture}
+    \item \t{BlackPawnCapture}
+    \item \t{WhiteBishopCheck}
+    \item \t{BlackQueenCheckmate}
+    \item \t{WhitePromotion}
+    \item \t{WhiteEnPassantFromLeft}
+    \item \t{WhiteEnPassantFromRight}
+    \item \t{BlackEnPassantFromLeft}
+    \item \t{BlackEnPassantFromRight}
+    \item \t{WhiteCastleKingside}
+    \item \t{BlackCastleKingside}
+    \item \t{WhiteCastleQueenside}
+    \item \t{BlackCastleQueenside}
+\end{itemize}
+
+The highest level of VAR testing is done in test suite \t{ValidatorTest}. This currently only contains two tests:
+
+\begin{itemize}
+    \item \t{BadMovementsTest} Checks for weird, outrageous cases which still could occur
+    \begin{itemize}
+        \item no movement
+        \item just add a random pawn
+        \item just add a random queen
+        \item just add a random rook
+    \end{itemize}
+
+    \item \t{KasparovVSTopalov} Takes a few steps from the beginning of the match \href{https://www.chess.com/article/view/the-best-chess-games-of-all-time#Kasparov_Topalov}{Kasparov vs. Topalov, Wijk aan Zee 1999}
+\end{itemize}
+
+All the tests need to pass. If a test fails, it means that either the code is broken, or the test is erroneous/ outdated. In any case, action needs to be taken to have all tests pass all the time since this part of the project is expected to deliver what it promises.
+
+
+% --------------------------------- Testing of Validation and Response Module --------------------------------- %
+
+\section{Testing of Classification Methods}
+
+It is common, good practice to test classification models. There are a bunch of metrics one could use, but I chose to settle with the most important ones, once again keeping things simple. Testing in this case means getting these metrics. This is done in \t{AbstractClassifier::calculateAndLogMetrics}, which requires an input parameter \t{confusionMatrix}.
+
+A confusion matrix contains the counts of all predictions grouped based on the actual and predicted labels in a 2D matrix form. In our case, on the rows, we have actual classes, while on columns we have predicted classes. The indices range from 0 to 12 and represent classes \t{FR}, \t{WP}, \t{WB}, \t{WN}, \t{WR}, \t{WQ}, \t{WK}, \t{BP}, \t{BB}, \t{BN}, \t{BR}, \t{BQ}, \t{BK}. As long as one classifier can prepare such a confusion matrix (and each classifier is supposed to be able to do so), it can call this method.
+
+From the confusion matrix, we extract the metrics presented in Table \ref{tab:metrics}. A clear explanation was found in the article \href{https://www.evidentlyai.com/classification-metrics/multi-class-metrics}{Accuracy, precision, and recall in multi-class classification on evidentlyai.com}.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|l|l|}
     \hline
-    \multicolumn{1}{|c|}{\textbf{\begin{tabular}[c]{@{}c@{}}Test\\ Name\end{tabular}}}                                     & \multicolumn{1}{c|}{\textbf{\begin{tabular}[c]{@{}c@{}}Board\\ Name(s)\end{tabular}}}                         & \multicolumn{1}{c|}{\textbf{Explanation and Expected Value}}                                                                                    \\ \hline
-    \endfirsthead
-    %
-    \endhead
-    %
-    \multirow{3}{*}{\_checkPath}                                                                                           & \begin{tabular}[c]{@{}l@{}}board0\\ board1\\ board2\end{tabular}                                              & \begin{tabular}[c]{@{}l@{}}Movement rule allows us to reach destination\\ and there is nothing in our way.\\ Expected 0.\end{tabular}           \\ \cline{2-3} 
-                                                                                                                           & \begin{tabular}[c]{@{}l@{}}board3\\ board4\\ board5\end{tabular}                                              & \begin{tabular}[c]{@{}l@{}}Movement rule allows us to reach destination\\ but there is something in our way.\\ Expected 1.\end{tabular}         \\ \cline{2-3} 
-                                                                                                                           & \begin{tabular}[c]{@{}l@{}}board6\\ board7\end{tabular}                                                       & \begin{tabular}[c]{@{}l@{}}There is nothing in our way but\\ movement rule does not allow us\\ to reach destination.\\ Expected 2.\end{tabular} \\ \hline
-    \multirow{9}{*}{\begin{tabular}[c]{@{}l@{}}\_canWhite\\ PawnAttackCell,\\ \\ \_canBlack\\ PawnAttackCell\end{tabular}} & \begin{tabular}[c]{@{}l@{}}board0\\ board1\end{tabular}                                                       & \begin{tabular}[c]{@{}l@{}}Simple move possible.\\ Expected true.\end{tabular}                                                                  \\ \cline{2-3} 
-                                                                                                                           & board2                                                                                                        & \begin{tabular}[c]{@{}l@{}}Double move possible.\\ Expected true.\end{tabular}                                                                  \\ \cline{2-3} 
-                                                                                                                           & \begin{tabular}[c]{@{}l@{}}board3\\ board4\end{tabular}                                                       & \begin{tabular}[c]{@{}l@{}}Diagonal capture possible.\\ Expected true.\end{tabular}                                                             \\ \cline{2-3} 
-                                                                                                                           & \begin{tabular}[c]{@{}l@{}}board5\\ board6\end{tabular}                                                       & \begin{tabular}[c]{@{}l@{}}En passant possible.\\ Expected true.\end{tabular}                                                                   \\ \cline{2-3} 
-                                                                                                                           & board7                                                                                                        & \begin{tabular}[c]{@{}l@{}}Simple move blocked.\\ Expected false.\end{tabular}                                                                  \\ \cline{2-3} 
-                                                                                                                           & board8                                                                                                        & \begin{tabular}[c]{@{}l@{}}Cannot move diagonally if not capture.\\ Expected false.\end{tabular}                                                \\ \cline{2-3} 
-                                                                                                                           & board9                                                                                                        & \begin{tabular}[c]{@{}l@{}}En passant not possible, not right column.\\ Expected false.\end{tabular}                                            \\ \cline{2-3} 
-                                                                                                                           & board10                                                                                                       & \begin{tabular}[c]{@{}l@{}}Long jump blocked.\\ Expected false.\end{tabular}                                                                    \\ \cline{2-3} 
-                                                                                                                           & board11                                                                                                       & \begin{tabular}[c]{@{}l@{}}Moving backwards.\\ Expected false.\end{tabular}                                                                     \\ \hline
-    \multirow{3}{*}{\_canBishopAttackCell}                                                                                 & \begin{tabular}[c]{@{}l@{}}board0\\ board1\end{tabular}                                                       & \begin{tabular}[c]{@{}l@{}}Diagonal move possible.\\ Expected true.\end{tabular}                                                                \\ \cline{2-3} 
-                                                                                                                           & \begin{tabular}[c]{@{}l@{}}board2\\ board3\end{tabular}                                                       & \begin{tabular}[c]{@{}l@{}}Diagonal move not possible.\\ Expected false.\end{tabular}                                                           \\ \cline{2-3} 
-                                                                                                                           & \begin{tabular}[c]{@{}l@{}}board4\\ board5\end{tabular}                                                       & \begin{tabular}[c]{@{}l@{}}Move not even diagonal.\\ Expected false.\end{tabular}                                                               \\ \hline
-    \multirow{3}{*}{\_canKnightAttackCell}                                                                                 & \begin{tabular}[c]{@{}l@{}}board0\\ board1\\ board2\\ board3\\ board4\\ board5\\ board6\\ board7\end{tabular} & \begin{tabular}[c]{@{}l@{}}Good moves.\\ Expected true.\end{tabular}                                                                            \\ \cline{2-3} 
-                                                                                                                           & \begin{tabular}[c]{@{}l@{}}board8\\ board9\end{tabular}                                                       & \begin{tabular}[c]{@{}l@{}}Cell occupied.\\ Expected false.\end{tabular}                                                                        \\ \cline{2-3} 
-                                                                                                                           & \begin{tabular}[c]{@{}l@{}}board10\\ board11\end{tabular}                                                     & \begin{tabular}[c]{@{}l@{}}Not respecting rule.\\ Expected false.\end{tabular}                                                                  \\ \hline
-    \multirow{3}{*}{\_canRookAttackCell}                                                                                   & \begin{tabular}[c]{@{}l@{}}board0\\ board1\\ board2\\ board3\end{tabular}                                     & \begin{tabular}[c]{@{}l@{}}Horizontal/vertical move possible.\\ Expected true.\end{tabular}                                                     \\ \cline{2-3} 
-                                                                                                                           & \begin{tabular}[c]{@{}l@{}}board4\\ board5\end{tabular}                                                       & \begin{tabular}[c]{@{}l@{}}Horizontal/vertical move not possible.\\ Expected false.\end{tabular}                                                \\ \cline{2-3} 
-                                                                                                                           & \begin{tabular}[c]{@{}l@{}}board6\\ board7\end{tabular}                                                       & \begin{tabular}[c]{@{}l@{}}Move not ever horizontal/vertical.\\ Expected false.\end{tabular}                                                    \\ \hline
-    \multirow{3}{*}{\_canQueenAttackCell}                                                                                  & \begin{tabular}[c]{@{}l@{}}board0\\ board1\\ board2\\ board3\\ board4\\ board5\\ board6\\ board7\end{tabular} & \begin{tabular}[c]{@{}l@{}}Good moves.\\ Expected true.\end{tabular}                                                                            \\ \cline{2-3} 
-                                                                                                                           & \begin{tabular}[c]{@{}l@{}}board8\\ board9\end{tabular}                                                       & \begin{tabular}[c]{@{}l@{}}Cell occupied.\\ Expected false.\end{tabular}                                                                        \\ \cline{2-3} 
-                                                                                                                           & \begin{tabular}[c]{@{}l@{}}board10\\ board11\end{tabular}                                                     & \begin{tabular}[c]{@{}l@{}}Not respecting rule.\\ Expected false.\end{tabular}                                                                  \\ \hline
-    \multirow{3}{*}{\_canKingAttackCell}                                                                                   & \begin{tabular}[c]{@{}l@{}}board0\\ board1\\ board2\\ board3\\ board4\\ board5\\ board6\\ board7\end{tabular} & \begin{tabular}[c]{@{}l@{}}Good moves.\\ Expected true.\end{tabular}                                                                            \\ \cline{2-3} 
-                                                                                                                           & \begin{tabular}[c]{@{}l@{}}board8\\ board9\end{tabular}                                                       & \begin{tabular}[c]{@{}l@{}}Cell occupied.\\ Expected false.\end{tabular}                                                                        \\ \cline{2-3} 
-                                                                                                                           & \begin{tabular}[c]{@{}l@{}}board10\\ board11\end{tabular}                                                     & \begin{tabular}[c]{@{}l@{}}Not respecting rule.\\ Expected false\end{tabular}                                                                   \\ \hline
-    canPieceAttackCell                                                                                                     & board0                                                                                                        & \begin{tabular}[c]{@{}l@{}}Real chess position, checking for multiple\\ pieces. Expected true or false.\end{tabular}                            \\ \hline
-    \multirow{2}{*}{isCellInCheck}                                                                                         & \begin{tabular}[c]{@{}l@{}}board0\\ board1\\ board2\\ board3\end{tabular}                                     & \begin{tabular}[c]{@{}l@{}}Cell is in check.\\ Expected true.\end{tabular}                                                                      \\ \cline{2-3} 
-                                                                                                                           & \begin{tabular}[c]{@{}l@{}}board4\\ board5\\ board6\\ board7\end{tabular}                                     & \begin{tabular}[c]{@{}l@{}}Cell not in check.\\ Expected false.\end{tabular}                                                                    \\ \hline
-    \multirow{4}{*}{getKingSituation}                                                                                      & board0                                                                                                        & \begin{tabular}[c]{@{}l@{}}Check which can be blocked.\\ Expected KingSituation::CHECK.\end{tabular}                                            \\ \cline{2-3} 
-                                                                                                                           & board1                                                                                                        & \begin{tabular}[c]{@{}l@{}}Checkmate by two rooks.\\ Expected KingSituation:: CHECKMATE.\end{tabular}                                           \\ \cline{2-3} 
-                                                                                                                           & board2                                                                                                        & \begin{tabular}[c]{@{}l@{}}King not in check, cannot move.\\ Expected KingSituation::STALEMATE\end{tabular}                                     \\ \cline{2-3} 
-                                                                                                                           & \begin{tabular}[c]{@{}l@{}}board3\\ board4\end{tabular}                                                       & \begin{tabular}[c]{@{}l@{}}King not in check, can move.\\ Expected KingSituation::FREE\end{tabular}                                             \\ \hline
-\end{longtable}
+    \textbf{Metric Name} & \textbf{Formulae}                                                & \textbf{Meaning}                                                                                                                                  \\ \hline
+    Accuracy             & $\frac{CorrectPredictions}{AllPredictions}$                      & \begin{tabular}[c]{@{}l@{}}Measures the proportion of correctly\\ classified cases from the total number\\ of objects in the dataset\end{tabular} \\ \hline
+    Precision            & $\frac{TP}{TP + FP}$                                             & \begin{tabular}[c]{@{}l@{}}Measures the model's ability to identify\\ instances of a particular class correctly\\.\end{tabular}                      \\ \hline
+    Recall               & $\frac{TP}{TP + FN}$                                             & \begin{tabular}[c]{@{}l@{}}Measures the model's ability to identify\\ all instances of a particular class.\\.\end{tabular}                           \\ \hline
+    Macro Precision      & $\frac{\sum_{i=0}^{n-1} Precision_i}{n}$                         & \begin{tabular}[c]{@{}l@{}}Measure precision by class, then averages\\ it across classes.\\.\end{tabular}                                            \\ \hline
+    Macro Recall         & $\frac{\sum_{i=0}^{n-1} Recall_i}{n}$                            & \begin{tabular}[c]{@{}l@{}}Measure recall by class, then averages\\ it across classes.\\.\end{tabular}                                               \\ \hline
+    Micro Precision      & $\frac{\sum_{i=0}^{n-1} TP_i}{\sum_{i=0}^{n-1} (TP_i + FP_i)}$   & \begin{tabular}[c]{@{}l@{}}Calculate precision jointly.\\.\\.\end{tabular}                                                                                                                     \\ \hline
+    Micro Recall         & $\frac{\sum_{i=0}^{n-1} TP_i}{\sum_{i=0}^{n-1} (TP_i + FN_i)}$   & \begin{tabular}[c]{@{}l@{}}Calculate recall jointly.\\.\\.\end{tabular}                                                                                                                           \\ \hline
+    \end{tabular}
+    \caption{Metric used for testing classification methods}
+    \label{tab:metrics}
+\end{table}
+
+Now the question is, what is a good dataset to train and test on, in our project's context? It is important to have images from each label, the more the better. Let's say we want at least approximately 100 images in the test set from each class. If we use the default 20\% split for testing, that means that in total there should be at least 500 images from each class. It is good to have pieces placed all around, and in different situations, like being alone, or being behind or in front of another piece. At first, I attempted to create datasets with different categories of images, like only pawns, only non-pawn pieces, only of one color, of all colors etc. But in all fairness, randomness in this case is probably preferable.
+
+To avoid shuffling the pieces on the board by hand (yes, this is how I simulated randomness at first), I wrote a code to generate such setups. It can be found under \t{misc/BoardSetupsGenerator.cpp}. It generates a text file with random setups. A snippet from it can be seen in Figure \ref{fig:board-setups-generator}. For example, for having 500 images minimum per-class, the script generated 928 boards, having 4 to 32 pieces on a setup. The two matrices show the last two setups, with 31 and 32 pieces. They are part of iteration 31. One iteration means generating one setup for each number of pieces in the range [4,32] (these values can be changed). The good thing is that the script generates setups in a way that keeps the original ratio of pieces (8 pawns, 2 knights/bishops/rooks, 1 queen/king). This makes the set even more ``natural'', although it can be normalized.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figs/board-setups-generator.PNG}
+    \caption{Snippet from the output when running \t{BoardSetupsGenerator.exe}}
+    \label{fig:board-setups-generator}
+\end{figure}
+
+TABLE 
+TENSORBOARD

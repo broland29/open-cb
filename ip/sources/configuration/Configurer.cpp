@@ -246,15 +246,14 @@ int Configurer::cropAndLabel(Mat_<Vec3b> imgOriginal, QVector<QString> encodings
 
 			// extract based on camera's coord system (i,j), save with name based on main coord system (row,col)
 			Mat_<Vec3b> imgCell = extractCell(i, j, imgNoBorder, borderParameters);
-			if (isTest)
+
+			// corner images usually provide better overview
+			if (i == 4 && j == 0 || i == 4 && j == 7 || i == 7 && j == 0 || i == 7 && j == 7)
 			{
-				// corner images usually provide better overview
-				if (i == 4 && j == 0 || i == 4 && j == 7 || i == 7 && j == 0 || i == 7 && j == 7)
-				{
-					imagesAndPathsToShowIfTest.push_back(std::pair<Mat_<Vec3b>, std::string>(imgCell, FileHandler::boardImageName(row, col)));
-				}
+				imagesAndPathsToShowIfTest.push_back(std::pair<Mat_<Vec3b>, std::string>(imgCell, FileHandler::boardImageName(row, col)));
 			}
-			else
+			
+			if (!isTest)
 			{
 				std::string folder = Paths::TEMPORARY_FOLDER + std::string("\\") + encodings[row * 8 + col].toStdString();
 				std::string path;

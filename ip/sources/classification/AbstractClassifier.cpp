@@ -1,7 +1,10 @@
 #include "../../headers/classification/AbstractClassifier.h"
 
 
-void AbstractClassifier::calculateAndLogMetrics(std::vector<std::vector<int>> confusionMatrix, std::vector<std::string> encodings)
+const std::array<std::string, 13> AbstractClassifier::labels = { "FR", "WP", "WB", "WN", "WR", "WQ", "WK", "BP", "BB", "BN", "BR", "BQ", "BK" };
+
+
+void AbstractClassifier::calculateAndLogMetrics(std::vector<std::vector<int>> confusionMatrix)
 {
 	/* Multiclass classification metrics https://www.evidentlyai.com/classification-metrics/multi-class-metrics
 
@@ -112,7 +115,7 @@ void AbstractClassifier::calculateAndLogMetrics(std::vector<std::vector<int>> co
 	os << std::setw(5) << "Class" << std::setw(15) << "Precision" << std::setw(15) << "Recall" << std::endl;
 	for (int i = 0; i < classCount; i++)
 	{
-		os << std::setfill(' ') << std::setw(5) << encodings[i] << std::fixed << std::setprecision(4) << std::setw(15) << precisions[i] << std::setw(15) << recalls[i] << std::endl;
+		os << std::setfill(' ') << std::setw(5) << labels[i] << std::fixed << std::setprecision(4) << std::setw(15) << precisions[i] << std::setw(15) << recalls[i] << std::endl;
 	}
 
 	os << std::endl;

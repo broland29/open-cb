@@ -1,10 +1,8 @@
 #include "../../headers/classification/SupportVectorMachine.h"
 
 
-SupportVectorMachine::SupportVectorMachine(SupportVectorMachineParameters supportVectorMachineParameters)
+SupportVectorMachine::SupportVectorMachine(SupportVectorMachineParameters supportVectorMachineParameters) : CxxClassifier(supportVectorMachineParameters.uniteFrees)
 {
-	uniteFrees = supportVectorMachineParameters.uniteFrees;
-	trained = false;
 }
 
 
@@ -12,14 +10,14 @@ int SupportVectorMachine::train()
 {
 	SPDLOG_TRACE("Starting training");
 
-	std::vector<std::pair<Mat_<Vec3b>, QString>> trainImages;
+	std::vector<std::pair<Mat_<Vec3b>, std::string>> trainImages;
 	std::map<std::string, int> trainLabelsAndCounts;
 	if (FileHandler::readLabelFolderImages(Paths::TRAIN_FOLDER, trainImages, trainLabelsAndCounts) != 0)
 	{
 		return 1;
 	}
 
-	std::vector<std::pair<Mat_<Vec3b>, QString>> validationImages;
+	std::vector<std::pair<Mat_<Vec3b>, std::string>> validationImages;
 	std::map<std::string, int> validationLabelsAndCounts;
 	if (FileHandler::readLabelFolderImages(Paths::VALIDATION_FOLDER, validationImages, validationLabelsAndCounts) != 0)
 	{
@@ -81,7 +79,7 @@ int SupportVectorMachine::test()
 		return 1;
 	}
 
-	std::vector<std::pair<Mat_<Vec3b>, QString>> testImages;
+	std::vector<std::pair<Mat_<Vec3b>, std::string>> testImages;
 	std::map<std::string, int> labelsAndCounts;
 	if (FileHandler::readLabelFolderImages(Paths::TEST_FOLDER, testImages, labelsAndCounts) != 0)
 	{
@@ -92,8 +90,6 @@ int SupportVectorMachine::test()
 	{
 		logDistribution(labelsAndCounts, "test");
 	}
-
-	int classCount = ENCODINGS.size();
 
 	// confustion matrix: on x axis we have predicted class, on y we have actual class
 	std::vector<std::vector<int>> confusionMatrix;
@@ -125,12 +121,37 @@ int SupportVectorMachine::test()
 		}
 	}
 
-	std::vector<std::string> encodings(classCount);
-	for (int i = 0; i < classCount; i++)
+	// even if BF and WF are treated separately, in the long run, they end up as the same "category". so it
+	// is only fair to unite the rows and columns of the confusion matrix with BF and WF before calculating metrics
+	if (!uniteFrees)
 	{
-		encodings[i] = internalToExternal(i).toStdString();
+		std::vector<std::vector<int>> confusionMatrixNew(13, std::vector<int>(13));
+
+		// unite WF and BF on first row/col "as FR"
+		const int indexWF = externalToInternal("WF");
+		const int indexBF = externalToInternal("BF");
+		confusionMatrixNew[0][0] = confusionMatrix[indexWF][indexWF] + confusionMatrix[indexBF][indexBF];
+		for (int i = 0; i < 13; i++)
+		{
+			if (i == indexWF || i == indexBF)
+			{
+				continue;
+			}
+			confusionMatrixNew[0][i] = confusionMatrix[indexWF][i] + confusionMatrix[indexBF][i];
+			confusionMatrixNew[i][0] = confusionMatrix[i][indexWF] + confusionMatrix[i][indexBF];
+		}
+
+		// the rest of the encodings from AbstractClassifier::labels is identical with FileHandler::labelFolderNames and can be "copied"
+		for (int i = 1; i < 13; i++)
+		{
+			for (int j = 1; j < 13; j++)
+			{
+				confusionMatrixNew[i][j] = confusionMatrix[externalToInternal(labels[i])][externalToInternal(labels[j])];
+			}
+		}
+		confusionMatrix = confusionMatrixNew;
 	}
-	calculateAndLogMetrics(confusionMatrix, encodings);
+	calculateAndLogMetrics(confusionMatrix);
 
 	return 0;
 }
@@ -217,7 +238,7 @@ Mat_<float> SupportVectorMachine::getFeatureFromImage(Mat_<Vec3b> image)
 }
 
 
-void SupportVectorMachine::getFeaturesAndLabels(std::vector<std::pair<Mat_<Vec3b>, QString>> images, Mat_<float>& X, Mat_<int>& y)
+void SupportVectorMachine::getFeaturesAndLabels(std::vector<std::pair<Mat_<Vec3b>, std::string>> images, Mat_<float>& X, Mat_<int>& y)
 {
 	// length of feature is fixed for each image
 	int d = getFeatureFromImage(images[0].first).cols;

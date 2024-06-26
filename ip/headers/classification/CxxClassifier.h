@@ -16,18 +16,20 @@ public:
 private:
 
 protected:
-	const bool DEBUG = true;
+	int classCount;				// uniteFrees ? 13 : 14
+	bool trained;				// true if train was called
+	const bool DEBUG = true;	// toggle extra logging
 
 public:
+	CxxClassifier(bool uniteFrees);
 
 private:
 
 protected:
-	bool trained;
 
-	// map external encoding ("WF", "WP", ...) to internal (0, 1, ...)
+	// map FileHandler::labelFolderNames to internal encoding (0, 1, ...)
 	int externalToInternal(
-		QString encoding
+		std::string encoding
 	);
 
 	// map internal encoding (0, 1, ...) to external ("WF", "WP", ...)

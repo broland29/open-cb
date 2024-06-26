@@ -70,7 +70,7 @@ int ConvolutionalNeuralNetwork::test()
 		}
 	}
 
-	calculateAndLogMetrics(confusionMatrix, encodings);
+	calculateAndLogMetrics(confusionMatrix);
 
 	return 0;
 }
