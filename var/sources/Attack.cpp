@@ -395,6 +395,7 @@ bool _getCanKingMove(char board[8][8], int kingRow, int kingCol)
 // can other piece of the same color as the king, except the king, move
 bool _getCanOtherMove(char board[8][8], int kingRow, int kingCol)
 {
+    Color attackerColor = (IS_WHITE(board[kingRow][kingCol])) ? Color::BLACK : Color::WHITE;
     for (int i = 0; i < 8; i++)
     {
         for (int j = 0; j < 8; j++)
@@ -415,9 +416,18 @@ bool _getCanOtherMove(char board[8][8], int kingRow, int kingCol)
             {
                 for (int v = 0; v < 8; v++)
                 {
-                    if (canPieceAttackCell(board, u, v, i, j))
+                    if (canPieceAttackCell(board, i, j, u, v))
                     {
-                        return true;
+                        // build up setup for hypothetical move
+                        char auxBoard[8][8];
+                        copyBoard(auxBoard, board);
+                        auxBoard[u][v] = board[i][j];
+                        auxBoard[i][j] = FR;
+
+                        if (!isCellInCheck(auxBoard, kingRow, kingCol, attackerColor))
+                        {
+                            return true;  // found a solution
+                        }
                     }
                 }
             }

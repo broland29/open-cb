@@ -1,97 +1,132 @@
-\chapter{Project Objectives}\label{ch:obiective}
+\chapter{Project Objectives} \label{ch:project-objectives}
 \pagestyle{fancy}
 
 
-% --------------------------------- Vision --------------------------------- %
 
-\section{Vision}
+% ------------------------------------------------------------------------------------------- %
+% ------------------------------------- What is OpenCB? ------------------------------------- %
+% ------------------------------------------------------------------------------------------- %
 
-OpenCB is a mixture of hardware and software. On the hardware side, two cameras are used to get images of a physical chessboard. On the software side, image processing algorithms are applied to detect the board, the board's cells, extract so-called ``cell images'', and classify the chess pieces. Cameras are handled in such a way that a chess position will be extracted from the photos they take. After this, a custom algorithm can be used to validate the chess move the system deduces from the position.
+\section{What is OpenCB?} \label{sec:what-is-opencb}
 
-This project aims to provide a software solution, designed for chess players of all skill levels, which serves as an add-on for traditional chess, to assist when playing. By checking the validity of chess movements, OpenCB can be a great tool for beginners who struggle to respect the rules of chess, but also helpful for professional players, since we all make mistakes. While the project adds a software layer to the game of chess, it does it with careful consideration - it is crucial to keep the physical aspect of the game intact as much as possible. At the same time, the project is open-source, under an MIT license, hence available for any developer willing to use the code or contribute to it.
+OpenCB is an add-on for chess. It is a mixture of hardware and software. It fulfills two core roles: reconstructing a chessboard's state (what piece is on each cell) and validating moves according to the FIDE rules of chess\cite{fide}.
 
-The name OpenCB is a wordplay. Open mainly comes from OpenCV, the technology used for image processing, but also refers to the open-source nature of the project. CB is an acronym for chessboard, the central element of the project. The official title of the thesis mentions two of the most important goals: state detection and chess move validation. We can call this a vision system since it has image processing at its core.
+The setup required to properly run the application consists of a chessboard, two webcams and a computer. The webcams should be mounted on the two sides of the chessboard, preferably on the sides where players don't sit, at an angle that makes it possible to capture the whole chessboard. The webcams shall be connected to a computer running OpenCB, a Windows desktop application. Through the graphical user interface, the players shall request the detection of the board, the validation of a movement and numerous other actions which lead to or assist the fulfillment of these two functionalities.
+
+OpenCB is designed for chess players of all skill levels, but especially for beginners. Checking the validity of chess movements can greatly help those who struggle to verify the correctness of their chess moves. For hobbyists and those interested, OpenCB is a showcase of various image processing and machine learning algorithms that have parameters that can be changed on the run, without touching the code. At the same time, by having a clear code base, OpenCB welcomes developers' contributions and encourages them to reuse the software to their liking. 
+
+In its current form, the project tries to provide generic solutions, which (with little tinkering) should work for a large variety of chessboards and pieces. It takes careful steps to avoid losing the physical aspect of the game. It can be used without spending lots of money. For good performance on the classification side, OpenCB encourages building your dataset and provides help to do it interactively. Its submodules are loosely coupled hence one might use the application only for one specific reason, for example, movement validation.
+
+The project's name is a wordplay. ``Open'' mainly comes from OpenCV, the technology used for image processing, but also refers to the open-source nature of the project. ``CB'' is an acronym for chessboard, the central element of the project. The official title of the thesis mentions two of the most important goals: state detection and chess move validation, while it also declares that the application is a vision system, having image processing at its core.
 
 
 
+% ------------------------------------------------------------------------------------------- %
 % --------------------------------- Functional Requirements --------------------------------- %
+% ------------------------------------------------------------------------------------------- %
 
-\section{Functional Requirements}
+\section{Functional Requirements} \label{sec:functional-requirements}
 
-Perhaps it is a good idea to form exact requirements from our goals. From the two main objectives, we can deduce that the system spans two logical domains: image processing and chess move validation. Moreover, we can also think of the user interface as another important part of the project. Hence the system will contain three subsystems: IP (Image Processing) for tasks related to images, VAR (Validation and Response) for chess move validation and UA (User Application) for the graphical part. This splitting is important not just for writing code, but also for specifying requirements beforehand, which are:
+To clearly state our project's objectives, it is important to define a list of requirements that shall be satisfied by the system. These are great for multiple reasons: a user might look at this and see what the system is capable of, and a developer knows what should be implemented, solving all requirements representing the definition of done.
+
+The overall system shall be split into three main parts: Image Processing Module (IP) for tasks related to images, Validation and Response module (VAR) for chess move validation and User Application Module (UA) for the graphical part. By defining the components early, we can group requirements by the module that fulfills them and structure the code accordingly. The list of functional requirements looks as below. Note that when the user is mentioned, it refers to the player who has their turn (will make the next move) if it is an action preceding a move, to the player who just moved if it is a post-move action, or to any of the two players if it is not a turn-dependent action.
 
 \begin{enumeratenum}
-    \item {\b{User Application}}
+    \item {\b{Validation and Response Module}}
         \begin{enumeratenum}
-            \item \b{Interface} \label{req:interface} \\
-            UA shall provide a standalone desktop interface, with minimal complexity and minimal number of windows.
+            \item \b{Validate Move} \label{req:var-validate-move} \\
+            VAR shall be able to validate a chess move, by extracting the current position from the \ref{req:ua-chess-gui} Chess GUI. The previous chess position shall be memorized from the previous \ref{req:var-validate-move} Validate Move request. The initial position is considered the initial chess setup (how normal chess games start). The first request shall be issued after the first movement.
 
-            \item \b{Preview Windows} \label{req:preview-windows} \\
-            UA shall provide two windows for camera preview from IP.
+            \item \b{Discard Move} \label{req:var-discard-move} \\
+            VAR shall be able to discard a chess move that was not yet validated through \ref{req:var-validate-move} Validate Move but appears on the \ref{req:ua-chess-gui} Chess GUI.
 
-            \item \b{Chessboard GUI} \label{req:chessboard-gui} \\
-            UA shall provide a chessboard GUI. When users use this GUI, they shall be able to move the pieces or change them without moving them. This GUI shall be used for correcting classification errors and composing datasets (labeling).
+            \item \b{New Game} \label{req:var-new-game} \\
+            VAR shall be able to reset its state if the user issues a new game.
 
-            \item \b{Message Label} \label{req:message-label} \\
-            UA shall provide a label where information or error messages can be displayed.
-            
-            \item \b{VAR Support} \label{req:var-support} \\
-            UA shall provide graphical elements making it possible to request any VAR functionality.
-            
-            \item \b{IP Support} \label{req:ip-support} \\
-            UA shall provide graphical elements making it possible to request any IP functionality.
+            \item \b{Surrender} \label{req:var-surrender} \\
+            VAR shall provide the possibility for the user to surrender.
+
+            \item \b{Offer Draw} \label{req:var-offer-draw} \\
+            VAR shall provide the possibility for the user to offer a draw.
+
+            \item \b{Accept Draw} \label{req:var-accept-draw} \\
+            VAR shall provide the possibility for the user to accept a draw offer.
+
+            \item \b{Log Moves} \label{req:var-log-moves} \\
+            VAR shall keep track of validated chess moves in a text file, using Long Algebraic Notation.
         \end{enumeratenum}
-
 
     \item {\b{Image Processing}}
         \begin{enumeratenum}
-            \item \b{Preview Frames} \label{req:preview-frames} \\
-            IP shall be able to continuously grab frames from the two cameras so that a live preview can be shown on the preview windows (\ref{req:preview-windows}).
-
-            \item \b{Image Saving} \label{req:image-saving} \\
-            IP shall be able to save a grabbed frame whenever requested.
+            \item \b{Grab Frames} \label{req:ip-grab-frames} \\
+            IP shall be able to continuously grab frames from the two cameras and send them to UA. The frequency of grabbing should allow a video-like preview of what the cameras see.
             
-            \item \b{Configuration} \label{req:configuration} \\
-            IP shall be able to extract the corners of the chessboard from a grabbed frame.
+            \item \b{Configure} \label{req:ip-configure} \\
+            IP shall be able to extract the corners of the chessboard from a grabbed frame. The corners shall be kept in memory so that they can be accessed when \ref{req:ip-crop-and-label} Crop and Label is issued.
 
-            \item \b{Cropping} \label{req:cropping} \\
-            IP shall be able to extract (crop) cell images (smaller images of the region supposedly containing only one piece) out of a grabbed frame, given that the corners of the chessboard are available.
+            \item \b{Test Configure} \label{req:ip-test-configure} \\
+            IP shall be able to simulate \ref{req:ip-configure} Configure without actually putting the cell images into folders. This way the user may test the results of cropping without ruining the existing dataset with improper cell images.
 
-            \item \b{Labeling} \label{req:labeling} \\
-            IP shall be able to label cell images. The precondition is having 64 cell images ready and having the chess GUI (\ref{req:chessboard-gui}) configured. The labeling shall be done based on the board position showcased on the chess GUI.
+            \item \b{Crop and Label} \label{req:ip-crop-and-label} \\
+            IP shall be able to extract (crop) cell images (smaller images of the region supposedly containing only one piece) out of a grabbed frame, given that the corners of the chessboard are available (\ref{req:ip-configure} Configure was run beforehand). Each cell image shall be put in one folder representing its label (content). Labels are extracted from the \ref{req:ua-chess-gui} Chess GUI. Labels are \t{WF}, \t{WP}, \t{WB}, \t{WN}, \t{WR}, \t{WQ}, \t{WK}, \t{BF}, \t{BP}, \t{BB}, \t{BN}, \t{BR}, \t{BQ}, \t{BK} (where \t{W} = white, \t{B} = black, \t{F} = free, \t{P} = pawn, \t{B} = bishop, \t{N} = knight, \t{R} = rook, \t{Q} = queen, \t{K} = king).
 
-            \item \b{Suffling and Splitting} \label{req:shiffling-and-splitting} \\
+            \item \b{Test Crop and Label} \label{req:ip-test-crop-and-label} \\
+            IP shall be able to simulate \ref{req:ip-crop-and-label} Crop and Label without actually saving the corners. This way the user may test the results without overwriting existing corner data.
+
+            \item \b{Suffle and Split} \label{req:ip-shuffle-and-split} \\
             IP shall be able to shuffle existing cell images and re-distribute them into training, testing and validation sets based on predefined ratios.
 
-            \item \b{Clearing Images} \label{req:clearing-images} \\
-            IP shall be able to clear all cell images on demand.
-            
+            \item \b{Clear All Images} \label{req:ip-clear-all-images} \\
+            IP shall be able to clear all cell images on demand.  
+
+            \item \b{Change Classifier} \label{req:ip-change-classifier} \\
+            IP shall let the user choose between three classifiers: K Nearest Neighbours, Support Vector Machine, and Convolutional Neural Network. When the user changes his/her preference, IP shall update the active classifier.
+
+            \item \b{Save Classifier} \label{req:ip-save-classifier} \\
+            IP shall be able to save the active classifier to disk if trained, in a way that it can later be retrieved through \ref{req:ip-load-classifier} Load Classifier. At most one instance of each classifier shall be saved.
+
+            \item \b{Load Classifier} \label{req:ip-load-classifier} \\
+            IP shall be able to load a classifier of the active classifier's type from disk, such that it can be used without training again. This shall overwrite the current active classifier.
+
+            \item \b{Train Classifier} \label{req:ip-train-classifier} \\
+            IP shall be able to train the active classifier given that a train and validation set is available.
+
+            \item \b{Test Classifier} \label{req:ip-test-classifier} \\
+            IP shall be able to test the active classifier given that a test set is available and \ref{req:ip-train-classifier} Train Classifier was issued beforehand.
+
+            \item \b{Classify Board} \label{req:ip-classify-board} \\
+            IP shall be able to reconstruct the chess position of the board, by using the active classifier, given that \ref{req:ip-train-classifier} Train Classifier and \ref{req:ip-configure} Configure was issued beforehand.
         \end{enumeratenum}
 
-
-    \item {\b{Validation and Response}}
+    \item {\b{User Application Module}}
         \begin{enumeratenum}
-            \item \b{Movement Validation} \label{req:movement-validation} \\
-            VAR shall be able to validate a chess move, given the current chess position. The previous chess position shall be memorized, the initial position shall be the initial chess setup.
+            \item \b{Preview Windows} \label{req:ua-preview-windows} \\
+            UA shall provide two graphical elements to show the images received from IP through \ref{req:ip-grab-frames} Grab Frames.
 
-            \item \b{Movement Discarding} \label{req:movement-discarding} \\
-            VAR shall be able to discard a chess move.
+            \item \b{Chess GUI} \label{req:ua-chess-gui} \\
+            UA shall provide a chessboard GUI. It shall depict an 8x8 chessboard. On startup, the chess GUI shall show the initial setup. Chess pieces may be moved from cell A to cell B by left-clicking cell A and then left-clicking cell B. A cell's content may be changed to the next piece by right-clicking the cell, respecting the order \t{FR} $\rightarrow$ \t{WP} $\rightarrow$ \t{WB} $\rightarrow$ \t{WN} $\rightarrow$ \t{WR} $\rightarrow$ \t{WQ} $\rightarrow$ \t{WK} $\rightarrow$ \t{BP} $\rightarrow$ \t{BB} $\rightarrow$ \t{BN} $\rightarrow$ \t{BR} $\rightarrow$ \t{BQ} $\rightarrow$ \t{BK} $\rightarrow$ \t{FR} \dots. This way the user may correct classification errors after issuing \ref{req:ip-classify-board} Classify Board and before issuing \ref{req:var-validate-move} Validate Move, as well as compose datasets by issuing \ref{req:ip-crop-and-label} Crop and Label.
 
-            \item \b{Starting New Game} \label{req:starting-new-game} \\
-            VAR shall be able to reset its state when a new game is issued.
+            \item \b{VAR Support} \label{req:ua-var-support} \\
+            UA shall provide graphical elements making it possible for the user to issue \ref{req:var-validate-move} Validate Move, \ref{req:var-discard-move} Discard Move, \ref{req:var-new-game} New Game, \ref{req:var-surrender} Surrender, \ref{req:var-offer-draw} Offer Draw, and \ref{req:var-accept-draw} Accept Draw.
+            
+            \item \b{IP Support} \label{req:ua-ip-support} \\
+            UA shall provide graphical elements making it possible for the user to issue \ref{req:ip-configure} Configure, \ref{req:ip-test-configure} Test Configure, \ref{req:ip-crop-and-label} Crop and Label, \ref{req:ip-test-crop-and-label} Test Crop and Label, \ref{req:ip-shuffle-and-split} Shuffle and Split, \ref{req:ip-clear-all-images} Clear All Images, \ref{req:ip-change-classifier} Change Classifier, \ref{req:ip-save-classifier} Save Classifier, \ref{req:ip-load-classifier} Load Classifier, \ref{req:ip-train-classifier} Train Classifier, \ref{req:ip-test-classifier} Test Classifier, and \ref{req:ip-classify-board} Classify Board.
 
+            \item \b{Message Label} \label{req:ua-message-label} \\
+            UA shall provide a graphical element where information or error messages can be displayed.
+
+            \item \b{Settings} \label{req:ua-settings} \\
+            UA shall provide graphical elements to modify the parameters of the application.
         \end{enumeratenum}
 \end{enumeratenum}
 
-These requirements will serve as a guideline throughout development. However, to achieve them, other things might need to be implemented. A great example is the communication between the subsystems, which might seem like an easy implicit task, but we will see further on that this is not the case.
 
 
-
-% --------------------------------- Non-functional Requirements --------------------------------- %
+% ------------------------------------------------------------------------------------------- %
+% ------------------------------- Non-functional Requirements ------------------------------- %
+% ------------------------------------------------------------------------------------------- %
 
 \section{Non-functional Requirements}
-
-Aside from functional requirements which state exact goals, it is important to enumerate non-functional requirements as well. While they might seem more abstract, they are as important (if not more) than their functional buddies. These will refer to both user and developer experience.
 
 The application shall be \b{user-friendly}. This implies keeping the graphical user interface simple and intuitive, providing a comprehensive user guide, focusing on user needs. Using the application shall be a smooth experience, having responsive graphical elements and being \b{performant} enough to yield low waiting time in time-critical tasks (for example, when providing the camera preview, fast frame grabbing is needed for high enough FPS in the preview window).
 

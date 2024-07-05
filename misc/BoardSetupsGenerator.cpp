@@ -19,7 +19,7 @@ std::ofstream outfile;							// output file
 std::ostringstream os;							// for efficient "string concatenation"
 
 const int INDIVIDUAL_COUNT_GOAL = 500;			// the least amount of counts of each piece. count = how many times a piece appears throughout all generated boards
-const int MINIMUM_AMOUNT = 4;					// minimum number of pieces on a table
+const int MINIMUM_AMOUNT = 10;					// minimum number of pieces on a table
 const int MAXIMUM_AMOUNT = 32;					// maximum amount of pieces on a table
 
 std::vector<std::string> allPieces = {

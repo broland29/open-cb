@@ -74,6 +74,11 @@ void Validator::validateBoard(char board[8][8], bool& isValid, std::string& enco
 
     metadata.changeTurn();
 
+    if (getKingSituation(currBoard, metadata.turn) == KingSituation::STALEMATE)
+    {
+        description += ". Stalemate";
+    }
+
     // if no new pawn move, reset el passant; otherwise let it stay "updated"
     if (oldValidator.metadata.enPassantCol == this->metadata.enPassantCol)
     {

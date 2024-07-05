@@ -1,8 +1,6 @@
 #pragma once
 
 #include <iostream>
-#include "Board.h"
-#include "Notation.h"
 #include "Move.h"
 #include <spdlog/spdlog.h>
 

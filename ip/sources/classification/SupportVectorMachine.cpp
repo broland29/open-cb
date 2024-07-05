@@ -16,6 +16,14 @@ int SupportVectorMachine::train()
 	{
 		return 1;
 	}
+	for (auto const& trainLabelAndCount : trainLabelsAndCounts)
+	{
+		if (trainLabelAndCount.second == 0)
+		{
+			SPDLOG_ERROR("No train images of class {} loaded!", trainLabelAndCount.first);
+			return 1;
+		}
+	}
 
 	std::vector<std::pair<Mat_<Vec3b>, std::string>> validationImages;
 	std::map<std::string, int> validationLabelsAndCounts;

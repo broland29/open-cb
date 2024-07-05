@@ -39,6 +39,7 @@
 \renewcommand*{\t}{\texttt}
 \renewcommand*{\i}{\textit}
 \renewcommand*{\b}{\textbf}
+\newcommand*{\p}{\phantom}
 
 \usepackage{subcaption}
 
@@ -57,6 +58,11 @@
 \usepackage{enumitem}  % https://tex.stackexchange.com/questions/54673/use-numbers-in-every-level-of-enumeration
 \newlist{enumeratenum}{enumerate}{10}
 \setlist[enumeratenum]{label*=\arabic*.}
+
+\usepackage{fancyvrb}  % https://tex.stackexchange.com/questions/122195/how-to-center-verbatim
+\usepackage{relsize}
+\usepackage[dvipsnames]{xcolor}
+\newcommand*{\g}{\textcolor{ForestGreen}}
 
 
 \setlist{noitemsep,nolistsep}

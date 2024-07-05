@@ -1,135 +1,60 @@
-\chapter{Analysis and Theoretical Foundation}
-\label{ch:analysis}
+\chapter{Analysis and Theoretical Foundation} \label{ch:analysis}
 \pagestyle{fancy}
 
-\section{General Considerations}
-
-\subsection{Representation and Coordinate Systems} \label{analysis:representation}
-
-Before we deep dive into anything, it is important to lay down some conventions. First of all, ``the chessboard is placed between the players in such a way that the near corner square to the right of the player is white'' (FIDE Laws of Chess \cite{fide}). This applies to both players (if we get one right, the other one just stays on the other side). There are different kinds of chess notations to refer to a movement. Usually, they all obey the convention that the rows are numbered, while the columns are letters, and the white player is used as a reference point. In Figure \ref{fig:representation} we can imagine this as the white player being at the ``bottom part'' of the board. However, for us, from a programmer perspective, looking at a chessboard like a matrix, it makes more sense to use numbers in ``both directions''. Since the project has OpenCV at its core, a Mat-like indexation would refer to \t{A8} as \t{00}, \t{E4} as \t{44}, \t{H2} as \t{67} and so on.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.55\textwidth]{figs/representation.png}
-    \caption{Representation}
-    \label{fig:representation}
-\end{figure}
-
-The project uses two cameras. These are mounted on the two sides of the board where the players are not playing, for convenience. If we use the white player as a reference, we can refer to them as left and right cameras. Each camera has its own coordinate system. This is shown in figure \ref{fig:coordinates}. The left camera and its coordinate system are red, while the right camera has the color green associated.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{figs/coordinates.png}
-    \caption{Coordinates}
-    \label{fig:coordinates}
-\end{figure}
-
-We need a global coordinate system, and it makes sense to use the one we started with. So the coordinates the cameras see are translated to the white player's coordinate system, which we will refer to as the main coordinate system from now on. If we observe the pattern, we realize that this translation is trivial. If we convert from left to main, $mainRow = leftCol, mainCol = 7 - leftRow$. If we go from right to main, $mainRow = 7 - rightCol, mainCol = rightRow$.
 
 
-\subsection{Notations} \label{subsec:notations}
+% ------------------------------------------------------------------------------------------- %
+% ------------------------------- Image Processing Algorithms ------------------------------- %
+% ------------------------------------------------------------------------------------------- %
 
-We need a modality to represent chess pieces. This is needed throughout the project for multiple reasons, such as classification, representation of board states, and saving images to specific folders (labeling). In a perfect world, it would be nice to have one notation in the whole project, but this is not the case currently.
+\section{Image Processing Algorithms} \label{sec:image-processing-algorithms}
 
-There are 12 pieces in chess. Free cells are also considered a category, and in some cases, black and white free cells are preferably distinguished (ex: classification yields better results this way). So we have 14 piece names, as shown in \ref{tab:notations}. Column ``Common'' refers to the notation used between multiple modules. This is the most expressive, as it is easy to read and interpret. The downside of such a notation is that it is a string - in any representation, it takes up more memory, and checking for equivalency is slower. Column ``VAR Notation'' shows what encoding is used when validating the movement. There are two things to notice here: they are all characters, overcoming the drawback of the previous representation, and white and black free have the same representation. This is because logically there is no need to distinguish them here. The last column shows what is shown to the user. The chess notation of choice is  Long Algebraic Notation since it is expressive and standard.
-
-So why do we need all three? The Long Algebraic Notation does not differentiate between white and black pieces. This can be deduced from the time when it was made. But we want this feature from a global representation. The VAR Notation would be another great representation, and we could give f and F for the two frees for example. The problem is that it cannot be used to save images to specific folders, since Windows folder names are case-insensitive...
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{|l|l|l|l|}
-    \hline
-    \b{Piece Name}   & \b{Common} & \b{VAR Notation} & \b{Algebraic} \\ \hline
-    White Free       & WF         & *                & none          \\ \hline
-    White Pawn       & WP         & P                & P             \\ \hline
-    White Bishop     & WB         & B                & B             \\ \hline
-    White Knight     & WN         & N                & N             \\ \hline
-    White Rook       & WR         & R                & R             \\ \hline
-    White Queen      & WQ         & Q                & Q             \\ \hline
-    White King       & WK         & K                & K             \\ \hline
-    Black Free       & BF         & *                & none          \\ \hline
-    Black Pawn       & BP         & p                & P             \\ \hline
-    Black Bishop     & BB         & b                & B             \\ \hline
-    Black Knight     & BN         & n                & N             \\ \hline
-    Black Rook       & BR         & r                & R             \\ \hline
-    Black Queen      & BQ         & q                & Q             \\ \hline
-    Black King       & BK         & k                & K             \\ \hline
-    \end{tabular}
-    \caption{Notations in the project}
-    \label{tab:notations}
-\end{table}
-
-Long Algebraic Notation might need a little bit of extra explanation. First, cells are referred to as file-rank (column-row), like A3, D4 etc. (see Figure \ref{fig:representation}). Pieces are as shown in Table \ref{tab:notations}. The ``formula'' for composing such a notation would be something like:
-
-\[\t{pieceEnc} + \t{prevEnc} + \t{captEnc} + \t{currEnc} + \t{checkEnc} + \t{promEnc} + \t{epEnc}\]
-
-where \t{pieceEnc} is the encoding of the piece (pawns are omitted), \t{prevEnc} is the encoding of the previous cell, \t{captEnc} is an `x' if there is a capture, \t{currEnc} is the encoding of the current cell, \t{checkEnc} is `\#' if there is a checkmate, `+' if there is a check, \r{promEnc} is the encoding of the piece the pawn was promoted to (if it is the case), and \t{epEnc} is ``ep'' is there was an en passant. In cases like \t{pieceEnc}, \t{captEnc}, \t{checkEnc}, \t{promEnc}, \t{epEnc}, if they are not actual, they are omitted, i.e. an empty string can be used when concatenating. Some examples would be:
-
-% https://www.chess.com/terms/chess-notation#specialcases
-\begin{itemize}
-    \item Pawn (white) moves from e2 to e4:                         \t{e2e4}
-    \item Knight (white) moves from g1 too f3:                      \t{Ng1f3}
-    \item Bishop (white) moves from b5 to c6 with capture:          \t{Bb5xc6}
-    \item Pawn (black) moves from d7 to c6 with capture:            \t{d7xc6}
-    \item Bishop (white) moves from f1 to b5 with check:            \t{Bf1b5+}
-    \item Queen (black) moves from d8 to h4 with checkmate:         \t{Qd8h4\#}
-    \item Pawn (white) moves from e7 to e8 with promotion to queen: \t{e7e8Q}
-    \item Pawn (black) moves from b4 to a3 with en passant:         \t{b4xa3ep}
-    \item Kingside (any) castling:                                  \t{0-0}
-    \item Queenside (any) castling:                                 \t{0-0-0}
-\end{itemize}
-
-You might say that it is redundant to mention previous cell encoding. While in most cases we could emit it (and use ``simple'' algebraic notation), there are some corner cases. Example: two knights on the same rank, one moves: we need to specify the file. Two knights on the same file, one moves: we need to specify rank. And specifying the whole previous cell simplifies things.
+Out of all three modules, the Image Processing Module makes use of the most algorithms and requires the biggest theoretical background. In this section, I will present the main IP algorithms in a general manner, so that \autoref{ch:detailed-design-and-implementation} will provide a comprehensive description of only the aspects of interest.
 
 
-\section{Image Processing Algorithms}
-\subsection{Hough} \label{analysis:hough}
+% --------------------------------------- Convolution --------------------------------------- %
 
-The process of line identification from a source image is not at all a trivial problem. The article \i{A survey of Hough Transform} \cite{hough_survey} takes a comprehensive look at this algorithm. It describes it as ``an ingenious method that converts such global curve detection problem into an efficient peak detection problem in parameter space''.
+\subsection{Conversion}
 
-Most of the time, the input should be an edge image. In our case, we apply Canny Edge Detection beforehand. The idea is to define a parameter space, map the image in it, and then take each object pixel, and let them vote about on which lane they think they can lie on. Bins, sometimes called accumulators, count these votes, and the lines with the most votes or above a certain threshold win. This way, any parametric analytic curve could be described- there are applications of Hough on finding circles and ellipses. However, for us, the goal is to get the lines defined by the chessboard, to identify it.
+Let's start with a simple but crucial part of the project: conversion of images from color to grayscale, and from grayscale to binary. Images are a ``snapshot of reality'', where colors have continuous values. In the computer world, we need color models to describe a color image numerically. One of the most famous color models is the RGB color model, where one pixel has red, green and blue channels, each channel having values ranging from 0 to 255. By mixing these three colors, the RGB color model is capable of representing 16.777.216 colors. This is more than enough for most purposes. Some RGB color examples are: (255,0,0) for red, (255,255,255) for white, (0,0,0) for black and (255,255,0) for yellow.
 
-For line parametrization, there were attempts to use different equations to describe a line. The simple slope-intercept form $f(x,y) = y - mx - c = 0$ for example suffered from the limitation that lines perpendicular to the abscissa were impossible to represent. There are workarounds to avoid this, however, I chose to follow the recommendation of \cite{prs_labs} and go with a different form, the one recommended by Duda and Hart: the normal parametrization/ $\rho - \theta$ representation:
+A grayscale image is what others may refer to as a black-and-white image. The grayscale image has only one color channel, which represents (light) intensity. 0 means black, while 255 means white. As a result, this format can show only 256 colors, hence being less representative. At the same time, it requires 3 times less memory, and may still hold precious information for image processing algorithms.
 
-\[ \rho = x \cos{\theta} + y \sin{\theta}\]
+The third kind of image we discuss is a binary image. A binary image is like a grayscale image having the restriction that its pixels are either ``pitch black'' (0) or ``the whitest white'' (255). One such image could be stored as a bitmap, being very light on memory. Usually, binary images represent one or more objects. One color value is chosen as the object pixel color, while the other one is the background pixel color.
 
-To illustrate how this representation works, here is Figure \ref{fig:rhotheta1}, showing an example. 
+The color image provides the most realistic representation if we compare it with human sight. However, for image processing purposes, we might want to use grayscale and/or binary images. Conversion from one to another is possible through different methods. One of the most used methods of converting a color image to a grayscale is to run its pixel values through the function \i{colorToGrayscale}:
+
+\[
+colorToGrayscale(red, green, blue) = 0.299 * red + 0.587 * green + 0.114 * blue
+\]
+
+We can see that different color channels have different amounts of impact on the resulting grayscale value, this is to achieve a more ``realistic'' result than a simple averaging would. Further on, once we have a grayscale image, we can easily convert it to a binary one by choosing a threshold intensity value, bringing everything less than or equal to the threshold to 0, and rounding up everything else to 255.
+
+\[
+grayscaleToBinary(grayscaleValue) =
+\begin{cases}
+    0 &\quad grayscaleValue \le threshold\\
+    255 &\quad grayscaleValue > threshold\\
+\end{cases}
+\]
+
+A minimalistic example is shown in Figure \ref{fig:conversion}. Each square represents a pixel. The value inside each square shows the numerical values that represent the pixel's color, while the square's background color is the actual color. The original image represents a brown cross, with different ``background'' colors on each delimited part. We can observe that the cross is generally darker than the background. By using the \i{colorToGrayscale} method, the middle image is found. And by choosing an appropriate threshold (in our case 127, which can often be used as a first educated guess, laying exactly in the middle of the range 0-255), the cross can be extracted into a binary image, as shown on the rightmost image.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.3\textwidth]{figs/rhotheta1.png}
-    \caption{Line in parametric representation}
-    \label{fig:rhotheta1}
+    \includegraphics[width=\textwidth]{figs/conversion.png}
+    \caption{Conversion example. From color to grayscale to binary.}
+    \label{fig:conversion}
 \end{figure}
 
-The origin is on the top left corner, to follow the convention enforced by openCV. You can see the \t{x} and \t{y} axes, and the red line is the one we want to describe. We take the normal to the red line from the origin: this is the purple line. The length of the purple line is $\rho$. The angle between the \t{x} axis and the purple line is $\theta$. In this particular case, if we take one unit on the axis to be of length 1, we can say that $\rho = 4\sqrt{2}$ and $\theta = \pi/2 = 45^{\circ}$.
 
-Now we just need to define a convention for the ranges we want to check. I will use Figure \ref{fig:rhotheta2} to show some examples, including border cases.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.9\textwidth]{figs/rhotheta2.png}
-    \caption{Parameter bounaries}
-    \label{fig:rhotheta2}
-\end{figure}
-
-The coordinate system is the same as in Figure \ref{fig:rhotheta1}. The dotted box shows the region of interest, more specifically, pixels that are inside the image. Lines as we know go to infinity, so they naturally go out of bounds. On the left picture, I wanted to focus on the limits of $\theta$. We can see that lines \t{L3}, \t{L4} and \t{L5} will be inside the image. While lines \t{L1} and \t{L2} could be described by a normal form, they are out of bounds, hence not of interest. If we think about $\theta_1$ and $\theta_2$, we can observe that they are in the range $(2\pi, 3\pi/4)$, or $(180^{\circ}, 270^{\circ})$. Looking at the right figure, we can focus on $\rho$. Again, some lines are out of the image, and we don't care about them. We cannot filter them based only on $\rho$. But we can see the two extremes. The minimum $\rho$ is achieved by \t{L1}: it has only one pixel inside the image, and it coincides with the origin of the coordinate system, so it is at 0 distance from it. Meanwhile, line \t{L5} is at maximum distance, given that its perpendicular coincides with the diagonal of the image. Overall, we can conclude:
-
-\[\theta \in [0, 2\pi] \cup [3\pi/4, 2\pi)\]
-\[\rho \in [0,\sqrt{width * width + height * height}]\]
-
-To enhance the efficiency, some use kernel operations to calculate votes. Others try to use a rotation-based approach, where ``the edge image is rotated about the center of the image plane by a fixed angle step, and in each rotated image, search is carried out in the horizontal and vertical directions to find the end points of horizontal and vertical line segments'' \cite{hough_survey}. Some try to use Neural Networks, to train a model to map an image to parametric lines. And as always, dedicated hardware and parallelization can be of great help.
-
-Overall, the Hough line detection algorithm is somewhat intuitive, robust to discontinuity and missing data on the curve/line, versatile and well-researched. As some downsides, we can mention that the computation time and memory requirements grow exponentially with the number of parameters, and in its simplest form, it suffers from peak spreading (votes in an area for ``the same thing'') and blind voting (every vote has the same weight).
-
-
+% --------------------------------------- Convolution --------------------------------------- %
 
 \subsection{Convolution}
 
-Wikipedia defines convolution as ``\href{https://en.wikipedia.org/wiki/Convolution}{a mathematical operation on two functions (\i{f} and \i{g}) that produces a third function (\i{f * g})}''. During this document, and in the project in general, when we say convolution we refer to \href{https://en.wikipedia.org/wiki/Convolution#Discrete_convolution}{discrete convolution}. This is because images can be perceived as functions that map coordinates x and y to discrete pixel values. The operation is done on two matrices, one representing a grayscale image, and the other representing a convolution matrix, also called \href{https://en.wikipedia.org/wiki/Kernel_(image_processing)}{kernel}.
+\href{https://en.wikipedia.org/wiki/Convolution}{Wikipedia} defines convolution as \i{a mathematical operation on two functions (f and g) that produces a third function (f * g)}. During this document, and in the project in general, when we say convolution we refer to \href{https://en.wikipedia.org/wiki/Convolution#Discrete_convolution}{discrete convolution}. This is because images can be perceived as functions that map coordinates x and y to discrete pixel values (0-255, on one or three channels/dimensions). The operation is done on two matrices, one representing a grayscale image, and the other representing a convolution matrix, also called \href{https://en.wikipedia.org/wiki/Kernel_(image_processing)}{kernel}.
 
-Kernels are usually small (3x3, 4x4, 5x5) matrices which, when convoluted with an image, result in another image (or the result can be scaled to another image) that is blurred, sharpened, or preprocessed for other reasons like edge detection. More naturally, convolution means sliding the kernel over the image, and for each pixel, adding up the products of the pixel values which get on top of each other. A simple, yet very effective example is applying a Gaussian blur, as seen in Figure \ref{fig:gaussian}. Here we use an approximation of the Gaussian kernel. The original image has 0 as object pixels, representing a cross. The result is blurred, and the values represent the grayscale value of the background color. The middle value, for example, is the result of the sum $255 * \frac{1}{16} + 0 * \frac{2}{16} + 255 * \frac{1}{16} + 0 * \frac{2}{16} + 0 * \frac{4}{16} + 0 * \frac{2}{16} + 255 * \frac{1}{16} + 0 * \frac{2}{16} + 255 * \frac{1}{16}$. The other values can be found in the same way.
-
+Kernels are usually small (3x3, 4x4, 5x5) matrices which, when convoluted with an image, result in another image (or the result can be scaled to another image) that is blurred, sharpened, or preprocessed for other reasons like edge detection. In natural language, convolution is the act of sliding the kernel over the image, and for each pixel, summing up the products of the pixel values which get on top of each other. A simple, yet very effective example is applying a Gaussian blur, as seen in Figure \ref{fig:gaussian}. Here we use an approximation of the 3x3 Gaussian kernel. The original image has 0 as object pixels, representing a cross. The result is a blurred cross. The numerical values on the figure represent the grayscale value of the respective cell's background color. When getting out of bounds, the value 255 is considered (padding), since this is the passive, background color. The middle value, for example, is the result of the equation $255 * \frac{1}{16} + 0 * \frac{2}{16} + 255 * \frac{1}{16} + 0 * \frac{2}{16} + 0 * \frac{4}{16} + 0 * \frac{2}{16} + 255 * \frac{1}{16} + 0 * \frac{2}{16} + 255 * \frac{1}{16}$. The other values can be found in the same way.
 
 \begin{figure}[H]
     \centering
@@ -138,11 +63,29 @@ Kernels are usually small (3x3, 4x4, 5x5) matrices which, when convoluted with a
     \label{fig:gaussian}
 \end{figure}
 
+Images often contain unnecessary details or noise in the form of small random object pixel groups. Blurring helps to reduce these, as well as softens the hard edges of the image. Convolution with a kernel can have different results depending on the kernel, not just blurring. For example, a median filter removes salt and pepper noise and high-pass filters intensify edges \cite{ip_labs}.
+
+
+% -------------------------------- Morphological Operations --------------------------------- %
+
+\subsection{Morphological Operations}
+
+This category of operations, as described in Image Processing, Laboratory Works \cite{ip_labs}, contains operations that affect the form, structure and/or shape of the original image. We are interested in the two basic morphological operations called dilation and erosion. An illustration of the effects of these can be found in Figure \ref{fig:morphological}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/morphological.png}
+    \caption{Morphological Operations Example}
+    \label{fig:morphological}
+\end{figure}
+
+The operations we will perform resemble the convolution operation described previously. A kernel-like small matrix called a structuring element is chosen. In the example, this is a 3x3 black matrix. During dilation, we go through each object pixel (0, black), we put the structuring element on top of each pixel of the original binary image, and we keep the ones where we find at least one overlaying object pixel when doing so. In Figure \ref{fig:morphological} dilation is used where the arrow suggests it. Erosion is quite the opposite: we only keep pixels where every object pixel of the structuring element is met. Hence dilation makes the image bigger, while erosion shrinks it. We can mix these two to have a morphological effect but also keep the original dimension by applying the same amount of dilations and then erosions, or the other way around. The first one is called closing, the latter is opening.
+
 \subsection{Canny Edge Detection}
 
-Edge detection is a common task in Image Processing. Edges (and corners) are extremely important, since they are one of the most valuable features we could extract from images. OpenCV's \href{https://docs.opencv.org/3.4/df/d54/tutorial_py_features_meaning.html}{Understanding Features} article gives a simple yet very intuitive example, this is recreated in Figure \ref{fig:edges_corners}. Think about the gray rectangle as our object of interest, and the red, green and blue boxes as small views, regions of interest. Extracting features from an image means searching for a way to transform, ``compress'' our image into a set of features which somewhat accurately describe it.
+Edge detection is a common task in Image Processing. Edges (and corners) are extremely important since they are one of the most valuable features we can extract from images. OpenCV's \href{https://docs.opencv.org/3.4/df/d54/tutorial_py_features_meaning.html}{Understanding Features} article gives a simple yet very intuitive example, this is recreated in Figure \ref{fig:edges_corners}. Think about the gray rectangle as our object of interest, and the red, green and blue boxes as small views, regions of interest. Extracting features from an image means searching for a way to transform, or ``compress'' our image into a set of features that somewhat accurately describe it.
 
-If we look inside the red square, we do not get much information about where we are. We know that we are inside the object, but it could be anywhere inside. From the green box's preview we can deduce that we are at the bottom of the object, this already reduces the amount of possibilities greatly. And the third, black box is situated at a corner, we can exactly deduce its position. This is a very simplified example, but it gives a good hint on why edges and corners are so searched for.
+If we look inside the red square, we do not get much information about where we are. We know that we are inside the object, but it could be anywhere inside. From the green box's preview, we can deduce that we are at the bottom of the object, this already reduces the amount of possibilities greatly. And the third, black box is situated at a corner, we can exactly deduce its position. This is a very simplified example, but it gives a good hint of why edges and corners are so searched for.
 
 \begin{figure}[H]
     \centering
@@ -151,7 +94,7 @@ If we look inside the red square, we do not get much information about where we 
     \label{fig:edges_corners}
 \end{figure}
 
-In a grayscale image, an edge point is in a region where intensity varies greatly. The most ``extreme edge'' would be a sudden transition from black (intensity of 0) to white (intensity of 255), or the other way around. However, usually this translation is smoothed, by the nature of the image and as a result of previous filtering. We can perceive the image as a function which maps coordinates x and y to intensity levels. If we just look at one dimension, a smooth change of intensity could be modeled by an Inverse Tangent function, mapped in the 0-255 interval (see figure \ref{fig:inverse_tangent}). To detect the ``middle point'' of the transition (i.e., the edge point), we could differentiate once and search for peaks, or differentiate twice and search for zero.
+In a grayscale image, an edge point is in a region where intensity varies greatly. The most ``extreme edge'' would be a sudden transition from black (intensity of 0) to white (intensity of 255), or the other way around. However, usually this translation is smoothed, by the nature of the image and as a result of previous filtering. We can perceive the image as a function that maps coordinates x and y to intensity levels. If we just look at one dimension, a smooth change of intensity could be modeled by an Inverse Tangent function, mapped in the 0-255 interval (see figure \ref{fig:inverse_tangent}). To detect the ``middle point'' of the transition (i.e., the edge point), we could differentiate once and search for peaks, or differentiate twice and search for zero.
 
 \begin{figure}[H]
     \centering
@@ -166,12 +109,11 @@ In a grayscale image, an edge point is in a region where intensity varies greatl
     \label{fig:inverse_tangent}
 \end{figure}
 
-Of course, in the case of images, we have two dimensions, x and y. For this reason, the previous approach is generalized, and we use gradients and Laplacian instead of first and second order derivatives. While for someone who does not refer to mathematics as his strong point (me) it seems like this is just derivatives in multiple dimensions, it also gives us information about neighbor intensities. ``The gradient in an image point is a vector heading the direction of the intensity variation around this point. Its module is proportional with the speed of this variation. If the edge points are part of a contour the gradient will be perpendicular on the tangent to the contour at that point.''\cite{ip_labs}.
+Of course, in the case of images, we have two dimensions, x and y. For this reason, the previous approach is generalized, and we use gradients and Laplacian instead of first and second-order derivatives. \i{The gradient in an image point is a vector heading the direction of the intensity variation around this point. Its module is proportional to the speed of this variation. If the edge points are part of a contour the gradient will be perpendicular on the tangent to the contour at that point}\cite{ip_labs}.
 
-We do not need exact values of the gradients. An approximation is enough. And to get such an approximation, one may choose between a range of kernels, like Prewitt, Sobel, and Roberts. Approximation of gradients using the Sobel operator can be done as shown in Equation \ref{eq:sobel}, where the * symbol represents convolution.
+We do not need exact values of the gradients. An approximation is enough. To get such an approximation, one may choose between a range of kernels, like Prewitt, Sobel, and Roberts. Approximation of gradients using the Sobel operator can be done as shown in Equation \ref{eq:sobel}, where the * symbol represents convolution.
 
-\begin{equation}
-\label{eq:sobel}
+\begin{equation} \label{eq:sobel}
 \nabla f_x = f(x,y) * 
 \begin{bmatrix}
     -1 &  0 &  1 \\
@@ -188,15 +130,65 @@ We do not need exact values of the gradients. An approximation is enough. And to
 \end{equation}
 
 
+% ------------------------------------- Hough Transform ------------------------------------- %
 
+\subsection{Hough Transform} \label{analysis:hough-transform}
+
+The process of extracting lines from an image is not at all a trivial problem. Hough can be described as \i{an ingenious method that converts a global curve detection problem into an efficient peak detection problem in parameter space}\cite{hough_survey}.
+
+Often the input image of the Hough transform is an edge image, which comes from applying Canny Edge Detection or similar algorithms. The idea is to define a parameter space, map the image in it, and then take each object pixel, and let them vote about on which lane they think they can lie on. Bins, sometimes called accumulators, count these votes, and the lines with the most votes or above a certain threshold win. This way, any parametric analytic curve could be described. There are applications of Hough in finding circles and ellipses, but the scope of the project only lies within line detection.
+
+For line parametrization, there were attempts to use different equations to describe a line. The simple slope-intercept form $f(x,y) = y - mx - c = 0$ for example suffered from the limitation that lines perpendicular to the abscissa were impossible to represent. There are workarounds to avoid this. Duda and Hart recommend a different representation: the normal parametrization (also called $\rho - \theta$ representation) where lines obey the equation:
+
+\begin{equation} \label{eq:rotheta}
+\rho = x \cos{\theta} + y \sin{\theta}
+\end{equation}
+
+To illustrate how this representation works, here is Figure \ref{fig:rhotheta1}, showing an example. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{figs/rhotheta1.png}
+    \caption{Line in parametric representation}
+    \label{fig:rhotheta1}
+\end{figure}
+
+We consider the origin to be in the top left corner. You can see the \t{x} and \t{y} axes. The red line is the one we want to describe. We take the normal to the red line from the origin: this is the purple line. The length of the purple line is $\rho$. The angle between the \t{x} axis and the purple line is $\theta$. In this particular case, if we take one unit on the axis to be of length 1, we can say that $\rho = 4\sqrt{2}$ and $\theta = \pi/2 = 45^{\circ}$.
+
+We have the equation \ref{eq:rotheta}, but the ranges in which the free terms lie were not mentioned yet. To intuitively deduce these, take a look at Figure \ref{fig:rhotheta2}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/rhotheta2.png}
+    \caption{Parameter bounaries}
+    \label{fig:rhotheta2}
+\end{figure}
+
+The coordinate system is the same as in Figure \ref{fig:rhotheta1}. The dotted box shows the region of interest, more specifically, pixels that are inside the image. Lines as we know go to infinity, so they naturally go out of bounds. On the left picture, focus on the limits of $\theta$. Lines \t{L3}, \t{L4} and \t{L5} will be inside the image. While lines \t{L1} and \t{L2} could be described by a normal form, they are out of bounds, hence not of interest. Observe that $\theta_1$ and $\theta_2$, just like any outsider, are in the range $(2\pi, 3\pi/4)$, or $(180^{\circ}, 270^{\circ})$. Now look at the rightmost example, and focus on $\rho$. Again, some lines are out of the image, and we don't care about them. We cannot filter them based only on $\rho$. But we can see the two extremes. The minimum $\rho$ is achieved by \t{L1}which has only one pixel inside the image, and it coincides with the origin of the coordinate system (so it is at 0 distance from it). Meanwhile, line \t{L5} is at maximum distance, given that its perpendicular coincides with the diagonal of the image. Overall, we can conclude:
+
+\[\theta \in [0, 2\pi] \cup [3\pi/4, 2\pi)\]
+\[\rho \in [0,\sqrt{width * width + height * height}]\]
+
+To enhance the efficiency, some use kernel operations to calculate votes. Others try to use a rotation-based approach, where \i{the edge image is rotated about the center of the image plane by a fixed angle step, and in each rotated image, search is carried out in the horizontal and vertical directions to find the end points of horizontal and vertical line segments}\cite{hough_survey}. Some try to use Neural Networks, to train a model to map an image to parametric lines. And as always, dedicated hardware and parallelization can be of great help. As some downsides of Hough's approach, we can mention that the computation time and memory requirements grow exponentially with the number of parameters, and in its simplest form, it suffers from peak spreading (votes in an area for ``the same thing'') and blind voting (every vote has the same weight).
+
+
+
+% ------------------------------------------------------------------------------------------- %
+% ----------------------- Machine Learning/ Classification Algorithms ----------------------- %
+% ------------------------------------------------------------------------------------------- %
 
 \section{Machine Learning/ Classification Algorithms}
 
+Although they are still part of Image Processing, the Machine Learning/ Classification Algorithms are complex enough to deserve a separate section. There will be three classifiers implemented/used: a K Nearest Neighbors classifier (KNN), a Support Vector Machine classifier (SVM) and a Convolutional Neural Network (CNN). The ordering is based on the expected greatness of the result, from least accurate to most accurate.
+
+
+% ----------------------------------- K Nearest Neighbors ----------------------------------- %
+
 \subsection{K Nearest Neighbors}
 
-The K Nearest Neighbors algorithm is one of the most popular classification algorithms due to its simplicity and intuitive nature. The article K-nearest neighbor by Leif E. Peterson \cite{knn} notes that \i{it should be one of the first choices for a classification study when there is little or no prior knowledge about the distribution of the data}. Even though we know our dataset since we are the ones making it, choosing KNN as a starting point is reasonable since it can provide us a reference point related to what accuracy we shall expect from more complex classifiers. The previously mentioned paper also describes some general ideas related to classification, some of which will be described in the following.
+The K Nearest Neighbors algorithm is one of the most popular classification algorithms due to its simplicity and intuitive nature. The article \i{K-nearest neighbor by Leif E. Peterson}\cite{knn} notes that \i{it should be one of the first choices for a classification study when there is little or no prior knowledge about the distribution of the data}. Even though we know our dataset (we are the ones making it), choosing KNN as a starting point is reasonable since it can provide us a reference point related to what accuracy we shall expect from more complex classifiers. The previously mentioned paper also describes some general ideas related to classification, some of which will be described in the following.
 
-The KNN algorithm is simple: as in other classification algorithms, the samples are described as feature vectors. Having a training set where we know and purposefully access the labels of images, we can take the image we want to classify, get its feature vector, calculate the distance from this feature vector to every feature vector in the training set, search for the \t{k} closest ones (minimal distance), look at their labels and choose the most frequent label as winner.
+The KNN algorithm is simple: as in other classification algorithms, the samples are described as feature vectors. Having a training set where we know and purposefully access the labels of images, we can take the image we want to classify, get its feature vector, calculate the distance from this feature vector to every other feature vector in the training set, search for the \t{k} closest ones (minimal distance), look at their labels and choose the most frequent label as winner.
 
 Let's say we have feature vectors $a$ and $b$, with features (elements) $a_1, a_2, \ldots, a_n$ and $b_1, b_2, \ldots, b_n$ respectively. The distance can then be calculated using the Euclidean distance:
 
@@ -213,7 +205,7 @@ Consider the example shown in Figure \ref{fig:knn}. Dots represent feature vecto
 
 Another great way to visualize KNN and distances is with the Voronoi tessellation, as mentioned in \cite{knn}. Take a look at Figure \ref{fig:voronoi}. The black points represent 2D feature vectors, just like in the previous figure. If in the KNN algorithm we would take \t{k} = 1, we would always choose the label of the closest point. Imagine that each black dot has a color associated as a label, and as we pass through every possible feature vector (like iterating the pixels of an image), we color the given point based on the closest black dot's associated color. The result of one such operation can be seen in Figure \ref{fig:voronoi}. On the left side, we have 10 random points, on the right side the same points plus another 10 points. The illustrations were generated using \href{https://cfbrasz.github.io/Voronoi.html}{Frederik Brasz's online Voronoi diagram generator}.
 
-\begin{figure}[ht]
+\begin{figure}[H]
     \centering
     \begin{subfigure}[b]{0.475\textwidth}
         \centering
@@ -228,14 +220,16 @@ Another great way to visualize KNN and distances is with the Voronoi tessellatio
     \label{fig:voronoi}
 \end{figure}
 
-Of course, the KNN algorithm can be used for any dimension. However, the computations increase greatly. For each classification, we have to calculate the distance from each training sample, and we also need to search for the minimum (this is not a big overhead, but it is relevant). As dimensionality increases, the computational power needed for distance calculation increases as well. While the algorithm itself does not have many parameters to play with, choosing the right \t{k} can be troublesome and may require at least some knowledge about the data, or experimentation. Small \t{k} may lead to overfitting, large \t{k} means that there is a risk to take into consideration samples that are very far from us. Some consider adding weights to votes, so closer neighbors have a more influential vote on the final label. In our case, we stuck to the simplest KNN possible.
+Of course, the KNN algorithm can be used for any dimension. However, the computations increase greatly. For each classification, we have to calculate the distance from each training sample, and we also need to search for the minimum (this is not a big overhead, but it is relevant). As dimensionality increases, the computational power needed for distance calculation increases as well. While the algorithm itself does not have many parameters to play with, choosing the right \t{k} can be troublesome and may require at least some knowledge about the data, or experimentation. Small \t{k} may lead to overfitting, large \t{k} means that there is a risk to take into consideration samples that are very far from us. Some consider adding weights to votes, so closer neighbors have a more influential vote on the final label.
 
+
+% --------------------------------- Support Vector Machine ---------------------------------- %
 
 \subsection{Support Vector Machine}
 
-SVMs are more sophisticated than KNNs. The overall goal is the same, training for the classification of unknown samples and known classes. We still have a training set, test set and hyperparameters. However, the approach is very different. SVMs try to define boundaries, and the new sample will be classified based on which side of the boundary is it on. So, unlike for KNN, we build an actual model.
+SVMs are more sophisticated than KNNs. The overall goal is the same, training for the classification of unknown samples and known classes. We still have a training set, test set and hyperparameters. However, the approach is very different. SVMs try to define boundaries, and the new sample will be classified based on which side of the boundary is it on. So, unlike in the case of KNN, we build an actual model.
 
-As previously, a simple example can be provided if we take feature vectors of dimension 2. This means that each instance's feature vector can be plotted in 2D. Support Vector Machines try to find the boundary that separates instances of the training data best. In the case of linear SVMs, the boundary is a hyperplane (point, line, plane, hyperplane for dimensions 1, 2, 3 and more). So in 2D, we search for the best (straight) line. There are multiple solutions, but \i{the optimal hyperplane is orthogonal to the shortest line connecting the convex hulls of the two classes, and intersects it halfway} \cite{svm}. In Figure \ref{fig:svm-lines} I tried to illustrate this. On the left-hand side, we see multiple solutions to the separation problem. On the right, we see the convex hulls with dashed lines and only one solution, the thick line. The dotted lines represent what we refer to as margins. Dots which lay on this margin are the support vectors, hence the name. The thin lines represent the distances from the line to the support vectors/ margin. This is equal on both sides since this gives the ``most general answer''. 
+As previously, a simple example can be provided if we take feature vectors of dimension 2. This means that each instance's feature vector can be plotted in 2D. Support Vector Machines try to find the boundary that separates instances of the training data best. In the case of linear SVMs, the boundary is a hyperplane (point, line, plane, hyperplane for dimensions 1, 2, 3 and more). So in 2D, we search for the best (straight) line. There are multiple solutions, but \i{the optimal hyperplane is orthogonal to the shortest line connecting the convex hulls of the two classes, and intersects it halfway}\cite{svm}. In Figure \ref{fig:svm-lines} I tried to illustrate this. On the left-hand side, we see multiple solutions to the separation problem. On the right, we see the convex hulls with dashed lines and only one solution, the thick line. The dotted lines represent what we refer to as margins. Dots which lay on this margin are the support vectors, hence the name. The thin lines represent the distances from the line to the support vectors/ margin. This is equal on both sides since this gives the ``most general answer''. 
 
 \begin{figure}[H]
     \centering
@@ -252,35 +246,131 @@ As previously, a simple example can be provided if we take feature vectors of di
     \label{fig:svm-lines}
 \end{figure}
 
-The equation of a hyperplane (linear equation) is $a_1x_1 + a_2x_2 + \ldots + a_nx_n = b$. When talking about SVMs, $x_i$ is feature i, $a_i$ is a weight associated with feature $x_i$, often noted as $w_i$. And since they like to think of these as elements of vectors, and have a 0 on the right-hand side, we get the equation $w * x + b = 0$. This is what gives us the separating hyperplane, and we can plug in one element from each side to define which class lies on the positive, respectively on the negative side.
+The equation of a hyperplane (linear equation) is $a_1x_1 + a_2x_2 + \ldots + a_nx_n = b$. When talking about SVMs, $x_i$ is feature $i$, $a_i$ is a weight associated with feature $x_i$, often noted as $w_i$. And since they like to think of these as elements of vectors, and have a 0 on the right-hand side, we get the equation $w * x + b = 0$. This is what gives us the separating hyperplane, and we can plug in one element from each side to define which class lies on the positive, respectively on the negative side.
 
-A very intuitive example of weights was given in Using SVMs for text categorization \cite{svm}, where the author says: \i{The weight vector for the category ``interest'' includes the words prime (.70), rate (.67), interest (63), rates(.60), and discount (.46), with large positive weights, and the words group (-.24), year (-.25), sees (-.33), world (-.35), and dlrs (-.71) with large negative weights}. Of course, these values depend on the implementation, but we can see that they show how much they contribute to the categorization of a sample to a given class.
+A very intuitive example of weights was given in \i{Using SVMs for text categorization}\cite{svm}, where the author says: \i{The weight vector for the category ``interest'' includes the words prime (.70), rate (.67), interest (63), rates(.60), and discount (.46), with large positive weights, and the words group (-.24), year (-.25), sees (-.33), world (-.35), and dlrs (-.71) with large negative weights}. Of course, these values depend on the implementation, but we can see that they show how much they contribute to the categorization of a sample to a given class.
 
-So, how to find this line? Our goal is to find the appropriate $w$ since this is the only variable. It involves a lot of mathematics, which I don't fully understand nor have time to dive into. It can be shown that calculations come down to a series of dot products.
+So, how to find this line? Our goal is to find the appropriate $w$ since this is the only variable. It involves a lot of mathematics, which I don't fully understand nor have time to dive into. It can be shown that calculations come down to a series of dot products, which can be optimized.
 
-What happens if the data is not linearly separable? There are multiple approaches to tackle this problem since linear separability is rarely the case. We can allow error since this is natural to avoid overfitting and to make impossible classifications possible. This idea led to the idea of soft margin SVMs, where slack variables are introduced, allowing some degree of misclassification when training, as well as a parameter C which allows us to trade between error and margin.
+What happens if the data is not linearly separable? There are multiple approaches to tackle this problem since linear separability is rarely the case. We can allow error since this is natural to avoid overfitting and to make impossible classifications possible. This idea led to the concept of soft margin SVMs, where slack variables are introduced, allowing some degree of misclassification when training, as well as a parameter C which allows us to trade between error and margin\cite{prs_labs}.
 
-The other solution to inseparable sets is to map the input to a higher dimensional space, where it can be linearly separated. After doing this and finding the boundary, we can map back to the input dimension. This results in boundaries being ``projected'', which might have circular or other weird shapes.
-
-
+The other solution to inseparable sets is to map the input to a higher dimensional space, where it can be linearly separated. The method used is often referred to as the kernel trick. After doing this and finding the boundary, we can map back to the input dimension. This results in boundaries being ``projected'', which might have circular or other weird shapes.
 
 
-\section{Chess Move Validation}
+% ------------------------------ Convolutional Neural Network ------------------------------- %
 
-\subsection{Chess Rules} \label{chessrules}
+\subsection{Convolutional Neural Network}
 
-What is a valid chess move? The rules of chess are set by FIDE (Fédération Internationale des Échecs, or in English, International Chess Federation). The current version can be found online as FIDE Laws of Chess \cite{fide}. While this document has to be rigorous to not allow any confusion or law-breaking, I will omit most of it, focusing only on what is of interest and may not be intuitive. If you do not know chess at all, I recommend reading it first.
+Convolutional Neural Networks are a form of Artificial Neural Networks. These are \i{computational processing systems that are heavily inspired by the way biological nervous systems (such as the human brain) operate}\cite{cnn}. CNNs are designed for image-driven pattern recognition tasks. While for many it might seem like black magic, it is just well applied linear algebra.
 
-As you might already know, bishops move diagonally, rooks vertically/horizontally, queens like a bishop and rook combined, and knights in an L shape. This is shown in Figure \ref{fig:attack_simple}. These movements are the same all the time, indifferent of color and if the piece is capturing or just moving (of course, bishops will stay on the same color throughout the game).
+The neural network term comes from the fact that several computational nodes, called neurons, are interconnected. Each node performs a dot product and then applies a function to induce non-linearity. Nodes are organized in layers. Multiple layers come after each other, creating a network. Every connection has an associated weight, which serves as a multiplier. The structure of a model is fixed from the beginning, the only variables being the weights. So, during training, the weights are learned. All these together create a model.
+
+CNNs provide three main types of layers: convolutional, pooling and fully connected. In Figure \ref{fig:mnist}, you can see a model which is a proposed solution for the MNIST classification problem, found in the online article \href{https://towardsdatascience.com/mnist-handwritten-digits-classification-using-a-convolutional-neural-network-cnn-af5fafbc35e9}{MNIST Handwritten Digits Classification using a Convolutional Neural Network (CNN)}. This classification problem is often brought up as the first real-life example of a problem solvable by CNNs. 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.6\textwidth]{figs/attack_simple.png}
-    \caption{Moving patterns of bishop, knight, rook, queen}
+    \includegraphics[width=\textwidth]{figs/mnist.png}
+    \caption{Example CNN architecture for the MNIST dataset}
+    \label{fig:mnist}
+\end{figure}
+
+The convolutional layer applies a dot product between the weights and the corresponding region defined by the dimension of the kernel. This is the convolution operation we used in other parts of the project as well. The number of filters defines the number of features we wish to learn in the corresponding layer and defines the depth of the result. Although not shown in the illustration, the ReLU activation function is applied after convolution. ReLU stands for Rectified Linear Unit. It simply maps every negative value (result) to 0 and every positive value to a linearly mapped (positive) value.
+
+Pooling layers reduce the dimensionality. This is needed to have fewer parameters (train faster) and is necessary since in the end, we want to reach the \t{1 x 1 x noOfClasses} dimension in a reasonable time. In the example, we see that 2x2 max-pooling is used. This means that from 2x2 pixel regions, the maximum value is kept. By doing this with a stride of two (moving the kernel 2 pixels each time), the result is a sub-sampled matrix with half the height and width of the layer's input. It is a common pattern to apply multiple convolutional layers followed by pooling layers, this gives a fine balance between computational effort and performance.
+
+Unlike in the convolutional layers, in fully connected layers every input node is connected to every output node. In other words, every value is involved in every output's calculation. Convolutional layers performed a "sliding dot product", so when computing one value, only the kernel's size number of nodes was involved. Fully connected layers yield much more parameters than convolutional ones. They are typically used after a flattening operation- we lose dimensionality. We can see how getting from 3136 (64 * 7 * 7) neurons to 10 (number of classes, since we have 10 digits) is done in two steps. If we were to do the math, this is more optimal than doing it directly.
+
+When designing CNN architectures, we have to be extra careful to avoid overfitting. Adding too many layers (and parameters) results on great performance when training, but poor results when testing and applying. My favorite analogy is one that came to my mind a while ago: an overfitted model is like an egghead (``tocilar''): it learned everything from the book word by word, hence it cannot improvise well when slightly different problems appear. The training data is not everything, it is an estimation of the testing data, and the testing data is an estimation of what the model will see when put to work. So the model should learn ``loosely''.
+
+For a long time, what made CNNs unsuitable was the lack of computational power. With the advancement of GPUs and dedicated software, this relatively old technology gave more and more impressive results. Although throwing more hardware into the problem always helps, if somebody wants to get better performance on the same machine, he/she needs to tailor the CNN model to his/her needs. This is a difficult task, with many topics to explore. Even the biggest gurus recommend trial and error, which requires a lot of time. One can play around with different loss functions, optimizers (methods to update weights), learning rates (intensity of gradient converging to 0 loss), data augmentation methods, dropout layers, pre-trained models etc.
+
+
+
+% ------------------------------------------------------------------------------------------- %
+% --------------------------------------- Chess Theory -------------------------------------- %
+% ------------------------------------------------------------------------------------------- %
+
+\section{Chess Theory}
+
+While the chess-related code and ideas are less theoretical there is a strict set of rules which need to be known to understand the system. This includes how the board is supposed to be set up, how can we refer to cells, which is a valid chess movement, how and when games start or end, how to write down chess moves and so on. As kids we often learn these from our elders in an informal way, but actually, important documents back up these rules, like the \i{FIDE Laws of Chess}\cite{fide}.
+
+
+% ------------------------------------- The Chessboard -------------------------------------- %
+
+\subsection{The Chessboard}
+
+According to FIDE, \i{the chessboard is placed between the players in such a way that the near corner square to the right of the player is white}\cite{fide}. We can set it up for either player as if it is correct for one, it is correct for the other as well. The rows of the chessboard are called ranks, while the columns are called files. Ranks are referred to by numbers ranging from 1 to 8. Files are represented by letters from \t{a} to \t{h} (does not matter if it is lower or uppercase).
+
+For a programmer, it is easier to think of the chessboard as a two-dimensional array and refer to its cells by indexation from 0 to 7. This representation along with the previously described file-rank representation is shown in Figure \ref{fig:representation}. We could say that \t{A8} is \t{00}, \t{E4} is \t{44}, \t{H2} is \t{67} and so on.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.55\textwidth]{figs/representation.png}
+    \caption{Representation}
+    \label{fig:representation}
+\end{figure}
+
+
+% -------------------------------- Long Algebraic Notation ---------------------------------- %
+
+\subsection{Long Algebraic Notation} \label{subsec:notations}
+
+As defined on \href{https://www.chess.com/terms/chess-notation}{the Chess.com article on Chess Notation}, \i{chess notation is the act of recording or writing down the moves of a chess game}. The reason to use a chess notation is obvious: we want a convention, a way to write down chess games so that everyone can understand, reconstruct and analyze them. It specifies at each move the encoding of the moving piece and the cell it moves to, optionally followed by special notations. A more verbose version of it is the long algebraic notation. It also includes the starting cell, where the moved piece was initially.
+
+A chess movement in long algebraic notation is composed as a concatenation shown in Equation \ref{eq:long-algebraic-notation}.
+
+\begin{equation} \label{eq:long-algebraic-notation}
+\b{pieceEnc} + \b{prevEnc} + \b{captEnc} + \b{currEnc} + \b{checkEnc} + \b{promEnc} + \b{epEnc} 
+\end{equation}
+
+An explanation of Equation \ref{eq:long-algebraic-notation}'s variables:
+\begin{itemize}
+    \item \b{pieceEnc}: the encoding of the moving piece. \t{B} for bishop, \t{N} for knight, \t{R} for rook, \t{Q} for queen and \t{K} for king. Pawns are omitted.
+    \item \b{prevEnc}: the encoding of the previous, ``starting'' cell (see Figure \ref{fig:representation}).
+    \item \b{currEnc}: the encoding of the current, ``landing'' cell (see Figure \ref{fig:representation}).
+    \item \b{captEnc}: \t{x} if there was a capture; otherwise not present.
+    \item \b{checkEnc}: \t{\#} if there is a checkmate, \t{+} if there is a check; otherwise not present.
+    \item \b{promEnc}: the encoding of the piece the moving pawn was promoted to if it is the case; otherwise not present.
+    \item \b{epEnc}: \t{ep} if there was an en passant; otherwise not present.
+\end{itemize}
+\vspace{0.5cm}
+
+To make things even clearer, here are some corner cases from \href{https://www.chess.com/terms/chess-notation#specialcases}{the same guide's special cases section}, but in long algebraic notation instead of the simple algebraic notation shown on the website:
+
+\begin{itemize}
+    \item Pawn (white) moves from e2 to e4:                         \t{e2e4}
+    \item Knight (white) moves from g1 too f3:                      \t{Ng1f3}
+    \item Bishop (white) moves from b5 to c6 with capture:          \t{Bb5xc6}
+    \item Pawn (black) moves from d7 to c6 with capture:            \t{d7xc6}
+    \item Bishop (white) moves from f1 to b5 with check:            \t{Bf1b5+}
+    \item Queen (black) moves from d8 to h4 with checkmate:         \t{Qd8h4\#}
+    \item Pawn (white) moves from e7 to e8 with promotion to queen: \t{e7e8Q}
+    \item Pawn (black) moves from b4 to a3 with en passant:         \t{b4xa3ep}
+    \item Kingside (any) castling:                                  \t{0-0}
+    \item Queenside (any) castling:                                 \t{0-0-0}
+\end{itemize}
+\vspace{0.5cm}
+
+
+You might say that it is redundant to mention previous cell encoding. While in most cases we could emit it (and use simple algebraic notation), there are some corner cases. Example: two knights on the same rank, one of them moves: we need to specify the file. Two knights on the same file, one moves: we need to specify rank. Specifying the previous cell at all times simplifies logging.
+
+
+% -------------------------------------- Chess Rules ---------------------------------------- %
+
+\subsection{Chess Rules} \label{chessrules}
+
+What is a valid chess move? The rules of chess are set by FIDE\cite{fide}. While this document has to be rigorous to not allow any confusion or law-breaking, I will only focus on rules that are of high interest due to their importance or their potential to create corner cases. If you do not know chess at all, I recommend reading the rules first.
+
+Bishops move diagonally, knights move in an L shape, rooks move vertically or horizontally, queens move like bishops and rooks combined, and kings can move one cell in each direction. This is shown in Figure \ref{fig:attack_simple}. These movements are the same all the time, indifferent of color and if the piece is capturing or just moving. Bishops will stay on the same color throughout the game due to the nature of their movement.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figs/attack_simple.png}
+    \caption{Moving patterns of bishop, knight, rook, queen, king}
     \label{fig:attack_simple}
 \end{figure}
 
-A special move is castling, and while it is common, beginners often get it wrong. The key is that the king always moves two cells, and the rook ``jumps over it''. See Figure \ref{fig:attack_castle}.
+A special move is castling, and while it is common, beginners often get it wrong. The key is that the king always moves two cells, and the rook ``jumps over it'' (see Figure \ref{fig:attack_castle}). In practice, the rules also specify that the king needs to be moved first, after which the rook is moved. However, from having just the before-move and after-move states, it is impossible to check for this.
 
 \begin{figure}[H]
     \centering
@@ -289,7 +379,7 @@ A special move is castling, and while it is common, beginners often get it wrong
     \label{fig:attack_castle}
 \end{figure}
 
-Things get a little bit more complicated with pawns. They move one cell ``forward'' (depending on the color) if the cell is free. This move can be of two cells if the pawn has not moved yet. They capture diagonally in one cell range. They can only do this diagonal step if there is something to capture. See Figure \ref{fig:attack_pawn}.
+Things get a little bit more complicated with pawns. They move one cell ``forward'' (depending on the color) if the cell is free. This move can be of two cells if the pawn has not moved yet. They capture diagonally in one cell range. They can only do this diagonal step only if there is something to capture (see Figure \ref{fig:attack_pawn}).
 
 \begin{figure}[H]
     \centering
@@ -298,7 +388,7 @@ Things get a little bit more complicated with pawns. They move one cell ``forwar
     \label{fig:attack_pawn}
 \end{figure}
 
-And there is also En Passant, a move which beginners often don't even know. If the enemy pawn just moved two cells forward, and you have a pawn which it will end up near, you can capture it, and your piece gets ``in front of'' the cell previously occupied by the enemy. See Figure \ref{fig:attack_en_passant}. A more formal definition is to be found in the dotted list below.
+And there is also En Passant, a move which beginners often don't even know. If the enemy pawn just moved two cells forward, and you have a pawn that ended up near it, you can capture the enemy pawn, and your piece gets ``in front of'' the cell previously occupied by the enemy pawn (see Figure \ref{fig:attack_en_passant}). A more formal definition is to be found in the dotted list below.
 
 \begin{figure}[H]
     \centering
@@ -309,28 +399,10 @@ And there is also En Passant, a move which beginners often don't even know. If t
 
 Some important considerations:
 \begin{itemize}
-    \item It is not permitted to move a piece to a square occupied by a piece of the same color. (3.1)
-    \item A piece is considered to attack a square even if this piece is constrained from moving to that square because it would then leave or place the king of its color under attack. (3.1.3)
-    \item The bishop, rook or queen may not move over any intervening pieces. (3.5)
-    \item A pawn occupying a square on the same rank as and on an adjacent file to an opponent’s pawn which has just advanced two squares in one move from its original square may capture this opponent’s pawn as though the latter had been moved only one square. This capture is only legal on the move following this advance and is called an ``en passant'' capture. (3.7.3.1, 3.7.3.2)
-    \item The right to castle has been lost if the king has already moved, or with a rook that has already moved. Castling is prevented temporarily if the square on which the king stands, or the square which it must cross, or the square which it is to occupy, is attacked by one or more of the opponent's pieces, or if there is any piece between the king and the rook with which castling is to be effected. (3.8.2.1, 3.8.2.2)
-    \item No piece can be moved that will either expose the king of the same color to check or leave that king in check. (3.9.2)
+    \item It is not permitted to move a piece to a square occupied by a piece of the same color (rule 3.1).
+    \item A piece is considered to attack a square even if this piece is constrained from moving to that square because it would then leave or place the king of its color under attack (rule 3.1.3).
+    \item The bishop, rook or queen may not move over any intervening pieces (rule 3.5).
+    \item A pawn occupying a square on the same rank as and on an adjacent file to an opponent's pawn which has just advanced two squares in one move from its original square may capture this opponent's pawn as though the latter had been moved only one square. This capture is only legal on the move following this advance and is called an ``en passant'' capture (rules 3.7.3.1 and 3.7.3.2).
+    \item The right to castle has been lost if the king has already moved, or with a rook that has already moved. Castling is prevented temporarily if the square on which the king stands, or the square which it must cross, or the square which it is to occupy, is attacked by one or more of the opponent's pieces, or if there is any piece between the king and the rook with which castling is to be effected (rules 3.8.2.1 and 3.8.2.2).
+    \item No piece can be moved that will either expose the king of the same color to check or leave that king in check (rule 3.9.2).
 \end{itemize}
-
-
-
-
-
-
-\subsection{Approach to Validate a Movement} \label{analysis:approach}
-
-To validate a move, first, we need to get it. The information we can take for granted is the previous and the current state of the board, i.e. two chessboard positions. To extract information from these, we need to see the difference between the two states. After getting the different cells, based on how many are there, we can further narrow our search. There are valid moves of two, three and four changes. No change means no movement, and any other number means we can already conclude that the move is illegal.
-
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.9\textwidth]{figs/move.png}
-    \caption{All possible chess moves}
-    \label{fig:move}
-\end{figure}
-

@@ -30,7 +30,7 @@ void ValidationAndResponse::validateMoveSlot(QVector<QString> encodings)
 		for (int j = 0; j < 8; j++)
 		{
 			QString encoding = encodings[i * 8 + j];
-			if (encoding == "FR") { board[i][j] = FR; continue; }
+			if (encoding == "WF" || encoding == "BF") { board[i][j] = FR; continue; }
 			if (encoding == "WP") { board[i][j] = WP; continue; }
 			if (encoding == "WB") { board[i][j] = WB; continue; }
 			if (encoding == "WN") { board[i][j] = WN; continue; }
@@ -62,6 +62,21 @@ void ValidationAndResponse::validateMoveSlot(QVector<QString> encodings)
 
 		// any correct move is a denial of a possible draw offer
 		drawWasOffered = false;
+
+		// "natural" end games
+		char lastChar = encoding[encoding.length() - 1];
+		if (lastChar == '#')
+		{
+			std::string message;
+			isGameRunning = false;
+			moveLogger->endGame(EndGameReason::CHECKMATE, validator->getLastMoveColor(), message);
+		}
+		if (description.find("Stalemate") != std::string::npos)
+		{
+			std::string message;
+			isGameRunning = false;
+			moveLogger->endGame(EndGameReason::STALEMATE, validator->getLastMoveColor(), message);
+		}
 	}
 
 	emit validateMoveReplySignal(isValid, QString::fromStdString(encoding), QString::fromStdString(description));
