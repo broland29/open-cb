@@ -12,7 +12,7 @@ int ConvolutionalNeuralNetwork::train()
 {
 	// --no-capture-output for avoiding stdout buffering - https://github.com/conda/conda/issues/9412#issuecomment-719759077
 	// example: ...
-	std::string command = "conda run --no-capture-output -n rolienv2 python " +
+	std::string command = "conda run --no-capture-output -n opencb python " +
 		Paths::CNN_TRAIN_SCRIPT +										// argv[0]
 		std::string(" ") + std::string(Paths::TRAIN_FOLDER) +			// argv[1]
 		std::string(" ") + std::string(Paths::VALIDATION_FOLDER) +		// argv[2]
@@ -30,7 +30,7 @@ int ConvolutionalNeuralNetwork::train()
 int ConvolutionalNeuralNetwork::test()
 {
 	// example: 
-	std::string command = "conda run --no-capture-output -n rolienv2 python " +
+	std::string command = "conda run --no-capture-output -n opencb python " +
 		Paths::CNN_TEST_SCRIPT +										// argv[0]
 		std::string(" ") + std::string(Paths::TEST_FOLDER) +			// argv[1]
 		std::string(" ") + std::string(Paths::CNN_FOLDER) +				// argv[2]
@@ -78,7 +78,7 @@ int ConvolutionalNeuralNetwork::test()
 
 int ConvolutionalNeuralNetwork::classifyBoard(QVector<QString>& encodings)
 {
-	std::string command = "conda run --no-capture-output -n rolienv2 python " +
+	std::string command = "conda run --no-capture-output -n opencb python " +
 		Paths::CNN_CLASSIFY_BOARD_SCRIPT +								// argv[0]
 		std::string(" ") + std::string(Paths::BOARD_FOLDER) +			// argv[1]
 		std::string(" ") + std::string(Paths::CNN_FOLDER) +				// argv[2]

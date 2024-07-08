@@ -1,2 +1,98 @@
-\chapter{User’s Manual}
-\pagestyle{fancy}
+\chapter{User's Manual} \label{ch:users-manual} \pagestyle{fancy}
+
+In this chapter, I will provide help in the process of setting up OpenCB. Section \ref{sec:hardware-setup} gives tips on setting up the physical part of the application for optimal results. Section \ref{sec:software-setup-for-users} serves as a tutorial for simple users, who only want to run the executable of the application. This is less technical and faster. Section \ref{sec:software-setup-for-developers} walks through setting up the development environment in which OpenCB was written. This takes some time to set up, as libraries are built, applications are downloaded and so on.
+
+
+
+
+
+
+% -------------------------------- Software Setup for Users --------------------------------- %
+
+\section{Software Setup for Users} \label{sec:software-setup-for-users}
+
+Follow the steps below to run OpenCB:
+
+\begin{enumeratenum}
+    \item Choose a \t{Windows} device to install \t{OpenCB} on.
+    \item If you don't run \t{Windows}, you can set up a virtual machine:
+    \begin{enumeratenum}
+        \item \href{https://www.youtube.com/watch?v=Y8rzZHscljQ}{Download and install \t{Oracle VM Virtual Box} and set up \t{Windows 10}}.
+        \item \href{https://www.youtube.com/watch?v=HbLQnUVEHuE}{Enable \t{Guest Additions} on \t{Virtual Box} for file sharing}. I recommend using the shared folder method.
+        \item \href{https://www.youtube.com/watch?v=90tB1nlP7ag}{Download and install \t{Oracle VM VirtualBox Extension Pack} to enable the two webcams in \t{Virtual Box}}. Note that you will need to do this at each startup if you wish to use the cameras.
+    \end{enumeratenum}
+    \item If you want to run the CNN model and the associated functionalities, set up the \t{Conda} environment:
+    \begin{enumeratenum}
+        \item \href{https://www.anaconda.com/download/success}{Download \t{Anaconda} through the installer}.
+        \item Navigate to the root directory. You should see the file \t{opencb.yaml} here.
+        \item Open a terminal.
+        \item Try the \cmd{conda} command. If it is not recognized, \href{https://stackoverflow.com/a/51996934/17694100}{add \t{Conda} to your \t{PATH} environment variable}. 
+        \item Enter the command \cmd{conda env create --file opencb.yaml}. This will create the \t{opencb} environment based on the \t{yaml} file, used by the \t{Python} scripts. \smallskip\\ 
+        If the \t{pip} installations fail due to changing dependencies, you have to play around with the versions specified in the file but try to keep the main packages (like \t{tensorflow}) in their original version, or else the code might not work. You can check the list of packages by activating the environment (\cmd{conda activate opencb}) and using the command \cmd{conda list}. If you want to remove the environment, run \cmd{conda remove -n opencb --all}.
+    \end{enumeratenum}
+    \item Get \t{open-cb-user.zip}, and unzip it.
+    \item Run \t{OpenCB.exe}.
+\end{enumeratenum}
+
+
+% ----------------------------- Software Setup for Developers ------------------------------- %
+
+\section{Software Setup for Developers} \label{sec:software-setup-for-developers}
+
+Below you will find steps to set up the developer environment used during the development of OpenCB. If you find other methods to compile the code or easier steps for one particular installation, you are welcome to do it your way. This is what worked for me, and was tested in a virtual machine.
+
+\begin{enumeratenum}
+    \item Download \t{Visual Studio 2019 Community Edition}, together with \t{C++ Extension}
+    \begin{enumeratenum}
+        \item \href{https://www.techspot.com/downloads/7241-visual-studio-2019.html}{Download the installer}.
+        \item When installing, select the \t{Desktop development with C++} extension.
+        \item Let it install
+    \end{enumeratenum}
+    \item Set up \t{Qt6}
+    \begin{enumeratenum}
+        \item \href{https://www.qt.io/download-qt-installer-oss?hsCtaTracking=99d9dd4f-5681-48d2-b096-470725510d34%7C074ddad0-fdef-4e53-8aa8-5e8a876d6ab4}{Get the online installer}.
+        \item Create an account
+        \item When shown options, install only the \t{MSVC 2019 64-bit} version. This is enough for the application to run.
+        \begin{figure}[H]
+            \centering
+            \includegraphics[width=0.4\textwidth]{figs/user-guide-1.png}
+        \end{figure}
+        \item Add a new environment variable \t{OPENCB\_DIR}.
+        \begin{figure}[H]
+            \centering
+            \includegraphics[width=0.4\textwidth]{figs/user-guide-2.png}
+        \end{figure}
+        \item Edit the \t{PATH} environment variable, add:
+        \begin{figure}[H]
+            \centering
+            \includegraphics[width=0.2\textwidth]{figs/user-guide-3.png}
+        \end{figure}
+    \end{enumeratenum}
+    \item Set up \t{git}.
+    \begin{enumeratenum}
+        \item Download the \href{https://git-scm.com/download/win}{\t{Standalone Installer}}
+        \item Stick with the defaults during installation.
+    \end{enumeratenum}
+    \item Set up \t{vcpkg}
+    \begin{enumeratenum}
+        \item Create a folder where you want to have it. Open a terminal.
+        \item \cmd{git clone https://github.com/microsoft/vcpkg.git}
+        \item \cmd{cd vcpkg}
+        \item \cmd{bootstrap-vcpkg.bat}
+        \item \cmd{vcpkg integrate install}
+    \end{enumeratenum}
+    \item Download \t{OpenCV}, \t{GTest}, \t{spdlog} and \t{nlohmann-json} thorugh \t{vcpkg}. If you find a faster way to set up \t{OpenCV} with \t{contrib}, go ahead, as this method takes around one and a half/ two hours due to compiling from the source. The other packages get installed in just a few minutes.
+    \begin{enumeratenum}
+        \item \cmd{vcpkg install opencv}
+        \item \cmd{vcpkg install opencv4[contrib] \-\-recurse}
+        \item \cmd{vcpkg install gtest}
+        \item \cmd{vcpkg install spdlog}
+        \item \cmd{vcpkg install nlohmann-json}
+    \end{enumeratenum}
+    \item Clone the project and try building it.
+    \begin{enumeratenum}
+        \item \cmd{git clone https://github.com/broland29/open-cb}
+        \item Open Visual Studio, choose Open a local folder, and open the folder you cloned into. 
+        \item Open \t{CMakeLists.txt} and around line 12 change the include path of \t{vcpkg} to the folder you installed \t{vcpkg} into. It should look like \t{INCLUDE(.../vcpkg/scripts/buildsystems/vcpkg.cmake)} where \t{...} is the path to the folder.
+    \end{enumeratenum}
+\end{enumeratenum}

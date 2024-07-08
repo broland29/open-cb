@@ -2,6 +2,16 @@
 \pagestyle{fancy}
 
 
+As stated in \nameref{ch:project-objectives}, OpenCB aims to be a software solution that, with the help of two webcams, assists the players during a game of chess. The main functionality of the system is the validation of the movements. For implementing such an algorithm, a broad knowledge of chess is needed. The second big functionality of the system is the chessboard state detection. The logical steps for detecting the state of the chessboard would be finding the chessboard, finding each cell of the chessboard, and using a classifier to predict the piece lying on each cell.
+
+One approach to detect the chessboard would be to find its corners. It is a fair assumption that every chessboard is square. Even if we take into consideration the perspective distortion caused by the angle at which the webcams are placed and their distance from the table, we could say the chessboard is a 4-sided convex polygon. Thus detection of the chessboard is equivalent to finding its four corner points. To make this possible, the user is asked to put the chessboard on a light background. From here, another assumption is that the board (at least its border) is darker than the background, and the background wraps around the (fully visible) chessboard. From this, we also deduce that the biggest 4-sided polygon is the chessboard.
+
+To find the corners, we will apply a pipeline of operations, each having one or more image processing algorithms in its background. These steps include: converting the image from color to grayscale to binary, blurring with the help of a Gaussian filter and the convolution operation, reducing the unnecessary details and noise with a custom breadth-first search algorithm and morphological operations, converting the filtered binary image into an edge image using Canny edge detection, finding the lines from this edge image with the help of Hough transform, finding the intersection of these lines using mathematics, and extracting the four outermost (closest to the four corners of the image) points with the premise that these are the corners of the board. All of the theory behind this will be explained in Section \ref{sec:image-processing-algorithms}.
+
+After having the corners of the board and knowing the thickness of the chessboard borders (parts of the chessboard wrapping around the cells/ actual playground) through user input, we can extract the cells of the board. A dataset can be composed then so that we can apply classification algorithms to reconstruct the state of the chessboard. To provide more options for the users, to compare results and to further validate ourselves, there are three classification algorithms employed: the K Nearest Neighbors classifier, the Support Vector Machine classifier, and the Convolutional Neural Network classifier. These will be described in Section \ref{sec:machine-learning--classification-algorithms}.
+
+Finally but not least, in Section \ref{sec:chess-theory} relevant chess theory will be presented, including how to correctly position the chessboard, how to refer to a cell and how to write down a chess move. The movement rules of the chess pieces will be presented, as well as some special cases (castling, en passant). Chess rules from FIDE\cite{fide} which might create corner cases in later implementation will also be studied.
+
 
 % ------------------------------------------------------------------------------------------- %
 % ------------------------------- Image Processing Algorithms ------------------------------- %
@@ -12,9 +22,9 @@
 Out of all three modules, the Image Processing Module makes use of the most algorithms and requires the biggest theoretical background. In this section, I will present the main IP algorithms in a general manner, so that \autoref{ch:detailed-design-and-implementation} will provide a comprehensive description of only the aspects of interest.
 
 
-% --------------------------------------- Convolution --------------------------------------- %
+% ---------------------------------------- Conversion --------------------------------------- %
 
-\subsection{Conversion}
+\subsection{Conversion} \label{subsec:conversion}
 
 Let's start with a simple but crucial part of the project: conversion of images from color to grayscale, and from grayscale to binary. Images are a ``snapshot of reality'', where colors have continuous values. In the computer world, we need color models to describe a color image numerically. One of the most famous color models is the RGB color model, where one pixel has red, green and blue channels, each channel having values ranging from 0 to 255. By mixing these three colors, the RGB color model is capable of representing 16.777.216 colors. This is more than enough for most purposes. Some RGB color examples are: (255,0,0) for red, (255,255,255) for white, (0,0,0) for black and (255,255,0) for yellow.
 
@@ -164,9 +174,9 @@ We have the equation \ref{eq:rotheta}, but the ranges in which the free terms li
     \label{fig:rhotheta2}
 \end{figure}
 
-The coordinate system is the same as in Figure \ref{fig:rhotheta1}. The dotted box shows the region of interest, more specifically, pixels that are inside the image. Lines as we know go to infinity, so they naturally go out of bounds. On the left picture, focus on the limits of $\theta$. Lines \t{L3}, \t{L4} and \t{L5} will be inside the image. While lines \t{L1} and \t{L2} could be described by a normal form, they are out of bounds, hence not of interest. Observe that $\theta_1$ and $\theta_2$, just like any outsider, are in the range $(2\pi, 3\pi/4)$, or $(180^{\circ}, 270^{\circ})$. Now look at the rightmost example, and focus on $\rho$. Again, some lines are out of the image, and we don't care about them. We cannot filter them based only on $\rho$. But we can see the two extremes. The minimum $\rho$ is achieved by \t{L1}which has only one pixel inside the image, and it coincides with the origin of the coordinate system (so it is at 0 distance from it). Meanwhile, line \t{L5} is at maximum distance, given that its perpendicular coincides with the diagonal of the image. Overall, we can conclude:
+The coordinate system is the same as in Figure \ref{fig:rhotheta1}. The dotted box shows the region of interest, more specifically, pixels that are inside the image. Lines as we know go to infinity, so they naturally go out of bounds. On the left picture, focus on the limits of $\theta$. Lines \t{L3}, \t{L4} and \t{L5} will be inside the image. While lines \t{L1} and \t{L2} could be described by a normal form, they are out of bounds, hence not of interest. Observe that $\theta_1$ and $\theta_2$, just like any outsider, are in the range $(\pi, \frac{3\pi}{2})$, or $(180^{\circ}, 270^{\circ})$. Now look at the rightmost example, and focus on $\rho$. Again, some lines are out of the image, and we don't care about them. We cannot filter them based only on $\rho$. But we can see the two extremes. The minimum $\rho$ is achieved by \t{L1}which has only one pixel inside the image, and it coincides with the origin of the coordinate system (so it is at 0 distance from it). Meanwhile, line \t{L5} is at maximum distance, given that its perpendicular coincides with the diagonal of the image. Overall, we can conclude:
 
-\[\theta \in [0, 2\pi] \cup [3\pi/4, 2\pi)\]
+\[\theta \in [0, \pi] \cup [\frac{3\pi}{2}, 2\pi)\]
 \[\rho \in [0,\sqrt{width * width + height * height}]\]
 
 To enhance the efficiency, some use kernel operations to calculate votes. Others try to use a rotation-based approach, where \i{the edge image is rotated about the center of the image plane by a fixed angle step, and in each rotated image, search is carried out in the horizontal and vertical directions to find the end points of horizontal and vertical line segments}\cite{hough_survey}. Some try to use Neural Networks, to train a model to map an image to parametric lines. And as always, dedicated hardware and parallelization can be of great help. As some downsides of Hough's approach, we can mention that the computation time and memory requirements grow exponentially with the number of parameters, and in its simplest form, it suffers from peak spreading (votes in an area for ``the same thing'') and blind voting (every vote has the same weight).
@@ -177,7 +187,7 @@ To enhance the efficiency, some use kernel operations to calculate votes. Others
 % ----------------------- Machine Learning/ Classification Algorithms ----------------------- %
 % ------------------------------------------------------------------------------------------- %
 
-\section{Machine Learning/ Classification Algorithms}
+\section{Machine Learning/ Classification Algorithms} \label{sec:machine-learning--classification-algorithms}
 
 Although they are still part of Image Processing, the Machine Learning/ Classification Algorithms are complex enough to deserve a separate section. There will be three classifiers implemented/used: a K Nearest Neighbors classifier (KNN), a Support Vector Machine classifier (SVM) and a Convolutional Neural Network (CNN). The ordering is based on the expected greatness of the result, from least accurate to most accurate.
 
@@ -290,7 +300,7 @@ For a long time, what made CNNs unsuitable was the lack of computational power. 
 % --------------------------------------- Chess Theory -------------------------------------- %
 % ------------------------------------------------------------------------------------------- %
 
-\section{Chess Theory}
+\section{Chess Theory} \label{sec:chess-theory}
 
 While the chess-related code and ideas are less theoretical there is a strict set of rules which need to be known to understand the system. This includes how the board is supposed to be set up, how can we refer to cells, which is a valid chess movement, how and when games start or end, how to write down chess moves and so on. As kids we often learn these from our elders in an informal way, but actually, important documents back up these rules, like the \i{FIDE Laws of Chess}\cite{fide}.
 

@@ -7,6 +7,7 @@
 #include <spdlog/fmt/ostr.h>
 #include "Color.h"
 #include "EndGameReason.h"
+#include "../com/headers/Paths.h"
 
 
 class MoveLogger

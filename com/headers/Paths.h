@@ -5,7 +5,8 @@
 
 namespace Paths
 {
-	const std::string OPENCB_ROOT = "C:\\open-cb";
+	const std::string OPENCB_ROOT = "C:\\open-cb";		// use for dev version
+	//const std::string OPENCB_ROOT = ".";				// use for user version
 
 	const std::string KNN_FOLDER = OPENCB_ROOT + "\\mem\\knn";		// KNN saved and loaded here
 	const std::string SVM_FOLDER = OPENCB_ROOT + "\\mem\\svm";		// SVM saved and loaded here
@@ -24,4 +25,6 @@ namespace Paths
 	const std::string CNN_PATH_CONF_MATRIX		= OPENCB_ROOT + "\\mem\\cnn\\conf_matrix.txt";
 
 	const std::string JSON_PARAMETERS = OPENCB_ROOT + "\\mem\\per\\persistence.json";
+
+	const std::string VAR_LOG = OPENCB_ROOT + "\\mem\\var";
 }

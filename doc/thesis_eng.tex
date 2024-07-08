@@ -64,6 +64,11 @@
 \usepackage[dvipsnames]{xcolor}
 \newcommand*{\g}{\textcolor{ForestGreen}}
 
+\newcommand*{\cmd}[1]{\colorbox{lightgray}{\texttt{#1}}}
+
+\usepackage{nicefrac}
+
+
 
 \setlist{noitemsep,nolistsep}
 
@@ -78,7 +83,7 @@
 \renewcommand{\thesismonth}{July}     %% The month of the licence session
 \renewcommand{\thesisyear}{2024}      %% The year of the
 \renewcommand{\thesistitle}{OpenCB:\\A vision system for chessboard state detection\\and chess move validation} % Title of the thesis
-\renewcommand{\thesissupervisor}{Assist. Prof. Phd. Eng. Robert VARGA} %% Supervisor
+\renewcommand{\thesissupervisor}{Sl. dr. ing. Robert VARGA} %% Supervisor
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newcommand{\makeThesisTitle}{\textbf{\thesistitletypesize \thesistitle}}
 \newcommand{\makeThesisType}{\thesistypetypesize \thesistype}
@@ -100,9 +105,9 @@
 \begin{document}
 \include{first_pages} % the first 3 pages
 %%%%%%%%%%%%%%%%% Advices page to remove
-\thispagestyle{empty}
-\include{guideline}
-\newpage
+%\thispagestyle{empty}
+%\include{guideline}
+%\newpage
 %%%%%%%%%%%%%%%%%% end of advices page
 \pagestyle{fancy}
 \setlength\headheight{16.0pt}

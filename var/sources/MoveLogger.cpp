@@ -1,12 +1,11 @@
 #include "../headers/MoveLogger.h"
 
-const std::string VAR_LOG_PATH = "C:\\open-cb\\mem\\var";
 
 MoveLogger::MoveLogger()
 {
 	// https://stackoverflow.com/questions/9089842/c-chrono-system-time-in-milliseconds-time-operations
 	std::string now = std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
-	currentLogPath = VAR_LOG_PATH + "\\log" + now + ".txt";
+	currentLogPath = Paths::VAR_LOG + "\\log" + now + ".txt";
 	previousMoveCount = 0;
 	gameCount = 0;
 }

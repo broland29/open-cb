@@ -2,20 +2,16 @@
 \pagestyle{fancy}
 
 
+Before inspecting the specifics of each module's subcomponents, classes and methods, first we shall take a high-level look at the system. Some of the main use cases will be presented, associated with the two types of users. Then I will present the hardware setup so that it becomes obvious what we are dealing with in real life. Then we will cover a typical usage, i.e. a flow of actions a user is expected to do to fully exploit the functionalities of the system. Throughout the implementation, we have to carefully inspect the functional and non-functional requirements defined in \autoref{ch:project-objectives}, since fulfilling them serves as an objective goal of the project.
+
+
 % ------------------------------------------------------------------------------------------- %
-% ------------------------------------- General Overview ------------------------------------ %
+% ----------------------------------- Users and Use Cases ----------------------------------- %
 % ------------------------------------------------------------------------------------------- %
 
-\section{General Overview}
+\section{Users and Use Cases} \label{sub:users-and-use-cases}
 
-Before digging deep into the specifics of each module's subcomponents, classes and methods, let's first take a high-level look at the system. Some of the main use cases will be presented, associated with the two types of users. Then I will present the hardware setup so that it becomes obvious what we are dealing with in real life. Then we will cover a typical usage, i.e. a flow of actions a user is expected to do to fully exploit the functionalities of the system. Throughout the implementation, we have to carefully inspect the functional and non-functional requirements defined in \autoref{ch:project-objectives}, since fulfilling them servers as an objective goal of the project.
-
-
-% ------------------------------------- Classification -------------------------------------- %
-
-\subsection{Users and Use Cases} \label{sub:users-and-use-cases}
-
-From \autoref{ch:project-objectives}, we can deduce that the system shall satisfy two types of users. The main one can simply be called \t{User}. It represents any person who downloads the software, sets it up and wants to use it. One such user can use the system for many use cases, which can be grouped into categories:
+Anyone who starts the application can be put under the category of User. From \autoref{ch:project-objectives}, we can deduce the main use cases the system shall provide support for. Users may differ in expertise, but the system offers the same functionalities for each User, from which they can choose as they like. The use cases can be categorized as follows in the list below, and can be represented visually as seen in Figure \ref{fig:usecase}.
 
 \begin{itemize}
     \item \b{Dataset Creation}
@@ -36,8 +32,6 @@ From \autoref{ch:project-objectives}, we can deduce that the system shall satisf
     Aside from what has already been listed, the User can also \t{Clear All} to delete all images, or \t{Change Settings} to modify parameters that persist cross-session.
 \end{itemize}
 
-The secondary actor of the system is called \b{Developer}. This could be any open-source connoisseur willing to contribute to the codebase or reuse parts of it. For this, it is essential to have readable code, good documentation and clear version control. The two presented actors and the associated use cases can be seen in Figure \ref{fig:usecase}.
-
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{figs/usecase.png}
@@ -46,38 +40,12 @@ The secondary actor of the system is called \b{Developer}. This could be any ope
 \end{figure}
 
 
-% ------------------------------------- Hardware Setup -------------------------------------- %
 
-\subsection{Hardware Setup} \label{sec:hardware-setup}
+% ------------------------------------------------------------------------------------------- %
+% ------------------------------------- A Typical Usage ------------------------------------- %
+% ------------------------------------------------------------------------------------------- %
 
-To use image processing functionalities, OpenCB requires two webcams. These shall be mounted on the two sides of the chessboard, the ones where players don't sit. In Figure \ref{fig:hardware} you can see the setup used to make the dataset for the demo, and in Figure \ref{fig:coordinates} the same setup is shown but focusing on the placement of cameras. As in Figure \ref{fig:hardware}, the cameras should be higher than the table, looking down at an angle that allows to fully capture the chessboard. Proper lighting is required, ideally the same as the one used for creating the dataset; for this, a simple desk lamp was used, and during the day blackout curtains were used. The cameras are connected to the laptop running the application.
-
-Since there is a live demo expected during the presentation of the license thesis, a setup that could somewhat easily be moved and recreated was needed. Although the cameras can be mounted on anything as long as they stay still and at a correct angle and distance, I needed something super fixed for the best possible results. For this, my dad who works in furniture design, created a table especially for this purpose. Figure \ref{fig:table-plan} shows its design plan, and it can be seen in action in Figure \ref{fig:hardware}.
-
-\begin{figure}[!ht]
-    \centering
-    \includegraphics[width=\textwidth]{figs/hardware.jpg}
-    \caption{The hardware setup used for the demo}
-    \label{fig:hardware}
-
-    \includegraphics[width=0.6\textwidth]{figs/table-plan.jpg}
-    \caption{The design for the demo table made by my dad}
-    \label{fig:table-plan}
-\end{figure}
-
-As previously noted, Figure \ref{fig:coordinates} shows a logical view of the setup. It is important to make sure that cameras are configured correctly, i.e. the left camera considered by the system is indeed the left one, and the same for the right camera. Having two cameras creates confusion when addressing chessboard cells. The most straightforward solution for this was to use a main coordinate system, which is the one usually used in chess games (see the discussion about chess notations in \nameref{ch:analysis}). This is from the white player's perspective, shown with black numbers. From now on, when we say cell \t{00} for example, we refer to the left camera's \t{70} and the right camera's \t{07}.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.9\textwidth]{figs/coordinates.png}
-    \caption{Coordinates}
-    \label{fig:coordinates}
-\end{figure}
-
-
-% ------------------------------------ A Typical Usage -------------------------------------- %
-
-\subsection{A Typical Usage}
+\section{A Typical Usage}
 
 A complex, but typical usage scenario will be described, which tries to employ as many functionalities as possible, with the supporting use cases presented in \ref{sub:users-and-use-cases}.
 
@@ -92,6 +60,57 @@ After finishing with the setups, the user issues \t{Shuffle and Split}, chooses 
 
 
 % ------------------------------------------------------------------------------------------- %
+% ------------------------------------- Hardware Setup -------------------------------------- %
+% ------------------------------------------------------------------------------------------- %
+
+\section{Hardware Setup} \label{sec:hardware-setup}
+
+The application can be used without a hardware setup, although the lack of cameras removes a lot of functionalities. OpenCB can used just as a GUI for chess and validating the movements entered manually. If you decide to use cameras, it is recommended to put them at an angle at which each camera's pieces are best distinguishable. If you have an existing dataset, try to set up the angles, distances and lighting in a way that produces images similar to the ones in the dataset. If you are creating a dataset, ensure that the hardware setup can be easily and accurately reproduced.
+
+In both cases, it is recommended to mount the cameras in a fixed position. You can put it on anything you like. For example, in the beginning, I put the board in a cardboard box and the cameras on the two sides of the box. This is good for demonstration purposes but is inconvenient for the players. I experimented with a big chessboard as well; to capture it, I put the cameras on the back of two chairs, this way I could easily manipulate their distances from the chessboard. The background has to be light, but not necessarily white. Both cameras must see the whole chessboard.
+
+
+% ------------------------------------- The Demo Setup -------------------------------------- %
+
+\subsection{The Demo Setup}
+
+In Figure \ref{fig:hardware} you can see the setup used to make the dataset for the demo. The cameras are put higher than the table, looking down at an angle that allows to fully capture the chessboard. Proper lighting is assured by a simple desk lamp. During the day blackout curtains were used. The cameras are connected to the laptop running the application. The table on which the chessboard lies is designed by my dad. Its design can be seen in Figure \ref{fig:table-plan}. The two supports for the webcams can be moved up and down to adjust to a proper distance.
+
+You do not need such a specialized setup for running the application. This was needed so that I could present the application live, and create a dataset in an environment that I could bring with myself.
+
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=\textwidth]{figs/hardware.jpg}
+    \caption{The hardware setup used for the demo}
+    \label{fig:hardware}
+
+    \includegraphics[width=0.6\textwidth]{figs/table-plan.jpg}
+    \caption{The design for the demo table made by my dad}
+    \label{fig:table-plan}
+\end{figure}
+
+
+% ------------------------------------ Why two cameras? ------------------------------------- %
+
+\subsection{Why two cameras?}
+
+You may rightfully ask: why do we need two cameras? The idea is simple, yet innovative. From the papers mentioned in \nameref{sec:similar-problemns-solutions-and-inspirations}, I noticed that people struggled with finding the right positioning for the cameras. Some put them above the chessboard, this way pieces of the same category look more similar, the players are not bothered by the camera, and shadows do not represent a problem (given that lighting can be put on the same support as the camera). However, for a classification task, such a setup provides too similar photos. The true features of a chess piece cannot be seen from a bird's view.
+
+Others put the camera on the side of the board. This resulted in more distinct pictures. However, pieces closer to the camera were smaller, pieces further would be stretched due to perspective distortion. This effect is even more visible on the sides of the chessboard, so the pieces on the far corners of the chessboard would look very different than the same pieces put on the closest cells. An even bigger problem is that there is a high chance that one piece is put in front of another, covering the target piece partially or even fully.
+
+My idea was to use two side-mounted cameras. Each camera is responsible only for half of the chessboard. In Figure \ref{fig:coordinates} you can see a logical diagram of the setup. Each camera has its coordinate system, but we are interested only in the main coordinate system having the white player as a reference point. With red, you can see the left camera and its coordinates, with green the right one, and with black the main coordinate system, that we use to avoid ambiguities. With these notations, the left camera will label/predict pieces only in the rectangle enclosed by cells \t{03}, \t{73}, \t{70}, \t{00}, while the right camera will work with sub-chessboard \t{74}, \t{04}, \t{07}, \t{77}. One cell image (cropped image in which we consider a piece to be) spans two cells, so both cameras will reach one more row further (ex: cell \t{43} will be described by cell image containing cells \t{43} and \t{44}). This is due to the height of the pieces and the angle at which we look at them.
+
+This way cameras consider only what is close to them. The further the cell, the ``worse'' the cell image will be. By doing this, cell images will have higher quality and classification will perform better.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/coordinates.png}
+    \caption{Coordinates}
+    \label{fig:coordinates}
+\end{figure}
+
+
+% ------------------------------------------------------------------------------------------- %
 % --------------------------------- Modules and Communication ------------------------------- %
 % ------------------------------------------------------------------------------------------- %
 
@@ -102,7 +121,7 @@ In the implementation, all three modules (User Application Module, Image Process
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.6\textwidth]{figs/black-box.png}
-    \caption{Black box of the system and its modules}
+    \caption{High-level view of the system and its modules}
     \label{fig:black-box}
 \end{figure}
 
@@ -188,7 +207,7 @@ In the project, there are examples of all the necessary layouts and widgets. Fig
 
 The camera previews are shown in \t{cameraOneImageLabel} and \t{cameraTwoImageLabel}. As their name suggests, they are \t{QLabel}s, but without text. One may set a picture as ``the background'' of a label by calling \t{label->setPixmap(pixmap)}, where pixmap is of type \t{QPixmap}, which we can get from a \t{QImage}. Whenever the left or right camera handler has a frame ready, they emit a \t{previewImageReadySignal} signal, which is caught by \t{ImageProcessing}'s slots, \t{previewImageReadyLeftSlot} or \t{previewImageReadyRightSlot} respectively. These are further on sent to \t{UA} through \t{previewImageReadyLeft} and \t{Right} signals. \t{MainWindow} catches these and updates the corresponding image label. No reply is sent since it would be unnecessary overhead. If either or both cameras are not connected, the application still starts, but only the functionalities that do not require cameras can be used.
 
-The Chess GUI is an 8x8 matrix of labels. For convenience, these labels are wrapped into the \t{ClickableLabel} class. This class provides the functions \t{setPiece}, \t{getPieceName}, \t{modifyStyleSheet}. They handle \t{mousePressEvent}s and provide two signals \t{leftClicked} and \t{rightClicked}. \t{setPiece} changes the internal piece name and also ``refreshes the sprite'' by setting the pixmap provided. \t{getPieceName} returns the piece name, with the caveat that it distinguishes between white and black free since this is needed for labeling. The \t{modifyStyleSheet} method lets the caller change the stylesheet (CSS-like style definition) without changing the background of the cell. Mouse presses are caught and \t{MainWindow} is notified, since the labels on themselves are ``dumb'' components, without logic.
+The Chess GUI is an \t{8x8} matrix of labels. For convenience, these labels are wrapped into the \t{ClickableLabel} class. This class provides the functions \t{setPiece}, \t{getPieceName}, \t{modifyStyleSheet}. They handle \t{mousePressEvent}s and provide two signals \t{leftClicked} and \t{rightClicked}. \t{setPiece} changes the internal piece name and also ``refreshes the sprite'' by setting the pixmap provided. \t{getPieceName} returns the piece name, with the caveat that it distinguishes between white and black free since this is needed for labeling. The \t{modifyStyleSheet} method lets the caller change the stylesheet (CSS-like style definition) without changing the background of the cell. Mouse presses are caught and \t{MainWindow} is notified, since the labels on themselves are ``dumb'' components, without logic.
 
 The Chess GUI's clicking logic is implemented in \t{MainWindow::leftClickedSlot} and \t{MainWindow::RightClickedSlot}. The goal is to make every piece changeable to every other piece. This can be done by right-clicking the cell, since it will change it to the next piece in a predefined order (\t{"FR"}, \t{"WP"}, \t{"WB"}, \t{"WN"}, \t{"WR"}, \t{"WQ"}, \t{"WK"}, \t{"BP"}, \t{"BB"}, \t{"BN"}, \t{"BR"}, \t{"BQ"}, \t{"BK"}, wrapped around). This is not very chess-like, but it is necessary to correct possible errors from classification. By left-clicking one cell \t{A} and then left-clicking cell \t{B}, the piece on cell \t{A} will ``move'' to cell \t{B}, leaving cell \t{A} empty. 
 
@@ -321,6 +340,7 @@ After this, two-level thresholding is done (on the image of magnitudes), with ha
 
 \begin{table}[H]
     \centering
+    \renewcommand{\arraystretch}{1.5}
     \begin{tabular}{|l|l|l|}
     \hline
     \textbf{Range} & \textbf{New Value} & \textbf{Naming} \\ \hline
@@ -328,6 +348,7 @@ After this, two-level thresholding is done (on the image of magnitudes), with ha
     {[}100, 200)   & 50                 & weak-edge       \\ \hline
     {[}200, 255{]} & 255                & strong-edge     \\ \hline
     \end{tabular}
+    \renewcommand{\arraystretch}{1}
     \caption{Two level thresholding}
     \label{tab:two-level-thresholding}
 \end{table}
