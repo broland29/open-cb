@@ -1,0 +1,324 @@
+\chapter{Testing and Validation} \label{ch:testing-and-validation} \pagestyle{fancy}
+
+As the size of the project grew, the importance of testing and validating different modules became more and more obvious. Although not every module can and needs to be tested, certain parts of the project naturally required this seemingly extra effort. Two such parts were the movement validation and the classification methods. These will be detailed in the next sections, with a description of the used technology, metrics, and expected and actual results.
+
+
+% -------------------------------------------------------------------------------------------------- %
+% --------------------------- Testing of Validation and Response Module ---------------------------- %
+% -------------------------------------------------------------------------------------------------- %
+
+\section{Testing of Validation and Response Module}
+
+The VAR module consists of multiple submodules, which wrap around each other ``like a cabbage''. This means that unit testing can be applied efficiently. Testing manually by playing games and writing down the bugs found is tedious and unprofessional. For a more systematic, organized testing, I used the \t{Google Test} (\t{GTest}) framework.
+
+The \t{Google Test} framework is huge since it is designed to be versatile and suitable for commercial products. I only used a minimal subset of its functionality, mainly to keep the code simple and easy to understand. To get started with \t{Google Test}, one needs to set it up and include the \t{gtest/test.h} header. As with any other \t{C}/\t{C++} executable, the entry point will be the \t{main} function. Here we call \t{::testing::InitGoogleTest}, and end our main function with \t{return RUN\_ALL\_TESTS();}.
+
+This way, the tests will be automatically run. I used the simplest method, \t{TEST}, which has two parameters, the test suite name and the test name. This provides us a way to define a hierarchical structuring of tests, the test suite name being the higher level one. My convention was to choose the test suite names based on the \t{C++} file they test (\t{AttackTest}, \t{MoveTest}, \t{ValidatorTest}), and define test names based on the specific thing (function or specific case) they aim to test. In the \t{CMakeLists.txt} file, tests are grouped under a separate executable. As a result, the test executable \t{Test.exe} is different from the main executable \t{OpenCB.exe} and is run independently. In Figure \ref{fig:gtest} a snippet of the console after running \t{Tests.txt} is shown.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{figs/gtest.PNG}
+    \caption{Snippet from the output when running \t{Tests.exe}}
+    \label{fig:gtest}
+\end{figure}
+
+
+% ------------------------------------- Test Suites and Tests -------------------------------------- %
+
+\subsection{Test Suites and Tests} \label{test-suites-and-tests}
+
+Tests of suite \t{AttackTest} aim to test each function of \t{Attack}. Namely, these are:
+
+\begin{itemize}
+    \item \b{checkPath}: checks if different pieces can reach from one cell to another. This can be done if nothing is in their way, and their movement rule specified as increments in the two directions (rows/y and columns/x) allows this. Cases tested:
+    \begin{itemize}
+        \item the path is free and the movement rule allows it
+        \item the path is not free although the movement rule allows
+        \item the path is free but the movement rule does not allow it
+    \end{itemize}
+    
+    \item \b{canWhitePawnAttackCell}, \b{canBlackPawnAttackCell}: they check different scenarios for pawns of both colors. Cases tested:
+    \begin{itemize}
+        \item simple move possible
+        \item double move possible
+        \item diagonal capture possible
+        \item simple move blocked
+        \item cannot move diagonally without capturing
+        \item long jump blocked
+        \item moving backward
+    \end{itemize}
+
+    \item \b{canBishopAttackCell}: checks different scenarios for bishops. Cases tested:
+    \begin{itemize}
+        \item diagonal move possible
+        \item diagonal move not possible 
+        \item move not even diagonal 
+    \end{itemize}
+
+    \item \b{canKnightAttackCell}: checks the horse movement patterns in all 8 directions and some invalid scenarios. Cases tested:
+    \begin{itemize}
+        \item good moves
+        \item cell occupied
+        \item not respecting the rule
+    \end{itemize}
+
+    \item \b{canRookAttackCell}: checks different scenarios for rooks. Cases tested:
+    \begin{itemize}
+        \item horizontal/vertical move possible
+        \item horizontal/vertical move not possible
+        \item move not ever horizontal/vertical
+    \end{itemize}
+
+    \item \b{canQueenAttackCell}: checks different scenarios for queens. Cases tested:
+    \begin{itemize}
+        \item good moves
+        \item cell occupied
+        \item not respecting the rule
+    \end{itemize}
+
+    \item \b{canKingAttackCell}: checking different scenarios for kings. Cases tested:
+    \begin{itemize}
+        \item good moves
+        \item cell occupied
+        \item not respecting the rule
+    \end{itemize}
+
+    \item \b{canPieceAttackCell}: takes a real board example (\href{https://www.chess.com/article/view/best-chess-moves#kholmov}{Kholmov's Combination Against Bronstein}), picks some random pieces and calls their respective methods, checking if the output is correct.
+    
+    \item \b{isCellInCheck}: includes some simple tests for checking cell status. Cases tested:
+    \begin{itemize}
+        \item cell in check
+        \item cell not in check
+    \end{itemize}
+
+    \item \b{getKingSituation}: takles some examples from the article \href{https://www.thesprucecrafts.com/check-checkmate-and-stalemate-611546}{Check, Checkmate, and Stalemate Chess Moves on thesprucecrafts.com}. Cases tested:
+    \begin{itemize}
+        \item check case
+        \item checkmate case
+        \item stalemate case
+        \item free case
+    \end{itemize}
+\end{itemize}
+%\vspace{0.3cm}
+
+The tests of suite \t{MoveTest} rely on \t{AttackTest}s to be correct, but also serve as a higher level guard to catch flaws of the attack submodule. Here we start to see more realistic setups. Each test calls \t{processMove}, and checks for its return values \t{isValid}, \t{encoding} and \t{description} to be as expected. Rather than going through each possibility (which would be an exaggeration), there were a few specific situations selected. The examples mentioned in Section \ref{subsec:notations}. Also, this is a great place to add tests covering bugs found on the run.
+
+\begin{itemize}
+    \item \b{WhitePawnMove}: expects \t{true}, \t{"e2e4"}, \t{"White move"}.
+
+    \item \b{WhiteKnightMove}: expects \t{true}, \t{"Ng1f3"}, \t{"White move"}.
+
+    \item \b{WhiteBishopCapture}: expects \t{true}, \t{"Bb5xc6"}, \t{"White capture"}.
+
+    \item \b{BlackPawnCapture}: expects \t{true}, \t{"d7xc6"}, \t{"Black capture"}.
+
+    \item \b{WhiteBishopCheck}: expects \t{true}, \t{"Bf1b5+"}, \t{"White move"}.
+
+    \item \b{BlackQueenCheckmate}: expects \t{true}, \t{"Qd8h4\#"}, \t{"Black move"}.
+
+    \item \b{WhitePromotion}: expects \t{true}, \t{"e7e8Q"}, \t{"White move"}.
+
+    \item \b{WhiteEnPassantFromLeft}: expects \t{true}, \t{"d5xe6ep"}, \t{"White en passant"}.
+
+    \item \b{WhiteEnPassantFromRight}: expects \t{true}, \t{"f5xe6ep"}, \t{"White en passant"}.
+
+    \item \b{BlackEnPassantFromLeft}: expects \t{true}, \t{"a4xb3ep"}, \t{"Black en passant"}.
+
+    \item \b{BlackEnPassantFromRight}: expects \t{true}, \t{"b4xa3ep"}, \t{"Black en passant"}.
+
+    \item \b{WhiteCastleKingside}: expects \t{true}, \t{"0-0"}, \t{"White castle"}.
+
+    \item \b{BlackCastleKingside}: expects \t{true}, \t{"0-0"}, \t{"Black castle"}.
+
+    \item \b{WhiteCastleQueenside}: expects \t{true}, \t{"0-0-0"}, \t{"White castle"}.
+
+    \item \b{BlackCastleQueenside}: expects \t{true}, \t{"0-0-0"}, \t{"Black castle"}.
+\end{itemize}
+
+The highest level of testing in VAR is done in test suite \t{ValidatorTest}. Here one can directly test the \t{Validator}. It checks for the same parameters as the tests of \t{MoveTest}, but on top of it, we can check for the correctness of \t{validator.metadata}. There are two tests implemented:
+
+\begin{itemize}
+    \item \b{BadMovementsTest}: checks for weird cases that still could occur. Cases tested:
+    \begin{itemize}
+        \item no movement is made
+        \item a random pawn appears in a cell that previously was free
+        \item a random queen appears in a cell that previously was free, along with the previous pawn
+        \item a random rook appears in a cell that previously was free, along with the previous pawn and queen
+    \end{itemize}
+
+    \item \b{KasparovVSTopalov}: takes a few steps from the beginning of the match \href{https://www.chess.com/article/view/the-best-chess-games-of-all-time#Kasparov_Topalov}{Kasparov vs. Topalov, Wijk aan Zee 1999}. Interesting checks:
+    \begin{itemize}
+        \item right value for \t{metadata.moveCount} after each movement
+        \item right value for \t{metadata.enPassantCol} after some movements affecting it
+        \item right values for \t{metadata.castle} after some movements affecting it
+    \end{itemize}
+\end{itemize}
+
+
+% -------------------------------------------- Results --------------------------------------------- %
+
+\subsection{Results} \label{sec:var-results}
+
+\b{All the unit tests are passing}. This is crucial since unit tests are designed to check the expected functionality of VAR. If a test were to fail, it would mean that either the code is broken due to a recent change, or the test is erroneous or it became outdated. In any case, failing tests are not an option.
+
+
+
+% -------------------------------------------------------------------------------------------------- %
+% --------------------------- Testing of Validation and Response Module ---------------------------- %
+% -------------------------------------------------------------------------------------------------- %
+
+\section{Testing of Classification Methods}
+
+It is common, good practice to test classification models. There are a bunch of metrics one could use, but I chose to settle with the most important ones, once again keeping things simple. Testing in this case means getting these metrics. This is done in \t{AbstractClassifier::calculateAndLogMetrics}, which requires an input parameter \t{confusionMatrix}.
+
+
+% ------------------------------------- Extracting the Metrics ------------------------------------- %
+
+\subsection{Extracting the Metrics}
+
+A confusion matrix contains the counts of all predictions grouped based on the actual and predicted labels in a 2D matrix form. In our case, on the rows, we have actual classes, while on columns we have predicted classes. The indices range from 0 to 12 and represent classes \t{FR}, \t{WP}, \t{WB}, \t{WN}, \t{WR}, \t{WQ}, \t{WK}, \t{BP}, \t{BB}, \t{BN}, \t{BR}, \t{BQ}, \t{BK}. Each classifier can prepare such a confusion matrix, so they can call this method.
+
+From the confusion matrix, we extract the metrics presented in Table \ref{tab:metrics}. A clear explanation was found in the article \i{\href{https://www.evidentlyai.com/classification-metrics/multi-class-metrics}{Accuracy, precision, and recall in multi-class classification on evidentlyai.com}}.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|c|l|}
+    \hline
+    \textbf{Metric Name} & \textbf{Formulae}                                                & \textbf{Meaning}                                                                                                                                  \\ \hline
+    Accuracy             & $\frac{CorrectPredictions}{AllPredictions}$                      & \begin{tabular}[c]{@{}l@{}}Measures the proportion of correctly\\ classified cases from the total number\\ of objects in the dataset.\end{tabular} \\ \hline
+    Precision            & $\frac{TP}{TP + FP}$                                             & \begin{tabular}[c]{@{}l@{}}Measures the model's ability to identify\\ instances of a particular class correctly.\\\phantom{.}\end{tabular}                      \\ \hline
+    Recall               & $\frac{TP}{TP + FN}$                                             & \begin{tabular}[c]{@{}l@{}}Measures the model's ability to identify\\ all instances of a particular class.\\\phantom{.}\end{tabular}                           \\ \hline
+    Macro Precision      & $\frac{\sum_{i=0}^{n-1} Precision_i}{n}$                         & \begin{tabular}[c]{@{}l@{}}Measure precision by class, then averages\\ it across classes.\\\phantom{.}\end{tabular}                                            \\ \hline
+    Macro Recall         & $\frac{\sum_{i=0}^{n-1} Recall_i}{n}$                            & \begin{tabular}[c]{@{}l@{}}Measure recall by class, then averages\\ it across classes.\\\phantom{.}\end{tabular}                                               \\ \hline
+    Micro Precision      & $\frac{\sum_{i=0}^{n-1} TP_i}{\sum_{i=0}^{n-1} (TP_i + FP_i)}$   & \begin{tabular}[c]{@{}l@{}}Calculate precision jointly.\\\phantom{.}\\\phantom{.}\end{tabular}                                                                                                                     \\ \hline
+    Micro Recall         & $\frac{\sum_{i=0}^{n-1} TP_i}{\sum_{i=0}^{n-1} (TP_i + FN_i)}$   & \begin{tabular}[c]{@{}l@{}}Calculate recall jointly.\\\phantom{.}\\\phantom{.}\end{tabular}                                                                                                                           \\ \hline
+    \end{tabular}
+    \caption{Metric used for testing classification methods}
+    \label{tab:metrics}
+\end{table}
+
+The \t{CorrectPedictions} parameter from Table \ref{tab:metrics} can be found by adding up the elements on the first diagonal. The \t{AllPredicitons} parameter is the sum of all elements of the confusion matrix, i.e. the size of the test set. Parameters \t{TP}, \t{FP} and \t{FN} are abbreviations of True Positive, False Positive and False Negative. A classification is counted as a True Positive (on class \t{C}) if it was predicted to belong to class \t{C} and it does belong to class \t{C}. This is equal to \t{confusionMatrix[C][C]}. A False Positive occurs when an image is predicted to be in class \t{C} but it belongs to another class. This is equal to the sum elements on column \t{C} except the element on the first diagonal. A False Negative occurs when an image is not predicted to be in class \t{C} although it belongs to class \t{C}. This is equal to the sum of elements on row \t{C} except the element on the first diagonal. Having all these we can calculate each metric as shown in table \ref{tab:metrics}.
+
+
+% ---------------------------- Importance of the Dataset and the Setup ----------------------------- %
+
+\subsection{Importance of the Dataset and the Setup}
+
+The idea of classifying approximately \t{47x92} pixel images (varies depending on border size) belonging to 13 classes without a huge dataset can be considered impossible. The task itself is not necessarily impossible, but it needs a big dataset. My first idea was that since the default train-validation-test split is 60-20-20, it would be nice to have at least 100 images of each class in each subset.
+
+During the early stages of the project, I made setups of the pieces in different patterns, like putting pawns in a row, putting them diagonally, placing rooks, bishops, knights, queens, and kings in different patterns etc. This is not very natural: we can expect random positions. Although in chess not every position can be reached (for example, we cannot have two kings near each other), we need to expect incorrect setups as well, since OpenCB is designed to detect these. So true randomness is desired. We can also somewhat presume that the ratio of the pieces in the initial setup (8 pawns, 2 bishops, 2 knights, 2 rooks, 1 queen, 1 king) will be persistent over the game, and we cannot expect the users to have multiple black kings, for example.
+
+So, as a good programmer, I wrote a script to generate random setups. It can be found under \t{misc/BoardSetupsGenerator.cpp}. It compiles to a separate executable. Its description states: \i{Generate board setups to be used for building a dataset. Continuously shuffle all pieces, take a subset of them, fill the rest with free cells, shuffle again, and print as a matrix until each piece appears INDIVIDUAL\_COUNT\_GOAL of times at least. The success criteria are checked after each iteration, where one iteration consists of generating boards having [MINIMUM\_AMOUNT, MAXIMUM\_AMOUNT] elements (non-free pieces)}. Since I wanted 100 in each subset (this means 100 in 20\%, 500 in 100\%), I set \t{INDIVIDUAL\_COUNT\_GOAL} to 500. For \t{MINIMUM\_AMOUNT} I used 10, for \t{MAXIMUM\_AMOUNT} I used 32 (all pieces). The reason for this is that the more non-free pieces are on board, the better (and the fewer images we need to take), but at the same time few-piece setups are important as well since these have a higher chance of getting cell images in which only the target piece appears (we want both ``solo'' and ``noisy'' pictures, since in practice both will occur).
+
+The script generated 781 setups to satisfy this condition. Setting up the board, setting up the Chess GUI, verifying the setups, pressing \t{Crop and Label}, and periodically verifying if images are indeed taken and of acceptable quality takes a lot of time. I composed a dataset of 60 board images ($60 * 64 = 3,840$ cell/labeled images) and it took me two whole days. Being far from the target, it is not showing the application's true capabilities. The dataset was made using the demo setup described in \nameref{sec:hardware-setup}.
+
+
+
+% -------------------------------------------- Results --------------------------------------------- %
+
+\subsection{Results} \label{subsec:ip-results}
+
+The confusion matrices of each classifier are shown in Figure \ref{ver:knn-confusion-matrix}, Figure \ref{ver:svm-confusion-matrix}, respectively Figure \ref{ver:cnn-confusion-matrix}. The extracted metrics are summarized in Table \ref{tab:results}. The KNN algorithm has an accuracy of 0.69\%. From its confusion matrix we can see that it performs better on detecting free cells than the SVM classifier: this is due to the nature of the feature used (color histogram), which performs well on this class. However, with the other pieces we see that it has weak results, especially with the black pieces. The SVM algorithm performs slightly better, and has significantly more correct predictions on black pieces. Above all lies the CNN, having 0.78\% accuracy.
+
+\begin{figure}[h]
+    \centering
+    \begin{BVerbatim}[fontsize=\scriptsize,commandchars=\\\{\}]
+     FR WP WB WN WR WQ WK BP BB BN BR BQ BK
+
+FR  \g{493} 17  0  1  0  0  0  0  0  0  0  0  0
+WP   22 \g{34}  1  6  1  0  0  0  0  0  0  0  0
+WB    8  8  \g{1}  1  0  0  0  0  0  0  0  0  0
+WN    7  9  0  \g{0}  0  0  0  0  0  0  0  0  0
+WR    4  6  0  0  \g{2}  0  0  0  0  0  0  0  0
+WQ    1  9  0  0  0  \g{0}  0  0  0  0  0  0  0
+WK    1  3  0  0  1  0  \g{0}  0  0  0  0  0  0
+BP   63  2  0  0  0  0  0  \g{0}  0  0  0  0  0
+BB   18  0  0  0  0  0  0  0  \g{0}  0  0  0  0
+BN   15  1  0  0  0  0  0  0  0  \g{0}  0  0  0
+BR   18  0  0  0  0  0  0  0  0  0  \g{0}  0  0
+BQ    6  0  0  0  0  0  0  0  0  0  0  \g{0}  0
+BK    9  0  0  0  0  0  0  0  0  0  0  0  \g{0}
+    \end{BVerbatim}
+    \caption{KNN confusion matrix}
+    \label{ver:knn-confusion-matrix}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \begin{BVerbatim}[fontsize=\scriptsize,commandchars=\\\{\}]
+    FR WP WB WN WR WQ WK BP BB BN BR BQ BK
+
+FR  \g{460} 19  1  2  3  1  0  0 17  2  1  1  0
+WP    9 \g{37}  3  4  6  1  1  3  0  0  0  0  0
+WB    5  7  \g{1}  0  3  0  0  1  0  0  1  0  0
+WN    4  3  4  \g{1}  1  1  0  1  1  0  0  0  0
+WR    2  7  0  1  \g{2}  0  0  0  0  0  0  0  0
+WQ    4  2  0  1  1  \g{1}  0  1  0  0  0  0  0
+WK    3  1  0  0  0  0  \g{1}  0  0  0  0  0  0
+BP    0  4  0  0  1  0  0 \g{33}  5  4  3  1  2
+BB   12  2  1  1  0  0  0  8  \g{2}  0  0  1  0
+BN    3  3  1  0  0  1  0  6  0  \g{0}  1  0  0
+BR    4  0  0  1  0  0  0 11  0  0  \g{1}  1  0
+BQ    4  2  0  0  0  0  0  1  1  2  0  \g{0}  0
+BK    0  0  0  1  0  0  0  5  0  2  0  0  \g{0}
+    \end{BVerbatim}
+    \caption{SVM confusion matrix}
+    \label{ver:svm-confusion-matrix}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \begin{BVerbatim}[fontsize=\scriptsize,commandchars=\\\{\}]
+    FR WP WB WN WR WQ WK BP BB BN BR BQ BK
+
+FR  \g{507}  0  0  1  0  0  1  0  0  1  0  1  0
+WP    3 \g{19} 10  9 15  2  4  0  1  0  0  1  0
+WB    0  5  \g{6}  2  3  0  2  0  0  0  0  0  0
+WN    0  3  2  \g{4}  3  0  4  0  0  0  0  0  0
+WR    0  2  2  0  \g{6}  0  1  0  0  0  0  1  0
+WQ    0  2  0  1  2  \g{0}  3  2  0  0  0  0  0
+WK    0  1  1  2  0  1  \g{0}  0  0  0  0  0  0
+BP    0  0  0  0  0  0  0 \g{44}  2  2  8  9  0
+BB    0  0  0  0  0  0  0  6  \g{6}  2  2  2  0
+BN    0  0  0  0  0  0  0  4  2  \g{5}  3  2  0
+BR    1  0  1  1  0  0  0  3  2  1  \g{7}  2  0
+BQ    0  0  0  0  0  0  0  1  0  1  3  \g{1}  0
+BK    0  0  0  0  0  0  0  4  2  0  0  3  \g{0}
+    \end{BVerbatim}
+    \caption{CNN confusion matrix}
+    \label{ver:cnn-confusion-matrix}
+\end{figure}
+
+\begin{table}[ht]
+    \centering
+    \begin{subtable}{0.5\textwidth}
+        \begin{tabular}{|l|c|c|c|}
+        \hline
+                                                                                                                                                & \textbf{KNN}                                                                                                                                                                & \textbf{SVM}                                                                                                                                                                   & \textbf{CNN}                                                                                                                                                                       \\ \hline
+        \textbf{\begin{tabular}[c]{@{}l@{}}Accuracy\\ \p{.}                                                                     \end{tabular}}  & \begin{tabular}[c]{@{}c@{}}0.690104\\ \p{.}                                                                                                                   \end{tabular} & \begin{tabular}[c]{@{}c@{}}0.706422\\ \p{.}                                                                                                                     \end{tabular}  & \begin{tabular}[c]{@{}c@{}}0.78776\\ \p{.}                                                                                                                         \end{tabular}   \\ \hline
+        \textbf{\begin{tabular}[c]{@{}l@{}}Precision\\ FR\\ WP\\ WB\\ WN\\ WR\\ WQ\\ WK\\ BP\\ BB\\ BN\\ BR\\ BQ\\ BK\\ \p{.}   \end{tabular}}  & \begin{tabular}[c]{@{}c@{}}\p{.}\\ 0.7414\\ 0.3820\\ 0.5000\\ 0.0000\\ 0.5000\\ 0.0000\\ 0.0000\\ 0.0000\\ 0.0000\\ 0.0000\\ 0.0000\\ 0.0000\\ 0.0000\\ \p{.} \end{tabular} & \begin{tabular}[c]{@{}c@{}}\p{.}\\ 0.9020\\ 0.4253\\ 0.0909\\ 0.0833\\ 0.1176\\ 0.2000\\ 0.5000\\ 0.4714\\ 0.0769\\ 0.0000\\ 0.1429\\ 0.0000\\ 0.0000\\ \p{.}   \end{tabular}  & \begin{tabular}[c]{@{}c@{}}\p{.}\\ 0.9922\\ 0.5938\\ 0.2727\\ 0.2000\\ 0.2069\\ 0.0000\\ 0.0000\\ 0.6875\\ 0.4000\\ 0.4167\\ 0.3043\\ 0.0455\\ 0.0000\\ \p{.}      \end{tabular}   \\ \hline
+        \textbf{\begin{tabular}[c]{@{}l@{}}Recall\\ FR\\ WP\\ WB\\ WN\\ WR\\ WQ\\ WK\\ BP\\ BB\\ BN\\ BR\\ BQ\\ BK\\ \p{.}      \end{tabular}}  & \begin{tabular}[c]{@{}c@{}}\p{.}\\ 0.9648\\ 0.5312\\ 0.0556\\ 0.0000\\ 0.1667\\ 0.0000\\ 0.0000\\ 0.0000\\ 0.0000\\ 0.0000\\ 0.0000\\ 0.0000\\ 0.0000\\ \p{.} \end{tabular} & \begin{tabular}[c]{@{}c@{}}\p{.}\\ 0.9073\\ 0.5781\\ 0.0556\\ 0.0625\\ 0.1667\\ 0.1000\\ 0.2000\\ 0.6226\\ 0.0741\\ 0.0000\\ 0.0556\\ 0.0000\\ 0.0000\\ \p{.}   \end{tabular}  & \begin{tabular}[c]{@{}c@{}}\p{.}\\ 0.9922\\ 0.2969\\ 0.3333\\ 0.2500\\ 0.5000\\ 0.0000\\ 0.0000\\ 0.6769\\ 0.3333\\ 0.3125\\ 0.3889\\ 0.1667\\ 0.0000\\ \p{.}      \end{tabular}   \\ \hline
+        \end{tabular}
+    \end{subtable}%
+    \begin{subtable}{0.25\textwidth}
+        \begin{tabular}{ll}
+            \multicolumn{2}{c}{\b{Legend:}} \\  
+            \b{FR} & Free Cell    \\
+            \b{WP} & White Pawn   \\
+            \b{WB} & White Bishop \\
+            \b{WN} & White Knight \\
+            \b{WR} & White Rook   \\
+            \b{WQ} & White Queen  \\
+            \b{WK} & White King   \\
+            \b{BP} & Black Pawn   \\
+            \b{BB} & Black Bishop \\
+            \b{BN} & Black Knight \\
+            \b{BR} & Black Rook   \\
+            \b{BQ} & Black Queen  \\
+            \b{BK} & Black King  
+        \end{tabular}
+    \end{subtable}
+
+    \caption{The results extracted from the confusion matrices}
+    \label{tab:results}
+\end{table}

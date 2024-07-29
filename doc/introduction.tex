@@ -1,0 +1,73 @@
+\chapter{Introduction - Project Context} \label{ch:introduction-project-context} \pagestyle{fancy}
+
+
+OpenCB is a software solution that assists beginner chess players. It gives feedback to its users about his/her movements' validity in a semi-automated way. OpenCB provides a flexible architecture in which a pipeline of image processing algorithms, different classification models, graphical widgets and chess-related algorithms coexist. Throughout the document, two main themes will reoccur: chess and image processing.
+
+
+
+% ------------------------------------------------------------------------------------------- %
+% ------------------------------------------ Chess ------------------------------------------ %
+% ------------------------------------------------------------------------------------------- %
+
+\section{Chess}
+
+\i{A game of chess is like a swordfight, you must think first before you move} (Shaolin and Wu Tang, 1981). Chess is the best-selling board game of all time\footnote{\url{https://www.fun.com/best-selling-board-games-all-time.html}}, so I think it is only fair to assume that most of us have at least heard about it. Its history dates back to the 6th century, although opinions vary on its exact origin. By most, its predecessor is considered to be Chaturanga\footnote{\url{https://en.wikipedia.org/wiki/Chaturanga}}, an ancient Indian game. The name Chaturanga is said to come from ``having four limbs'' or ``army'', the four parts of the Indian army being elephants, chariots, horsemen and foot soldiers, possible predecessors of the well-known bishops, rooks, knights and pawns we have today.
+
+There are some speculations about early versions of chess which were played with dice. Its current name is said to come from the Persian word ``Shāh!'', which means king. The expression ``Shāh Māt!'' means the king is helpless. Similar sounding words are still used by some languages to express check and checkmate during a game. In Hungarian for example, we say ``Sakk'' and ``Sakk-Matt''.
+
+The game is described in the 13th-century Spanish manuscript \i{Libro de los juegos}, the oldest document on European table games. Aside from this, early proofs of chess' huge history are the various old chess boards to be seen in different museums. Some exceptional sets are shown in Figure \ref{fig:chess-sets}. One of, if not the oldest one, is The Afrasiab Chessmen\footnote{\url{http://history.chess.free.fr/afrasiab.htm}}. It is made of ivory and consists of 7 pieces. It is dated from the 6th to 8th century. The Lewis Chessmen\footnote{\url{https://www.britishmuseum.org/collection/galleries/medieval-europe}} were found on the Isle of Lewis, Scotland, dating to 1150-1175. Made from walrus ivory and whales' teeth, it's believed that they belonged to a merchant traveling from Norway to Ireland. The Russian Chess set from Kholmogory\footnote{\url{https://www.metmuseum.org/art/collection/search/202506}} is said to come from the late 18th - early 19th century. Here interestingly all pieces are of the same color, although they depict opposing armies, Russian Christians versus Muslims. The Staunton chess set\footnote{\url{https://en.wikipedia.org/wiki/Staunton_chess_set}} is the current standard approved worldwide, and most of the chess sets we see on the market today resemble its pieces.
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[b]{0.475\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figs/afrasiab.jpg}
+        \caption{The Afrasiab Chessmen} 
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.475\textwidth}  
+        \centering 
+        \includegraphics[width=\textwidth]{figs/lewis.jpg}
+        \caption {The Lewis Chessmen}
+    \end{subfigure}
+    \vskip\baselineskip
+    \begin{subfigure}[b]{0.475\textwidth}   
+        \centering 
+        \includegraphics[width=\textwidth]{figs/russian.jpg}
+        \caption{Russian Set from Kholmogory}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.475\textwidth}   
+        \centering 
+        \includegraphics[width=\textwidth]{figs/Staunton.jpg}
+        \caption{The Staunton Chess Set}  
+    \end{subfigure}
+    \caption{Chess sets throughout the time}
+    \label{fig:chess-sets}
+\end{figure}
+
+For a long time, chess was part of elite education. For many, it was a symbol of intelligence and free will. During the Cold War, the USSR spent dozens of resources to exploit chess talents, dominating chess worldwide. Chess has a competitive nature: although you can end in a draw, the goal is to win over the enemy, to defeat your opponent. The World Chess Championship 1886\footnote{\url{https://en.wikipedia.org/wiki/World_Chess_Championship_1886}} is considered the first official world championship, played between Wilhelm Steinitz (of Bohemian-Austrian origins) and Johannes Zukertort (of British-German origins).
+
+Many years of ``unofficialness'' and lack of standards ended, when in 1924 the Foundation of World Chess Federation (FIDE)\footnote{\url{https://en.wikipedia.org/wiki/FIDE}} was founded. They are based in Switzerland, and since 1948 their main activity has been organizing the World Chess Championship. FIDE also holds world championships for women, juniors, seniors, and the disabled. To qualify to challenge the World Champion, one has to win the Candidates Tournament. You also need good results in events like the Chess World Cup, the FIDE Grand Prix, and the FIDE Grand Swiss Tournament, to enter the Candidates Tournament.
+
+With all these formalities and difficult steps in professional play, chess still lives worldwide as a game played by people of all skill levels. It became even more accessible and popular during the early internet boom. The beginning of online chess can be tied to the Internet Chess Club\footnote{\url{https://en.wikipedia.org/wiki/Internet_Chess_Club}}, the first internet chess server, launched in 1992. Since then, we have \href{https://www.chess.com/home}{Chess.com} and \href{https://lichess.org/}{Lichess} as two popular websites, which can be used on any device, even on smartphones.
+
+Speaking of technology, the way chess is played changed drastically when in 1997 Deep Blue, an IBM supercomputer defeated Garry Kasparov, the world chess champion at that time\footnote{\url{https://en.wikipedia.org/wiki/Deep_Blue_versus_Garry_Kasparov}}. This was Deep Blue's second match against Kasparov, with a result of 3\nicefrac{1}{2}--2\nicefrac{1}{2}. It was widely covered in media, it shocked many people. A true showcase of the advancement of computers and computer science. Since then, competing players have actively used chess models and tools to prepare for matches, analyze their opponents and validate their ideas. Shortly after the Deep Blue incident, in 1999, Kasparov played a chess game against the world\footnote{\url{https://en.wikipedia.org/wiki/Kasparov_versus_the_World}}. More than 50,000 people from over 75 countries voted for each move through the internet. The game lasted 62 moves, with a win for Kasparov. He later said that it was \i{the greatest game in the history of chess}.
+
+The fact that chess became so popular and has lived on for so long is a clear indicator of its ingenuity. For me, chess is the best board game. What makes it so great in my mind, is that it is borderline impossible to consider every movement, that it is humanly impossible to see the whole impact of just one move, and that you can make guesses, but you cannot guarantee what the opponent will respond to your move. The fact that there is no luck involved (at least in the way it is in dice games, for example) makes it more skillful in my opinion. The only limitation is your expertise, focus and patience. 
+
+
+
+% ------------------------------------------------------------------------------------------- %
+% ------------------------------------ Image Processing ------------------------------------- %
+% ------------------------------------------------------------------------------------------- %
+
+\section{Image Processing}
+
+Seeing color is a phenomenon more complex than you might think\footnote{\url{https://www.amnh.org/explore/ology/brain/seeing-color}}. Light is a kind of wave, just like radio waves, but with a different wavelength. The human eye is capable of detecting a spectrum of light, resulting in us seeing colors. We only see the color which is reflected by the objects hit by the light. If we look at computers, we notice that all of them have some kind of display to interact with their user. It only makes sense to imitate these colors on a display, since computers are made by humans, for humans.
+
+Before computer displays, there is a long history of photography\footnote{\url{https://en.wikipedia.org/wiki/History_of_photography}}. It all began with two discoveries: the camera obscura image projection and the discovery that some substances are visibly altered by exposure to light. Back in the day taking a photograph was considered a luxury, it was mainly used for portraits and landscape photos. Nowadays we have digital images from digital cameras, made possible by charge-coupled devices (CCDs), basically arrays of capacitors. Storage of such images can be made into non-volatile memory in different formats. Retrieval/visualization of such images is then done through displays, which also underwent a long series of changes, resulting in technologies such as cathode ray tube (CRT) monitors, liquid-crystal displays (LCD), and light-emitting diode (LED) screens.
+
+Since we now have these snapshots of reality in computer memory, we might as well process them to extract useful information from them in an automated and efficient way. This is where image processing comes into play. Image processing is the act of employing algorithms to process digital images on a computer or designated hardware. These images can be thought of as arrays of pixels. A grayscale image's pixels have intensity values ranging from 0 to 255, where 0 is black and 255 is white. If we use the RGB model, one color image pixel has three channels (red, green and blue), each channel having a value from 0 to 255.  Mixtures of these three channels give us a large variety of colors. These are numerical data that can be plugged into algorithms. Some of these algorithms have a mathematical background with ideas long preceding the birth of image processing.
+
+Through image processing, we can extract features from digital images such as their average color, objects they depict, lines, corners and regular shapes that they contain. By applying machine learning, we can deduce what is shown in an unseen picture. We can detect cars, traffic road signs, and lanes of the road to empower autonomous driving and assistance. We can detect faces to automatically blur them in video footage. We can classify deformations of the human skin to check if they are signs of illness. We can use facial recognition as a biometric identification method. For better results, as well as for aesthetic reasons, we might preprocess the images, change their brightness and contrast level, blur them or sharpen them. The field of image processing is vast and growing.

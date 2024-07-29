@@ -1,0 +1,54 @@
+\appendix
+\chapter{Relevant Code sections}
+\pagestyle{fancy}
+
+\section{Rectification of board image}  \label{appendix:rectification}
+\begin{verbatim}
+std::vector<Point2f> dstCorners;
+dstCorners.push_back(Point2d(0, 0));                        // TL 
+dstCorners.push_back(Point2d(IMAGE_WIDTH, 0));              // TR
+dstCorners.push_back(Point2d(IMAGE_WIDTH, IMAGE_HEIGHT));   // BR
+dstCorners.push_back(Point2d(0, IMAGE_HEIGHT));             // BL
+
+// perform rectification
+Mat M = getPerspectiveTransform(corners, dstCorners);
+warpPerspective(imgResizedColor, imgWarped, M, Size(500, 500));
+
+imgNoBorder = imgWarped(Rect{
+    borderLeft,                                    // x
+    borderTop,                                     // y
+    IMAGE_WIDTH - borderLeft - borderRight,        // width
+    IMAGE_HEIGHT - borderTop - borderBottom        // height
+});
+\end{verbatim}
+
+
+\section{Getting the king situation} \label{appendix:kingsituation}
+\begin{verbatim}
+if (attackers.size() == 0)
+{
+    if (canKingMove || canOtherMove)
+    {
+        return KingSituation::FREE;
+    }
+    return KingSituation::STALEMATE;
+}
+else  // we have attackers, we are in check
+{
+    if (canKingMove || canAttackersBeBlocked)
+    {
+        return KingSituation::CHECK;
+    }
+    return KingSituation::CHECKMATE;
+}
+\end{verbatim}
+
+
+
+\chapter{Other Relevant Info}
+
+Proofs etc. if any. Otherwise remove this chapter
+
+\chapter{Published Papers}
+
+If any. Otherwise remove this chapter

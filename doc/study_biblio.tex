@@ -1,0 +1,172 @@
+\chapter{Bibliographic Research} \label{ch:studiubib} \pagestyle{fancy}
+
+The birth of OpenCB was initiated by a great variety of personal ideas, academic articles, YouTube videos, scientific papers and knowledge acquired during the time spent at university. Bibliographic research is essential, good resources lay a solid foundation for design and implementation. In the following sections, the main inspirations will be presented, along with papers that came in handy.
+
+
+
+% ------------------------------------------------------------------------------------------- %
+% ---------------------- Similar Problems, Solutions and Inspirations ----------------------- %
+% ------------------------------------------------------------------------------------------- %
+
+\section{Similar Problems, Solutions and Inspirations} \label{sec:similar-problemns-solutions-and-inspirations}
+
+The big questions that summarized the initial discovery phase of the project sounded like \i{How to validate a chess move?} \i{Which are the optimal steps to process raw images in our favor?} \i{Shall we use classification, pattern matching or object tracking for chessboard state reconstruction?}. Ultimately, there was a clear need for a set of algorithms, for a way to tackle this huge problem, to start from the bottom and slowly build up the system.
+
+There will be three papers presented. Other papers were read as well, but these three served as pivot points during design. The reason they were so useful is that they discuss similar problems. Each one of them shows a different perspective, with different approaches. Some ideas are shared; this is a good indication that they are useful ideas and should be considered.
+
+After the three papers, two existing smart chessboards will be presented. These are commercial products. Although there is no intention of creating profit from OpenCB, it is interesting to take a look at the products that have similar goals (helping beginners, serving as an add-on for chess) and have actual customers interested in them.
+
+
+% -------------------- A Computer Vision System for Chess Game Tracking --------------------- %
+
+\subsection{A Computer Vision System for Chess Game Tracking} \label{subsec:a-computer-vision-system-for-chess-game-tracking}
+
+Being the most influential paper, \i{A Computer Vision System for Chess Game Tracking}\cite{acvsystem} presents \i{a real-time system that allows the detection of the moves of a chess game}. As its title suggests, it provides a detailed description of the whole pipeline needed to get from an image to actual move detection. 
+
+In its introductory section, numerous similar and/or related projects are mentioned. The authors place the camera on the top of the board. They detect the occupancy of cells based on average color information. Rectification, intensity adjustment and chessboard position adjustment are done. They take into account the World Chess Federation (FIDE) requirements for board size and color. 
+
+The stages through which the system goes are:
+
+\begin{enumerate}
+    \item \b{Chessboard Image Frame}: a 5-megapixel Logitech C310 camera is mounted over the board to get the images.
+    
+    \item \b{Chessboard Grid Detector}: built-in \t{MATLAB} functions are used to get a grid, from which borders and pivot points are extracted.
+    
+    \item \b{Geometric Rectification}: using the previously detected corner points, the images are warped into 480x480 pixel dimensions.
+    
+    \item \b{Chessboard Position Adjustment}: white pieces are positioned to be on the bottom of the board. From the previous step, they could be on any side, depending on the order of detected corners.
+    
+    \item \b{Automatic Camera Exposure Adjustment}: a custom camera exposure adjustment algorithm is defined which \i{maximizes the average of the color differences between light/dark piece and square}.
+    
+    \item \b{Intensity Adjustment}: a 5x5 median filter is applied, and saturation is increased.
+    
+    \item \b{Average Color References}: an ROI (region of interest) is used to find out if the cell is free or taken. Reference colors are calculated at the beginning.
+    
+    \item \b{Move Detection}: moving frames are defined as frames that have a big color difference, having as reference the previous stable frame. 
+    
+    \item \b{2D Reconstructed Chessboard State and Move Logs}: after detecting cell states, the movement is deduced from the current and previous states. Six cases are defined based on the differences. If the movement is valid, it is saved.
+\end{enumerate}
+\vspace{0.5cm}
+
+The writers also suggest using the LAB color space for better performance. They mention shadows as a negative factor in performance. Overall this paper provided a lot of ideas for the project, although I do not like the movement tracking approach, since there is no guarantee the pieces are the same. This approach differentiates pieces only by their color.
+
+
+% ----------------------- Stonewall, Live Analysis of Chess Gameplay  ----------------------- %
+
+\subsection{Stonewall, Live Analysis of Chess Gameplay} \label{subsec:stonewall-live-analysis-of-chess-gameplay}
+
+Another highly influential paper was \i{Stonewall, a system for live analysis of chess gameplay and feedback from a chess engine}\cite{stonewall}. This application is a project made by a student named Sam Donald, who studied at the University of Canterbury. I found it through a video on YouTube, which showed quite impressive results.
+
+It shares many ideas with the previously mentioned paper: it detects the outermost corners starting from an empty board, uses K-means clustering for reference color calculation, gets moves based on differences from the previous and current state, and applies rectification. However, there are some new ideas presented as well. One of them is having a \b{side-mounted camera}. This has the drawback of perspective distortion and overlaying pieces but produces much more distinguishable piece images. The author ties the program to the Stockfish chess engine to validate movement and to output a reply. The human plays with white, against the machine's black pieces.
+
+Spatial relationships are used to approximate corner locations that are not directly found. Cropping up/ segmenting the image into cells is mentioned, and the \b{issue of pieces occupying two or three cells} due to the angle of the camera is presented. Internally there is an ASCII representation of the board.
+
+Tracking of pieces is done by imported \t{Python} libraries. I like custom implementations, so for me, this is not desirable. A list of all possible moves is iterated at each movement, which might be an overhead. Another drawback of the system highlighted by the developer is the hard-coded \b{pawn promotion}. Every pawn is considered to be promoted to a queen, although following the rules of chess, a pawn might be promoted to a rook, bishop or knight as well. Castling is hard-coded, calibration is not automated and it is slightly complicated, and there is a need to press a key at the end of each move.
+
+All in all, this paper served as a good reference point, to see what another student was able to achieve within this topic. I like the fact that Sam carefully thought of options to handle faults. There is source code available as well, but it is in \t{Python} (not in \t{C++}) and I did not look over it, since I wanted to start implementation from scratch.
+
+
+% ---------------------- Chess Piece Movement Detection and Tracking  ----------------------- %
+
+\subsection{Chess Piece Movement Detection and Tracking} \label{subsec:chess-piece-movement-detection-and-tracking}
+
+Paper \i{Chess Piece Movement Detection and Tracking, A Vision System Framework for Autonomous Chess Playing Robot}\cite{chesspiecemovement} is the most technical out of the three mentioned papers. It defines a chess-playing robot as \i{a robot that can see, think, and move the chess piece properly}. There is a whole team behind this project, and the work is divided into three parts: mechanics, engine and vision. The paper discusses only vision-related details.
+
+Although it is more technical and dry, it mentions a lot of ideas that came to my mind beforehand. \b{Contour tracing} is used to get the borders of the chessboard. They convert the image to grayscale, apply \b{Gaussian filtering} then feed the image to \b{Canny edge detector} and \b{morphological operations}. They mention the issue of borders (the outer part of chessboards which is not cell). \b{Hough Transformation} is mentioned as well; to deal with multiple lines detected very close to each other, they merge them. Cell corners are derived from the intersections of lines. Stable and unstable frame detection is detailed. Blob detection is applied based on subtraction. Four types of moves are defined: normal moves, capturing moves, en-passant moves, and castling moves.
+
+
+% ------------------------------ Existing Commercial Products ------------------------------- %
+
+\subsection{Existing Commercial Products} \label{subsec:existing-commercial-products}
+
+Although one might not expect it, there is an actual market for smart chess boards. And if there is a market for something, there are products to fill the need. We will take a look at two commercial products to see what the market offers, and compare it to our solution.
+
+The team behind \href{https://squareoffnow.com/}{\b{Square Off}} considers itself the distributor of the \i{World's Smartest AI chessboards}. Their vision is to build \i{the future of games and toys with robotics and AI}. With numerous partners showcased, both in the world of sales and chess, it looks like their product is the go-to solution if somebody wants to experiment with smart chessboards. Their PRO chessboard is a rollable e-chessboard selling for €299 (around 1.490 RON as of May 7, 2024). It can be connected to the Square Off App. The chessboard is dotted with small LEDs to guide the user. You can play against AI, in face-to-face mode or online.
+
+\href{https://playchessup.com/en-eu}{\b{ChessUp}} is a similar product to Square Off. The product is sold as \i{a revolutionary smart chess board with a built-in chess engine and chess instructor}. It has built-in AI, touch sense pieces, and light indicators, checks the legality of movements, allows you to play online on Lichess, and has a mobile app. Their product costs €339.00 (approximately 1690 RON). They are a gaming startup with the mission of making \i{STEM-focused games more approachable}.
+
+We can say that, compared to ChessUp and Square Off, our solution has the advantage of being free and open source. While professional solutions will always surpass student projects, they often deny giving you the possibility to tailor the software and hardware to your needs, stripping away some of your freedom for so-called convenience. Nevertheless, we can still take inspiration from these products.
+
+
+
+% ------------------------------------------------------------------------------------------- %
+% ----------------------------------- FIDE Laws of Chess ------------------------------------ %
+% ------------------------------------------------------------------------------------------- %
+
+\section{FIDE Laws of Chess} \label{subsec:fide-laws-of-chess}
+
+The International Chess Federation or World Chess Federation has the acronym FIDE, coming from the French Fédération Internationale des Échecs. They act as the governing body of international chess competitions. Their publication \i{FIDE Laws of Chess}\cite{fide} conveniently summarizes the well-known rules of chess, as well as defines some rules applied at their competitions and tournaments which might differ from place to place, organization to organization.
+
+The paper has sections \i{Basic Rules of Play}, \i{Competitive Rules of Play} and \i{Appendices}. Our focus is on the first section, as this includes the articles \i{The Nature and Objectives of the Game of Chess}, \i{The Initial Position of the Pieces on the Chessboard}, \i{The Moves of the Pieces}, \i{The Act of Moving the Pieces} and \i{The Completion of the Game}. This handbook is available online and is a good study for new players, as well as a great refresher for those who have not played for a long time or have questions related to the rules.
+
+
+
+% ------------------------------------------------------------------------------------------- %
+% ------------------------------------ Image Processing ------------------------------------- %
+% ------------------------------------------------------------------------------------------- %
+
+\section{Image Processing}
+
+My introduction to the domain of Image Processing was through the Image Processing course taken at the Technical University of Cluj-Napoca. One semester after that, the Pattern Recognition Systems course served as a follow-up. Both of these courses had good support, which will be presented in the next sections. After these, a paper on Hough transform will be showcased. 
+
+
+% --------------------------- Image Processing, Laboratory Works ---------------------------- %
+
+\subsection{Image Processing, Laboratory Works}
+
+The book \i{Image Processing, Laboratory Works}\cite{ip_labs} presents introductory topics, as well as some more advanced algorithms, to offer support to implement them with the use of \t{OpenCV}. It contains chapters \i{Introduction to the OpenCV library}, \i{Color spaces}, \i{The histogram of image intensity levels}, \i{Geometrical features of binary objects}, \i{Connected-component labeling}, \i{Border tracing algorithm}, \i{Morphological operations of binary images}, \i{Statistical properties of grayscale images}, \i{Image filtering in the spatial and frequency domains}, \i{Noise modeling and digital image filtering}, \i{Edge detection}.
+
+The idea of using \t{OpenCV} and \t{C++} for the license thesis began here. Some implementations, like the one for Canny edge detection, were already made during the third year's second semester and only needed minimal modifications. The topics cover a wide range of image processing methods and thus give a good impression of what can be achieved using them or similar algorithms. Good practices were learned during the usage of this book, and it served as a go-to when questions arose.
+
+
+% --------------------- Pattern Recognition Systems, Laboratory Works ----------------------- %
+
+\subsection{Pattern Recognition Systems, Laboratory Works}
+
+The book \i{Pattern Recognition Systems, Laboratory Works}\cite{prs_labs} has a similar structure to the previous one. It aims to explain more specific algorithms, that help in recognizing different patterns in digital images, focusing on practicalities. It contains chapters \i{Least Mean Squares}, \i{RANSAC}, \i{Hough Transform}, \i{Distance Transform}, \i{Statistical Data Analysis}, \i{Principal Component Analysis}, \i{K-means Clustering}, \i{K-Nearest Neighbor Classifier}, \i{Naive Bayes Classifier}, \i{Perceptron Classifier}, \i{AdaBoost Method}, \i{Support Vector Machine}. 
+
+Many of these algorithms amazed me, as they provided solutions for seemingly impossible tasks. Imitating even a little bit of the human intuition and way of processing images is incredibly hard. While the algorithms seemed interesting on their own, I wanted to combine them to solve a real-life problem. Initially, OpenCB started as a project for the PRS laboratory, but it outgrew itself.
+
+
+% ------------------------------ A survey on Hough Transform -------------------------------- %
+
+\subsection{A survey on Hough Transform}
+
+The paper \i{A survey on Hough Transform}\cite{hough_survey} provides a comprehensive presentation of the Hough algorithm. Its abstract notes: \i{Our survey, along with more than 200 references, will help the researchers and students to get a comprehensive view of HT and guide them in applying it properly to their problems of interest}. In the \i{Introduction} section, the general idea is presented, after which, in the section \i{Formulation}, different line representations and parametrizations are shown. While the base idea is simple if you get a hold of it, there are many variations to achieve better results and to become more time- and space-efficient. Many real-life applications are listed, like medical imaging, motion detection and robot navigation.
+
+
+
+% ------------------------------------------------------------------------------------------- %
+% ---------------------------- Machine Learning/ Classification ----------------------------- %
+% ------------------------------------------------------------------------------------------- %
+
+\section{Machine Learning/ Classification}
+
+
+% ---------------------------------- K Nearest Neighbors ------------------------------------ %
+
+\subsection{K-Nearest Neighbors}
+
+While the KNN algorithm is straightforward and well explained in \i{Pattern Recognition Systems, Laboratory Works}\cite{prs_labs}, I was curious what others have to say about it. I found the paper \i{K-nearest neighbor from Leif E. Peterson}\cite{knn}. He gives a good overview of the algorithm, formalizes ideas, and tries to explain every term he runs into. After the second section, the discussion becomes very generic, issuing topics like building the confusion matrix, standardization and fuzzification, cross-validation and some performance evaluation. It was a good refresher and a reassurance that my ideas were in place.
+
+
+% -------------------------------- Support Vector Machine ----------------------------------- %
+
+\subsection{Support Vector Machine}
+
+While trying to get a better understanding of how the SVM algorithm works, I stumbled upon a snippet from an IEEE Intelligent Systems and their Applications publication from 1998, called \i{Support Vector Machines}\cite{svm}. This resource contained four articles: \i{SVMs - a practical consequence of learning theory}, \i{Using SVMs for text categorization}, \i{Applying SVMs to face detection} and \i{How to implement SVMs}.
+
+In the first article, we get a general introduction to SVMs, as this was something experimental at the time. Bernhard Schölkopf, the author, argues that it is worth studying the functioning of an SVM since it is not just ``yet-another-algorithm''. He describes the hyperplane classifiers, feature spaces and kernels, presents the kernel trick, and gives intuitive examples. Developments and open issues are also showcased.
+
+The second article describes the usage of SVM for assigning predefined categories (based on content) to unseen text and proudly presents the practical results. A linear SVM is used, and in this case, the weights have an easy-to-understand role in classification. A detailed comparison is made with other algorithms (findism, naive Bayes, Bayes nets, trees), the metric being the average of the precision and recall (breakeven point).
+
+The third article uses SVM for detecting squares that contain faces. What stood out to me was that it is a binomial classification (face and non-face), and that a big part of the success of the experimentation is said to come from training on images containing 0 faces and putting every false positive into the training set. They experiment on real-time systems, but you can imagine what can be done with a Windows NT Pentium 200-MHz computer.
+
+The last article tries to demystify the implementation of SVMs, however, it quickly became too technical for me, since it insists a lot on the different solutions for solving the QP (quadratic programming) problem, and discusses optimizations rather than the base algorithm. Overall it is nice to see that these algorithms have been around for so long. In the case of classifiers, many ideas and theories were held back only by the lack of computational power.
+
+
+% ----------------------------- Convolutional Neural Network -------------------------------- %
+
+\subsection{Convolutional Neural Network}
+
+The paper \i{An Introduction to Convolutional Neural Networks}\cite{cnn} is a relatively easily digestible paper on CNNs, especially if you have some prior experience with them. It focuses mainly on the architecture of a CNN, which is convenient for a programmer. It discusses the different layers a CNN might have: convolutional layers, pooling layers, and fully connected layers. It does not enter too much into the theory but touches on topics such as activation functions, normalization, and the nature of the features learned. It also tells us a little about the history of CNNs and how they differ from other models.

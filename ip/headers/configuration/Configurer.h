@@ -1,0 +1,98 @@
+#pragma once
+
+#include "../CommonIP.h"
+#include "BFS.h"
+#include "Canny.h"
+#include "Conversion.h"
+#include "Filter.h"
+#include "Hough.h"
+#include "Morphological.h"
+#include "../file_handling/FileHandler.h"
+#include "../com/headers/Parameters.h"
+#include "../com/headers/Paths.h"
+
+#include <QObject>
+#include <QMutex>
+
+
+
+
+
+enum class CameraSide
+{
+	LEFT,
+	RIGHT
+};
+
+
+class Configurer
+{
+public:
+private:
+	
+	CameraSide cameraSide;
+	std::vector<Point2f> corners;			// corners of chessboard
+	bool configured;						// true if corners set at least once
+	std::shared_ptr<QMutex> imshowMutex;
+
+public:
+	Configurer(CameraSide cameraSide, std::shared_ptr<QMutex> imshowMutex);
+
+	// gets the corners of the chessboard
+	int configure(
+		Mat_<Vec3b> img,  // image from which the corner positions will be extracted
+		ConfigureParameters configureParameters,
+		bool isTest
+	);
+
+	int cropAndLabel(
+		Mat_<Vec3b> img,
+		QVector<QString> encodings,  // labelFolder for each cell
+		CropAndLabelParameters cropAndLabelParameters,
+		BorderParameters borderParameters,
+		bool isTest
+	);
+
+	// save cell images on disk. while this is an overhead, classifiers may need different
+	//     image formats (ex: CNN), so cannot universally just pass an array of Mats
+	int prepareCellImages(
+		Mat_<Vec3b> imgOriginal,
+		BorderParameters borderParameters
+	);
+
+private:
+	// actually extracts two cells
+	Mat_<Vec3b> extractCell(int i, int j, Mat_<Vec3b> img, BorderParameters borderParameters);
+
+	// coordinate system transformation: left -> main (see cams.drawio)
+	void leftToMain(int lr, int lc, int& mr, int& mc);
+
+	// coordinate system transformation: right -> main (see cams.drawio)
+	void rightToMain(int rr, int rc, int& mr, int& mc);
+
+	int warpAndRemoveBorder(
+		Mat_<Vec3b> imgOriginal,
+		Mat_<Vec3b>& imgWarped,
+		Mat_<Vec3b>& imgNoBorder,
+		BorderParameters borderParameters
+	);
+
+	// Draws a cross on color image img, "around" point p, with given diameter
+// and optionally color (white default)
+	void drawCrossColor(
+		Mat_<Vec3b> img,
+		Point2i p,
+		int diameter,
+		Vec3b color = Vec3b(255, 255, 255)
+	);
+
+	// Extract object pixels in a list of points
+	std::vector<Point2i> getPointsFromBinary(
+		Mat_<uchar> img,
+		int objectPixelColor = 255
+	);
+
+	double euclideanDistance(Point2i a, Point2i b);
+
+};
+

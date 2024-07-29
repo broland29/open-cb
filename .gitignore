@@ -1,0 +1,11 @@
+.vs
+out/*
+mem/*
+*.png
+*.pyc
+
+doc/*
+!doc/*.tex
+!doc/thesis.bib
+!doc/drawio
+!ua/resources/*

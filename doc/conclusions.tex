@@ -1,0 +1,46 @@
+\chapter{Conclusions} \label{conclusions} \pagestyle{fancy}
+
+
+The initial goal of this project was to create a software solution that can help beginner chess players by validating their moves, in an interesting, interactive way. OpenCB was thought to be an add-on for the game of chess, providing a solid underlying architecture, and utilizing numerous image processing algorithms. Initially, I had a lot of ideas and a limited number of familiar image processing algorithms, the big question was how to combine them into an application.
+
+The ideas slowly came together, and the result speaks for itself. OpenCB became a versatile tool, a desktop application with a beautiful interface and a modular design. The majority of the components were developed from scratch, and put together one by one carefully during a solid nine months. This documentation describes its architecture in detail, assisting in possible further development, but also for the reusal of parts of the code.
+
+
+
+% ------------------------------------------------------------------------------------------- %
+% --------------------------------- Personal Contributions ---------------------------------- %
+% ------------------------------------------------------------------------------------------- %
+
+\section{Personal Contributions}
+
+While many of the ideas were inspired by existing work in the field, and some of the conclusions I came to are identical to what others did before, there is a fair share of personal ideas and solutions that can be considered contributions to the problem of chessboard state recognition and movement validation.
+
+First of all, notice \b{the architecture} itself, and the way modules are put together. The algorithms presented in \nameref{ch:analysis} are awesome on their own, but they need to interact somehow to reach a common goal. Gaussian filtering, morphological closing, Canny edge detection, Hough transform and the K-Nearest Neighbors classifier were all \b{written from scratch} and put one after another so that the output of one algorithm is the input of the next one. All this creates just one module of the three, the Image Processing module. The Validation and Response module contains \b{a complex algorithm for movement validation written from zero, with unit tests} included. It's not just an idea, it is an implementation as well. Above these two lies the User Application module, providing \b{a graphical user interface} through which a user can interact with the system. These modules communicate efficiently and can be reused on their own as well.
+
+Next, there are a few things I did completely differently from existing solutions. For example, \b{the usage of two cameras} (discussed in Section {\nameref{subsec:why-two-cameras}). Or the usage of long algebraic notation (see: Section {\nameref{eq:long-algebraic-notation}) to be more beginner-friendly. Or the custom background noise reduction with breadth-first search of Section {\nameref{fig:binary--bfs}.
+
+Finally but not least, the source code is available for anybody and designed in a way that can be a playground for any image processing enthusiast. \b{The algorithms are replaceable, reorderable, and parametrized}. The GUI can be easily changed, some code being so dynamic that one can add buttons and text boxes without even worrying about the layout. The VAR module is independent and can be used for just movement validation alone.
+
+
+
+% ------------------------------------------------------------------------------------------- %
+% ----------------------------------- Future Development ------------------------------------ %
+% ------------------------------------------------------------------------------------------- %
+
+\section{Future Development}
+
+While OpenCB is already a complex application, there are parts of it that could be refined. For example, the classification results could be better by either finding an existing large dataset or making the process of dataset creation faster. Alternatives for image processing on the board reconstruction side would be solutions like using custom pieces and boards with pressure or light sensors, but this would mean that the solution would become less generic: the price of the setup would rise and the project would become less accessible. Better cameras, more preprocessing, and bigger chess boards with easily identifiable black pieces would certainly help.
+
+Aside from the difficulties with classification, there is not much to complain about in the current version. Of course, the code could be refined, to be shorter, more optimal and more fault-tolerant. The setup could be made easier, by wrapping the developer environment into a Docker container or something similar, and by finding a way to use CNN models without the tedious conda environment setups and hiccups, like running from the cloud. More functionalities could be added to help the players even more, or the whole process could be made a bit more autonomous. 
+
+
+
+% ------------------------------------------------------------------------------------------- %
+% --------------------------------------- Final Words --------------------------------------- %
+% ------------------------------------------------------------------------------------------- %
+
+\section{Final Words}
+
+The development of OpenCB and its documentation was a real challenge. It took me a lot of time and effort, but I feel like I learned a lot. Indisputably this is my biggest project yet. This was the first time I felt the importance of having a good design from the start. I developed an appreciation for simple solutions, which are understandable even if you have not seen the code for months. It tested my time-management and stress-management skills. After all, it was a fun project.
+
+I would like to thank everyone who contributed to the license thesis: my thesis coordinator for giving me useful advice and giving me ideas when I was stuck, my colleagues for helping me out when needed, and my family and friends for keeping me motivated.
