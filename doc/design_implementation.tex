@@ -1,8 +1,8 @@
 \chapter{Detailed Design and Implementation} \label{ch:detailed-design-and-implementation}
 \pagestyle{fancy}
 
+This section provides a high-level view of the system, after which a comprehensive presentation of each module and secondary functionalities will be done. The main use cases will be presented, and a typical usage will be covered, a flow of actions a user is expected to do to fully exploit the functionalities of the system. Throughout the implementation, the functional and non-functional requirements defined in \autoref{ch:project-objectives} will provide guidance; fulfilling them serves as an objective goal of the project.
 
-Before inspecting the specifics of each module's subcomponents, classes and methods, first we shall take a high-level look at the system. Some of the main use cases will be presented, associated with the two types of users. Then I will present the hardware setup so that it becomes obvious what we are dealing with in real life. Then we will cover a typical usage, i.e. a flow of actions a user is expected to do to fully exploit the functionalities of the system. Throughout the implementation, we have to carefully inspect the functional and non-functional requirements defined in \autoref{ch:project-objectives}, since fulfilling them serves as an objective goal of the project.
 
 
 % ------------------------------------------------------------------------------------------- %
@@ -14,22 +14,15 @@ Before inspecting the specifics of each module's subcomponents, classes and meth
 Anyone who starts the application can be put under the category of User. From \autoref{ch:project-objectives}, we can deduce the main use cases the system shall provide support for. Users may differ in expertise, but the system offers the same functionalities for each User, from which they can choose as they like. The use cases can be categorized as follows in the list below, and can be represented visually as seen in Figure \ref{fig:usecase}.
 
 \begin{itemize}
-    \item \b{Dataset Creation}
-    To use other functionalities (like Chessboard Detection), or for other personal reasons, the User might want to create a dataset of cell images, i.e. images of individual pieces. The use cases making this possible are \t{Configure}, which gets the corners of the chessboard, and \t{Crop and Label}, which extracts the images and labels them by butting them into appropriate folders based on what the User specified on the Chess GUI. To be more user-friendly, test variations of these functions are provided as well; these only show a preview of the actions, without saving the result/ affecting existing data. The images then can be distributed into train, validation and test sets through the \t{Shuffle and Split} use case.
+    \item \b{Dataset Creation}: to use other functionalities (like Chessboard Reconstruction), or for other personal reasons, the User might want to create a dataset of cell images, i.e. images of individual pieces. The use cases making this possible are \t{Configure}, which gets the corners of the chessboard, and \t{Crop and Label}, which extracts the images and labels them by butting them into appropriate folders based on what the User specified on the Chess GUI. To be more user-friendly, test variations of these functions are provided as well; these only show a preview of the actions, without saving the result/ affecting existing data. The images then can be distributed into train, validation and test sets through the \t{Shuffle and Split} use case.
     
-    \item \b{Classifier Handling}
-    A precondition of the \t{Classify Board} use case is to have a trained classifier. For an inexperienced user, it is enough to select one classifier and train it using a dataset. However, if the User is more tech-savvy, he/she might want to play around with the three classifiers. The user can test the classifiers, then compare results on different sets, save them, and load them.
+    \item \b{Classifier Handling}: a precondition of the \t{Classify Board} use case is to have a trained classifier. For an inexperienced user, it is enough to select one classifier and train it using a dataset. However, if the User is more tech-savvy, he/she might want to play around with the three classifiers. The user can test the classifiers to compare results on different sets, change hyperparameters, and save and load the classifiers.
 
-    \item \b{Chessboard Reconstruction}
-    If there is a successfully trained classifier and \t{Configure} was run beforehand, the User might request chessboard reconstruction through \t{Classify Board}. The system will do its best to show what it sees on the board through the Chess GUI. If it works sufficiently enough, it might be easier than moving around the pieces manually.
+    \item \b{Chessboard Reconstruction}: if there is a successfully trained classifier and \t{Configure} was run beforehand, the User might request chessboard reconstruction through \t{Classify Board}. The system will do its best to show what it sees on the board through the Chess GUI. If it works sufficiently enough, it might be easier than moving around the pieces manually.
 
-    \item \b{Chess Move validation}
-    
-    Independently of other use cases, the chess move validation only relies on what is seen on the Chess GUI indifferently from the source it set it up. The User might play a game of chess and validate each move. The correct moves will be logged in a text file.
+    \item \b{Chess Move Validation}: independently of other use cases, the chess move validation only relies on what is seen on the Chess GUI (does not care about why the Chess GUI looks as it does). The User can play a game of chess and validate each move. The correct moves will be logged in a text file.
 
-    \item \b{Miscellaneous actions}
-    
-    Aside from what has already been listed, the User can also \t{Clear All} to delete all images, or \t{Change Settings} to modify parameters that persist cross-session.
+    \item \b{Miscellaneous Actions}: aside from what has already been listed, the User can also \t{Clear All} to delete all images, or \t{Change Settings} to modify parameters that persist cross-session.
 \end{itemize}
 
 \begin{figure}[H]
@@ -40,32 +33,23 @@ Anyone who starts the application can be put under the category of User. From \a
 \end{figure}
 
 
+\b{A typical session of using OpenCB might look like the following.} First, the user makes sure that the cameras are connected and working. This can be done through built-in applications (\i{Camera} for Windows 10). The user sets up the table and the cameras and then starts the application.
 
-% ------------------------------------------------------------------------------------------- %
-% ------------------------------------- A Typical Usage ------------------------------------- %
-% ------------------------------------------------------------------------------------------- %
+First, he configures the system. He tests the configuration with the current parameters using \t{Test Configure}. The results are not satisfactory, so he plays around with the parameters (\t{Change Settings}) until the corners are found. Then, \t{Configure} is run. Next, he tests how well cell images are extracted through \t{Test Crop and Label}. The cells are not cut well, so he goes to the settings again (\t{Change Settings}) and changes the border parameters. Now the test (\t{Test Configure}) shows nice cell images.
 
-\section{A Typical Usage}
+The user unfortunately does not have an existing dataset that contains images suitable for the chessboard, camera angle, camera distance and lighting. So he builds his dataset, and since he wants a truly random dataset, he uses the \i{BoardSetupsGenerator} script (also shipped with the application) to generate setups. For each setup, he sets up the physical board, the Chess GUI, and issues \t{Crop and Label}.
 
-A complex, but typical usage scenario will be described, which tries to employ as many functionalities as possible, with the supporting use cases presented in \ref{sub:users-and-use-cases}.
-
-Suppose a user uses OpenCB for the first time. First, he makes sure that the cameras are connected and working. This can be done through built-in applications (\i{Camera} for Windows 10). The user sets up the table and the cameras as detailed in \ref{sec:hardware-setup}. Then, the user starts the application.
-
-First, the user configures the system. The user tests the configuration with the current parameters using \t{Test Configure}. The results are not satisfactory, so the user plays around with the parameters (\t{Change Settings}) until the corners are found. Then, \t{Configure} is run. Next, the user tests how well cell images are extracted through \t{Test Crop and Label}. The cells are not cut well, so the user goes to the settings again (\t{Change Settings}) and changes the border parameters. Now the test (\t{Test Configure}) shows nice cell images.
-
-The user unfortunately does not have an existing dataset that contains images suitable for the chessboard, camera angle, camera distance and lighting. So the user builds his dataset, and since he wants a truly random dataset, he uses the \i{BoardSetupsGenerator} script to generate setups. For each setup, he sets up the physical board, the Chess GUI, and issues \t{Crop and Label}.
-
-After finishing with the setups, the user issues \t{Shuffle and Split}, chooses the CNN classifier for best performance (\t{Select Classifier}), and trains it (\t{Train Classifier}). The user also tests and sees a decent result (\t{Test Classifier}). Now he sets up a new chess game (\t{New Game}) and calls his friend. They start playing together. After each step, the user requests \t{Classify Board}, and corrects possible errors on the Chess GUI, then issues \t{Validate Move}. When incorrect moves are detected, he makes another move or notifies his enemy to correct his move. At the end, the user saves the game from the log generated (\t{Open Logs}).
+After finishing with the setups, the user issues \t{Shuffle and Split}, chooses the CNN classifier for best performance (\t{Select Classifier}), and trains it (\t{Train Classifier}). He also tests and sees a decent result (\t{Test Classifier}). Now he sets up a new chess game (\t{New Game}) and calls his friend. They start playing together. After each step, he requests \t{Classify Board}, and corrects possible errors on the Chess GUI, then issues \t{Validate Move}. When incorrect moves are detected, he makes another move or notifies his friend to correct his move. At the end, the user saves the game from the log generated (\t{Open Logs}).
 
 
 
 % ------------------------------------------------------------------------------------------- %
-% ------------------------------------- Hardware Setup -------------------------------------- %
+% ------------------------------------ Hardware Design -------------------------------------- %
 % ------------------------------------------------------------------------------------------- %
 
-\section{Hardware Setup} \label{sec:hardware-setup}
+\section{Hardware Design} \label{sec:hardware-design}
 
-The application can be used without a hardware setup, although the lack of cameras removes a lot of functionalities. OpenCB can used just as a GUI for chess and validating the movements entered manually. If you decide to use cameras, it is recommended to put them at an angle at which each camera's pieces are best distinguishable. If you have an existing dataset, try to set up the angles, distances and lighting in a way that produces images similar to the ones in the dataset. If you are creating a dataset, ensure that the hardware setup can be easily and accurately reproduced.
+The application can be used without a hardware setup, although the lack of cameras removes a lot of functionalities. OpenCB can be used just as a GUI for chess and validating the movements entered manually. If you decide to use cameras, it is recommended to put them at an angle at which each camera's pieces are best distinguishable. If you have an existing dataset, try to set up the angles, distances and lighting in a way that produces images similar to the ones in the dataset. If you are creating a dataset, ensure that the hardware setup can be easily and accurately reproduced.
 
 In both cases, it is recommended to mount the cameras in a fixed position. You can put it on anything you like. For example, in the beginning, I put the board in a cardboard box and the cameras on the two sides of the box. This is good for demonstration purposes but is inconvenient for the players. I experimented with a big chessboard as well; to capture it, I put the cameras on the back of two chairs, this way I could easily manipulate their distances from the chessboard. The background has to be light, but not necessarily white. Both cameras must see the whole chessboard.
 
@@ -78,21 +62,21 @@ In Figure \ref{fig:hardware} you can see the setup used to make the dataset for 
 
 You do not need such a specialized setup for running the application. This was needed so that I could present the application live, and create a dataset in an environment that I could bring with myself.
 
-\begin{figure}[!ht]
+\begin{figure}[!hb]
     \centering
     \includegraphics[width=\textwidth]{figs/hardware.jpg}
     \caption{The hardware setup used for the demo}
     \label{fig:hardware}
 
-    \includegraphics[width=0.6\textwidth]{figs/table-plan.jpg}
+    \includegraphics[width=0.5\textwidth]{figs/table-plan.jpg}
     \caption{The design for the demo table made by my dad}
     \label{fig:table-plan}
 \end{figure}
 
 
-% ------------------------------------ Why two cameras? ------------------------------------- %
+% --------------------------- Justification of Using Two Cameras ---------------------------- %
 
-\subsection{Why two cameras?}
+\subsection{Justification of Using Two Cameras} \label{subsec:why-two-cameras}
 
 You may rightfully ask: why do we need two cameras? The idea is simple, yet innovative. From the papers mentioned in \nameref{sec:similar-problemns-solutions-and-inspirations}, I noticed that people struggled with finding the right positioning for the cameras. Some put them above the chessboard, this way pieces of the same category look more similar, the players are not bothered by the camera, and shadows do not represent a problem (given that lighting can be put on the same support as the camera). However, for a classification task, such a setup provides too similar photos. The true features of a chess piece cannot be seen from a bird's view.
 
@@ -104,7 +88,7 @@ This way cameras consider only what is close to them. The further the cell, the 
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=0.9\textwidth]{figs/coordinates.png}
+    \includegraphics[width=0.8\textwidth]{figs/coordinates.png}
     \caption{Coordinates}
     \label{fig:coordinates}
 \end{figure}
@@ -118,27 +102,29 @@ This way cameras consider only what is close to them. The further the cell, the 
 
 In the implementation, all three modules (User Application Module, Image Processing Module, Validation and Response Module) have separate folders (\t{ua}, \t{ip}, \t{var}). UA is the main module, while IP and VAR communicate with it (see Figure \ref{fig:black-box}). They are part of the same executable but thought of as completely separate components. Initially, a client-server architecture was implemented with the usage of sockets. This meant separate executables and primitive message passing. This solution quickly overgrew itself, and although in the beginning, it sounded like a good idea, having three separate executables proved to be annoying and unnecessary.
 
-\begin{figure}[H]
+\begin{figure}[ht]
     \centering
-    \includegraphics[width=0.6\textwidth]{figs/black-box.png}
+    \includegraphics[width=0.5\textwidth]{figs/black-box.png}
     \caption{High-level view of the system and its modules}
     \label{fig:black-box}
 \end{figure}
 
-After experimenting with \t{Qt}, I realized that it is much more than just a GUI library. It has different modules, like \t{Qt Core}, \t{Qt GUI}, \t{Qt Network}, \t{Qt Test} and so on. A full list can be found in \href{https://doc.qt.io/qt.html}{the online documentation}. Aside from other discoveries, I found that \t{Qt} has a very convenient way of message passing, through what they call signals and slots. From a programmer's perspective, signals and slots are functions. There exist definitions for access specifier-like wrappers for both signals and slots, which can be used in header files.  If a class is declared as \t{Q\_OBJECT}, it can emit and catch signals. Signals don't have a body, they just need to be declared. Slots are functions that we want to execute when a signal is emitted. Signals and slots can be connected, they need to have compatible signatures (in the simplest form, the same parameters).
+After experimenting with \t{Qt}, I realized that it is much more than just a GUI library. It has different modules, like \t{Qt Core}, \t{Qt GUI}, \t{Qt Network}, \t{Qt Test} and so on. A full list can be found in \href{https://doc.qt.io/qt.html}{the online documentation}. Aside from other discoveries, I found that \t{Qt} has a very convenient way of message passing, through the mechanism they call \b{signals and slots}. From a programmer's perspective, signals and slots are functions. There exist definitions for access specifier-like wrappers for both signals and slots, which can be used in header files.  If a class is declared as \t{Q\_OBJECT}, it can emit and catch signals. Signals don't have a body, they just need to be declared. Slots are functions that we want to execute when a signal is emitted. Signals and slots can be connected, given that they have compatible signatures (in the simplest form, the same parameters).
 
-Signals and slots are naturally used by the GUI module: widgets like buttons emit signals when they are pressed, and we implement slots for handling that event. We can emit signals through code as well, by simply calling the signal function, preferably preceded with the \t{emit} empty definition to show our intent. This mechanism was used to replace sockets completely. Non-Qt types can be sent through signals and slots as well if they are registerable, although I tried to stick with the basic Qt types and make conversions where needed.
+Signals and slots are naturally used by the GUI module: widgets like buttons emit signals when they are pressed, and we implement slots for handling that event. We can emit signals through code as well, by simply calling the signal function, preferably preceded with the \t{emit} empty definition to show our intent. This mechanism was used to replace sockets completely. Non-\t{Qt} types can be sent through signals and slots as well if they are registerable, although I tried to stick with the basic \t{Qt} types and make conversions where needed.
 
 The signals and slots mechanism is by default blocking, and signals get queued up. This is a neat feature. To send reply messages to inform the sender about the request's success status or send back the required information, I came up with the following pattern: if module \t{A} sends to module \t{B} a signal \t{doSomethingSignal}, module B catches it with \t{doSomethingSlot}. Once it completes the request or fails to do so, module \t{B} sends back a \t{doSomethingReplySignal}. If the case, module \t{A} catches it through \t{doSomethingReplySlot}. Where reply is essential, the whole thing was wrapped into a separate class, with a timer associated, which times out if no reply comes in a given time (see \t{SignalWaiter}).
 
 Figure \ref{fig:signals-slots} shows the most important signals and slots, with delimiting boxes for the modules. This is an important overview as it shows all the communication between modules. Through these messages, we can see how user requests are delegated to different modules, and how response is sent back where it is the case.
 
-\begin{figure}[!ht]
+\begin{landscape}
+\begin{figure}[hb]
     \centering
-    \includegraphics[angle=90,origin=c,width=\textwidth]{figs/signals-slots.png}
+    \includegraphics[width=1.2\textwidth]{figs/signals-slots.png}
     \caption{Important signals and slots}
     \label{fig:signals-slots}
 \end{figure}
+\end{landscape}
 
 
 
@@ -150,9 +136,9 @@ Figure \ref{fig:signals-slots} shows the most important signals and slots, with 
 
 The User Application Module provides a Graphical User Interface for the user, as well as serves as the main module, given that our application is a \t{Qt}-based desktop application. As a result of this, class \t{UserApplication} is more than just a wrapper of other UI-related classes: the main loop of the whole application is the event loop provided by its \t{run} method. The \t{ui} package/folder on itself is simple, see Figure \ref{fig:class-ua}. Two separate windows are available, the main window and the settings dialog, which will be described in the next paragraphs.
 
-\begin{figure}[!ht]
+\begin{figure}[ht]
     \centering
-    \includegraphics[width=0.6\textwidth]{figs/class_ua.png}
+    \includegraphics[width=0.7\textwidth]{figs/class_ua.png}
     \caption{Classes of package \t{ua}}
     \label{fig:class-ua}
 \end{figure}
@@ -205,20 +191,22 @@ In the project, there are examples of all the necessary layouts and widgets. Fig
     \label{fig:main-window-skeleton}
 \end{figure}
 
-The camera previews are shown in \t{cameraOneImageLabel} and \t{cameraTwoImageLabel}. As their name suggests, they are \t{QLabel}s, but without text. One may set a picture as ``the background'' of a label by calling \t{label->setPixmap(pixmap)}, where pixmap is of type \t{QPixmap}, which we can get from a \t{QImage}. Whenever the left or right camera handler has a frame ready, they emit a \t{previewImageReadySignal} signal, which is caught by \t{ImageProcessing}'s slots, \t{previewImageReadyLeftSlot} or \t{previewImageReadyRightSlot} respectively. These are further on sent to \t{UA} through \t{previewImageReadyLeft} and \t{Right} signals. \t{MainWindow} catches these and updates the corresponding image label. No reply is sent since it would be unnecessary overhead. If either or both cameras are not connected, the application still starts, but only the functionalities that do not require cameras can be used.
+The camera previews are shown in \t{cameraOneImageLabel} and \t{cameraTwoImageLabel}. As their name suggests, they are \t{QLabel}s, but without text. One may set a picture as ``the background'' of a label by calling \t{label->setPixmap(pixmap)}, where pixmap is of type \t{QPixmap}, which we can get from a \t{QImage}. Whenever the left or right camera handler has a frame ready, they emit a \t{previewImageReadySignal} signal, which is caught by \t{ImageProcessing}'s slots, \t{previewImageReadyLeftSlot} or \t{previewImageReadyRightSlot} respectively. These are further on sent to UA through \t{previewImageReadyLeft} and \t{Right} signals. \t{MainWindow} catches these and updates the corresponding image label. No reply is sent since it would be unnecessary overhead. If either or both cameras are not connected, the application still starts, but only the functionalities that do not require cameras can be used.
 
-The Chess GUI is an \t{8x8} matrix of labels. For convenience, these labels are wrapped into the \t{ClickableLabel} class. This class provides the functions \t{setPiece}, \t{getPieceName}, \t{modifyStyleSheet}. They handle \t{mousePressEvent}s and provide two signals \t{leftClicked} and \t{rightClicked}. \t{setPiece} changes the internal piece name and also ``refreshes the sprite'' by setting the pixmap provided. \t{getPieceName} returns the piece name, with the caveat that it distinguishes between white and black free since this is needed for labeling. The \t{modifyStyleSheet} method lets the caller change the stylesheet (CSS-like style definition) without changing the background of the cell. Mouse presses are caught and \t{MainWindow} is notified, since the labels on themselves are ``dumb'' components, without logic.
+The Chess GUI is an 8x8 matrix of labels. For convenience, these labels are wrapped into the \t{ClickableLabel} class. This class provides the functions \t{setPiece}, \t{getPieceName}, \t{modifyStyleSheet}. They handle \t{mousePressEvent}s and provide two signals \t{leftClicked} and \t{rightClicked}. \t{setPiece} changes the internal piece name and also ``refreshes the sprite'' by setting the pixmap provided. \t{getPieceName} returns the piece name, with the caveat that it distinguishes between white and black free since this is needed for labeling. The \t{modifyStyleSheet} method lets the caller change the stylesheet (CSS-like style definition) without changing the background of the cell. Mouse presses are caught and \t{MainWindow} is notified, since the labels on themselves are components without logic.
 
-The Chess GUI's clicking logic is implemented in \t{MainWindow::leftClickedSlot} and \t{MainWindow::RightClickedSlot}. The goal is to make every piece changeable to every other piece. This can be done by right-clicking the cell, since it will change it to the next piece in a predefined order (\t{"FR"}, \t{"WP"}, \t{"WB"}, \t{"WN"}, \t{"WR"}, \t{"WQ"}, \t{"WK"}, \t{"BP"}, \t{"BB"}, \t{"BN"}, \t{"BR"}, \t{"BQ"}, \t{"BK"}, wrapped around). This is not very chess-like, but it is necessary to correct possible errors from classification. By left-clicking one cell \t{A} and then left-clicking cell \t{B}, the piece on cell \t{A} will ``move'' to cell \t{B}, leaving cell \t{A} empty. 
-
-The other widgets are self-explanatory -- one button/dropdown for each use case. The settings button however is special. By clicking on it, a new window opens up: the settings dialog (see Figure \ref{fig:settings-dialog}). While this might seem less elegantly organized, the neat thing is that it can be easily changed if needed. There is a wrapper for both combo box parameters and line edit parameters. Combo box parameters are the ones where the user has to choose between predefined options, for example, booleans (\t{True} or \t{False}). Line edit parameters allow the user to enter a value. All the parameter widgets are grouped in maps, to allow easy access outside the class. The grouping is done in the same way as in the Parameters class, more on this later.
-
-\begin{figure}[h]
+\begin{figure}[ht]
     \centering
     \includegraphics[width=\textwidth]{figs/settings-dialog.PNG}
     \caption{The settings dialog}
     \label{fig:settings-dialog}
 \end{figure}
+
+The Chess GUI's clicking logic is implemented in \t{MainWindow::leftClickedSlot} and \t{MainWindow::RightClickedSlot}. The goal is to make every piece changeable to every other piece. This can be done by right-clicking the cell, since it will change it to the next piece in a predefined order (\t{"FR"}, \t{"WP"}, \t{"WB"}, \t{"WN"}, \t{"WR"}, \t{"WQ"}, \t{"WK"}, \t{"BP"}, \t{"BB"}, \t{"BN"}, \t{"BR"}, \t{"BQ"}, \t{"BK"}, wrapped around). This is not very chess-like, but it is necessary to correct possible errors from classification. By left-clicking one cell \t{A} and then left-clicking cell \t{B}, the piece on cell \t{A} will ``move'' to cell \t{B}, leaving cell \t{A} empty. 
+
+The other widgets are self-explanatory -- one button/dropdown for each use case. The settings button however is special. By clicking on it, a new window opens up: the settings dialog (see Figure \ref{fig:settings-dialog}). While this might seem less elegantly organized, the neat thing is that it can be easily changed if needed. There is a wrapper for both combo box parameters and line edit parameters. Combo box parameters are the ones where the user has to choose between predefined options, for example, booleans (\t{True} or \t{False}). Line edit parameters allow the user to enter a value. All the parameter widgets are grouped in map data structures, to allow easy access outside the class. The grouping is done in the same way as in the Parameters class (see: Section \ref{sec:parameters}).
+
+
 
 
 % ------------------------------------------------------------------------------------------- %
@@ -231,7 +219,7 @@ In the source code, the Image Processing Module can be found in the \t{ip} packa
 
 The main classes of IP can be seen in Figure \ref{fig:class-ip}.
 
-\begin{figure}[H]
+\begin{figure}[!ht]
     \centering
     \includegraphics[width=0.8\textwidth]{figs/class_ip.png}
     \caption{Classes of package \t{ip}}
@@ -302,7 +290,7 @@ Next, we take the image from the previous step and convert it to a binary image 
 
 To remove possible background noise, an enhancement was added at a late stage of the project. The notion of image edge pixels was introduced. These are pixels that are at \t{IMAGE\_EDGE\_SIZE} (3 pixels) distance from the edge of the image. It is a precondition for the algorithm to have the whole chessboard visible, and to have it on a light uniform background. However, the background might not cover the whole image, and in this case, the BFS step might remove the possible noises. The image edge pixels are iterated, and where a black pixel is found, it is assumed that it is noise, and a BFS is started from it, transforming all the nearby black pixels into white ones. In Figure \ref{fig:binary--bfs} you can see how the (intentionally put) background object is removed.
 
-\begin{figure}[H]
+\begin{figure}[ht]
     \centering
     \begin{subfigure}[b]{0.475\textwidth}
         \centering
@@ -353,14 +341,7 @@ After this, two-level thresholding is done (on the image of magnitudes), with ha
     \label{tab:two-level-thresholding}
 \end{table}
 
-All this is necessary for the edge extension step, in which weak edge pixels are ``appended'' to the strong edges. This is because if we only take strong edges, we might have disconnected borders, and if we take both weak and strong edges (basically lower the threshold), we might get unwanted pixels in the result. To achieve this, we iterate the pixels of the image, and whenever a new strong edge point is found, we start a new Breadth First Search, which accepts both weak and strong edges, and sets the met weak edges to strong ones. To avoid the big overhead of repeating computations, a \t{visited} matrix is defined, which shows if we already checked a given pixel. After this, we can get rid of the remaining weak edges, as they are (hopefully) irrelevant to us.
-
-\begin{figure}[ht]
-    \centering
-    \includegraphics[width=0.45\textwidth]{figs/configure-6-canny.PNG}
-    \caption{Image after Canny edge detection}
-    \label{fig:canny}
-\end{figure}
+All this is necessary for the edge extension step, in which weak edge pixels are ``appended'' to the strong edges. This is because if we only take strong edges, we might have disconnected borders, and if we take both weak and strong edges (basically lower the threshold), we might get unwanted pixels in the result. To achieve this, we iterate the pixels of the image, and whenever a new strong edge point is found, we start a new breadth-first search, which accepts both weak and strong edges, and sets the weak edges to strong ones. To avoid the big overhead of repeating computations, a \t{visited} matrix is defined, which shows if we already checked a given pixel. After this, we can get rid of the remaining weak edges, as they are (hopefully) irrelevant to us.
 
 
 \paragraph{Hough}
@@ -369,14 +350,25 @@ As simple as it might seem, the implementation of the Hough line detection algor
 
 You may ask, why are these intersections important? Well, initially I wanted to use the Hough algorithm to detect all the lines of a chessboard, and the intersection points of these lines would have served as the corner points of the cells. In practice, perfect detection of 18 lines cannot be consistently achieved, especially with my setup. Chessboards also come in all forms and shapes, and most of them have borders (the part around the cells that are not cells, just decoration), so this adds at least 4 unwanted lines in the formulae.
 
-One assumption we can safely make is that the chessboard is square. And that it is the biggest square in the image. So, instead of looking for the lines delimiting the cells, I chose to search for the 10 most dominant lines Hough can find (it is a changeable parameter, 10 is just the default), compute all the intersections of all lines, and search for the points which are in the image, and closest to the corner of the image. This way we get the corner points of the chessboard. The fact that chessboard borders vary in size and often are confusing for Image Processing algorithms led me to the decision to give up finding the thickness of the border, and instead make it the user's job to fine-tune the border width parameters. This is not very elegant, but it works. Figure \ref{fig:hough} shows the lines detected, plotted on the original color image.
+One assumption we can safely make is that the chessboard is square. And that it is the biggest square in the image. So, instead of looking for the lines delimiting the cells, I chose to search for the 10 most dominant lines Hough can find (it is a changeable parameter, 10 is just the default), compute all the intersections of all lines, and search for the points which are in the image, and closest to the corner of the image. This way we get the corner points of the chessboard. The fact that chessboard borders vary in size and often are confusing for Image Processing algorithms led me to the decision to give up finding the thickness of the border, and instead make it the user's job to fine-tune the border width parameters. This is not very elegant, but it works. Figure \ref{fig:canny--hough} shows the edge image of Canny and the detected lines plotted on the original color image.
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=0.45\textwidth]{figs/configure-7-hough.PNG}
-    \caption{Image after Hough line detection}
-    \label{fig:hough}
+    \begin{subfigure}[b]{0.475\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figs/configure-6-canny.PNG}
+        \caption{Image after Canny edge detection} 
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.475\textwidth}  
+        \centering 
+        \includegraphics[width=\textwidth]{figs/configure-7-hough.PNG}
+        \caption {Image after Hough transform}
+    \end{subfigure}
+    \caption{Extraction of lines}
+    \label{fig:canny--hough}
 \end{figure}
+
 
 
 \paragraph{Corner extraction}
@@ -396,16 +388,14 @@ The last steps of configuration are done directly in method \t{configure}. We bu
         \includegraphics[width=\textwidth]{figs/configure-9-corners.PNG}
         \caption {Keeping only the corners}
     \end{subfigure}
-    \caption{Intersection of lines from Hough}
+    \caption{Extraction of corner}
     \label{fig:intersections--corners}
 \end{figure}
 
 
 \subsubsection{Function \t{cropAndLabel}}
 
-This function has the purpose of building a training set. The user sets up the chess GUI to resemble what he/ she sees on the board, then presses the \t{cropAndLabel} button. The information from the chess GUI is extracted and passed on to this function through the \t{encodings} parameter. The function has to crop \t{imgOriginal} into cell images and give them names. If parameter \t{isTest} is false, a save operation request is made for each cell image, with the correct folder path. Otherwise, the cell images are not saved, they are just displayed, enabling the user to test if border sizes are appropriate without messing up the dataset. These functionalities map to two different buttons on the GUI.
-
-At this point, we must assume that corner extraction worked well, and we have the four corner points available. By calling a utility function \t{warpAndRemoveBorder}, we extract from the image the warped region of interest. This is done by using \t{OpenCV}'s \t{getPerspectiveTransform} and \t{warpPerspective} functions. From the resulting image, we can remove the borders, since the border dimensions are given by the user (or default values are used). The results look like in Figure \ref{fig:rectification}.
+This function has the purpose of building a training set. First, the user puts chess pieces on the chessboard -- we call this a setup. Then, the user puts the same setup on the application's chess GUI (by right and left clicks). The user can check if the cropping is right trough pressing the \t{Test Crop and Label} button. This will initiate the \t{cropAndLabel} function with the parameter \t{isTest} set to true: the cropped (cell) images will not be saved, but a preview of what they would look like (as in Figure \ref{fig:intersections--corners}) will be shown. If this looks okay, and the setup is the same on the board and the GUI, the user can press \t{Crop and Label}. This time, cell images will be put in corresponding folders. For example, if on the chess GUI's 00 position a white pawn can be found, from the left camera's image cells 00 and 01 will be cropped and put in folder \t{tmp/WP}.
 
 \begin{figure}[ht]
     \centering
@@ -423,6 +413,8 @@ At this point, we must assume that corner extraction worked well, and we have th
     \caption{Extracting the region of interest}
     \label{fig:warped--border-removed}
 \end{figure}
+
+At this point, we must assume that corner extraction worked well, and we have the four corner points available. By calling a utility function \t{warpAndRemoveBorder}, we extract from the image the warped region of interest. This is done by using \t{OpenCV}'s \t{getPerspectiveTransform} and \t{warpPerspective} functions. From the resulting image, we can remove the borders, since the border dimensions are given by the user (or default values are used). The results look like in Figure \ref{fig:warped--border-removed}.
 
 The name of the files could be arbitrary, as long as it is not repeating (otherwise images would overwrite each other -- unfortunately I say this after wasting a day). I chose to compose a meaningful name, so it could help with debugging. The name contains the row and column of the cell, in the main coordinate system, alongside a timestamp to ensure uniqueness. This is achieved through mapping the camera's coordinate system to the main one (see: \nameref{fig:coordinates}). The folder path comes from the parameter \t{encodings}, and \t{FileHandler}'s \t{saveImage} utility is called, which will be described later. Figure \ref{fig:corner-cells} shows the four most ``problematic'' cell images, namely the ones in the corners. If these are aligned well, the other cell images are expected to look good as well. Note that the camera is responsible only for the lower half of the board, so the corner cells are picked accordingly.
 
@@ -445,10 +437,10 @@ This function is very similar to the previous one since it also crops the cell i
 
 Classification refers to the classification of cell images and preceding operations, like training and testing the active classifier. This subcomponent's wrapper is called \t{Classifier}. It holds one instance of each classifier: \t{KNearestNeighbors}, \t{SupportVectorMachine} and \t{ConvolutionalNeuralNetwork}. These classifiers implement the \t{AbstarctClassifier} class. Since there were multiple similarities between KNN and SVM implementation, both being written in \t{C++} and directly using \t{OpenCV}, the intermediary \t{CxxClassifier} was added to avoid repeating code.
 
-At each moment, one of the three classifiers is selected as active. By default, this is KNN. If changes are made to the classification parameters, the affected classifiers are re-instantiated. The user might make a backup for these classifiers to avoid re-training them each session. Currently, one backup of each type is supported.
+One of the three classifiers is selected as active. By default, this is KNN. If changes are made to the classification parameters, the affected classifiers are re-instantiated. The user might make a backup for these classifiers to avoid re-training them each session. One backup of each type is supported.
 
 
-\subsubsection{K Nearest Neighbors}
+\subsubsection{K-Nearest Neighbors}
 
 This classifier is the simplest option a user can choose. It is based on the KNN presented in \i{Pattern Recognition Systems, Laboratory Works}\cite{prs_labs}. For features, it uses the color histogram, more precisely the three color histograms (blue, green, red) with a given resolution, put ``one after another''. The resolution of the histograms is given by the \t{numberOfBins} parameter, which by default is set to 8, but can be changed in the settings dialog. This means that the color value of one channel, ranging from 0 to 255, gets mapped into one of the eight bins, based on where it lies on the scale. This will result in a feature of length $8 * 3 = 24$.
 
@@ -463,9 +455,9 @@ During training, the images are loaded, transformed into features, and stored. T
 
 \subsubsection{Support Vector Machine}
 
-While it looks like support vector machines are getting out of fashion, they still hold their ground. Implementing an SVM involves high-level mathematics, which comes with the risk of introducing hard-to-find mistakes and requires extensive study. Instead of implementing my own SVM and writing code to extract features to feed it, I chose to experiment with \t{OpenCV}'s implementation of SVM and the ORB features.
+While it looks like Support Vector Machines are getting out of fashion, they still hold their ground. Implementing an SVM involves high-level mathematics, which comes with the risk of introducing hard-to-find mistakes and requires extensive study. Instead of implementing my own SVM and writing code to extract features to feed it, I chose to experiment with \t{OpenCV}'s implementation of SVM and the ORB features.
 
-Unfortunately, \t{OpenCV}'s features and classifiers are poorly documented, and it is hard to find resources that truly explain how to use them. A kind Stack Overflow user explains \href{https://stackoverflow.com/questions/29870726/brief-implementation-with-opencv-2-4-10}{in a question thread} that using one such classifier usually involves the following steps:
+Unfortunately, \t{OpenCV}'s features and classifiers are poorly documented, and it is hard to find resources that truly explain how to use them. \href{https://stackoverflow.com/questions/29870726/brief-implementation-with-opencv-2-4-10}{A kind Stack Overflow user explains in a question's thread} that using one such classifier usually involves the following steps:
 
 \begin{enumerate}
     \item \b{Finding some interesting (feature) points in an image.} Usually, this is done with \t{FeatureDetector}s that return a vector of key points based on different criteria. I experimented with SIFT detectors using the \t{SIFT::create} method. The problem was that this yielded different amounts of key points for different images. This means variable length features, which is not desirable. The workaround suggested by the assistant teacher was to hardcode a grid of key points. While this might sound weird at first, it makes sense: we will look at fixed-distance pixels and see what ``significance'' they have.
@@ -475,7 +467,7 @@ Unfortunately, \t{OpenCV}'s features and classifiers are poorly documented, and 
     \item \b{Using the features and feeding it to an algorithm.} While OP mentions feature matching using \t{DescriptorMatcher}, I found a way to feed these feature vectors to the \t{OpenCV} SVM. We get an SVM instance with \t{ml::SVM::create}, and set different parameters, like a linear kernel, a maximum number of iterations and an accuracy threshold.
 \end{enumerate}
 
-To compile and run all this, the \t{opencv2/ml.hpp} header had to be included, alonside the \t{opencv2/xfeatures2d.hpp} header, which required \t{opencv4[contrib]} installation. There were some sacrifices I had to make to fit all the premade interfaces. For example, the features had to be of type float for SVM to accept it. This meant that I could not fit the feature matrix and class labels into \t{CxxClassifier}, and I had to write some very similar code in both the KNN and SVM source code due to slight type differences. While the used SVM has many high-level functions, for evaluation I chose to go with a naive implementation of calling predict separately on each image and building my confusion matrix since the available functions were too high-level and not transparent enough, and using the same function for each classifier is the fairest comparison.
+To compile and run all this, the \t{opencv2/ml.hpp} header had to be included, alongside the \t{opencv2/xfeatures2d.hpp} header, which required \t{opencv4[contrib]} installation. There were some sacrifices I had to make to fit all the premade interfaces. For example, the features had to be of type float for SVM to accept it. This meant that I could not fit the feature matrix and class labels into \t{CxxClassifier}, and I had to write some very similar code in both the KNN and SVM source code due to slight type differences. While the used SVM has many high-level functions, for evaluation I chose to go with a naive implementation of calling predict separately on each image and building my confusion matrix since the available functions were too high-level and not transparent enough, and using the same function for each classifier is the fairest comparison.
 
 
 \subsubsection{Convolutional Neural Network}
@@ -499,7 +491,7 @@ It was a good idea to include a CNN into the project since nowadays this is the 
 
 \subsection{File Handling}
 
-The operations on file systems are often OS-specific and represent volatility. While some save/load operations can be done easily with higher-level functions, error handling requires complex logic. So it is worth grouping these operations into a separate module. The \t{file\_handling} submodule currently only contains one class, \t{FileHandler}.
+The operations on file systems are often OS-specific and represent a volatility. While some save/load operations can be done easily with higher-level functions, error handling requires complex logic. So it is worth grouping these operations into a separate module. The \t{file\_handling} submodule currently only contains one class, \t{FileHandler}.
 
 Heavily relying on \t{Paths}, class \t{FileHandler} does operations on \t{OpenCV} images organized into a special hierarchy. We call folders \t{TEMPORARY\_FOLDER}, \t{TRAIN\_FOLDER}, \t{VALIDATION\_FOLDER} and \t{TEST\_FOLDER} label folders. This is because they all share the same internal structure: each one has 14 subfolders, containing images belonging to one known label. This is how images are prepared for classification. \t{TEMPORARY\_FOLDER} contains images that are labeled due to the structuring, but not yet associated with a data set.
 
@@ -519,7 +511,7 @@ All files of the VAR module can be found in folder \t{var}. The entry point is \
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=0.6\textwidth]{figs/class_var.png}
+    \includegraphics[width=0.55\textwidth]{figs/class_var.png}
     \caption{Classes of package \t{var}}
     \label{fig:class-var}
 \end{figure}
@@ -529,7 +521,7 @@ All files of the VAR module can be found in folder \t{var}. The entry point is \
 
 \subsection{Movement Validation}
 
-To validate a movement, first, we need to know which are the valid moves. A discussion on the rules of chess was held in \nameref{ch:analysis}. However, we need a systematic way of detecting a movement and deciding if it is a valid one. The idea I implemented was inspired by the paper \i{A Computer Vision System for Chess Game Tracking}\cite{acvsystem}. Two chessboard states are compared, one being the previous board (before the movement was made) and one being the current board (after the movement was done). These are two 2-dimensional matrices. We can compare these and check the number of changes (differences) we have. By the number of differences and the previous and current state of the changed cells, a movement can be considered valid if it obeys one of the setups shown in Figure \ref{fig:move}.
+To validate a movement, first, we need to know which are the valid moves. A discussion on the rules of chess was held in Section \nameref{sec:chess-theory}. However, we need a systematic way of detecting a movement and deciding if it is a valid one. The idea I implemented was inspired by the paper \i{A Computer Vision System for Chess Game Tracking}\cite{acvsystem}. Two chessboard states are compared, one being the previous board (before the movement was made) and one being the current board (after the movement was done). These are two 2-dimensional matrices. We can compare these and check the number of changes (differences) we have. By the number of differences and the previous and current state of the changed cells, a movement can be considered valid if it obeys one of the setups shown in Figure \ref{fig:move}.
 
 \begin{figure}[ht]
     \centering
@@ -538,7 +530,7 @@ To validate a movement, first, we need to know which are the valid moves. A disc
     \label{fig:move}
 \end{figure}
 
-Validation of a movement is done through the \t{validateMoveSlot}. This initiates a long chain of function calls spreading multiple files. An example would be: when the white player makes the first move of the game, \t{d2d4}. The success branch (kind of like a happy flow) of the chain of interactions in this case is shown in detail in Figure \ref{fig:varflow}.
+Validation of a movement is done through the \t{validateMoveSlot}. This initiates a long chain of function calls spreading multiple files. An example would be the white player making the first move of the game: \t{d2d4}. The success branch (kind of like a happy flow) of the chain of interactions in this case is shown in detail in Figure \ref{fig:varflow}.
 
 \begin{figure}
     \centering
@@ -547,7 +539,7 @@ Validation of a movement is done through the \t{validateMoveSlot}. This initiate
     \label{fig:varflow}
 \end{figure}
 
-The naming of files is not the best, but each one is a unit that is dependent only on the upper units if there exist such units and is testable by itself. Class \t{ValidationAndResponse} has a \t{Validator} instance, and calls its \t{validateBoard} function, passing it to the current board. The validator holds the previous board implicitly. It is assumed that every game starts from the initial chess setup, so the ``first previous board'' is this. The first validation request is expected to be made after the first movement. This function returns three parameters: \t{isValid}, which is true if the movement is considered a valid chess move, and false otherwise; \t{encoding}, which contains the encoding of the movement if it is valid (long algebraic notation), and \t{description}, which describes the movement (sometimes giving reasons why the movement is invalid if it is so).
+The naming of files is not the best, but each one is a unit that is dependent only on the lower-level units and is testable by itself. Class \t{ValidationAndResponse} has a \t{Validator} instance, and calls its \t{validateBoard} function, passing it to the current board. The validator holds the previous board implicitly. It is assumed that every game starts from the initial chess setup, so the ``first previous board'' is this. The first validation request is expected to be made after the first movement. This function returns three parameters: \t{isValid}, which is true if the movement is considered a valid chess move, and false otherwise; \t{encoding}, which contains the encoding of the movement if it is valid (long algebraic notation), and \t{description}, which describes the movement (sometimes giving reasons why the movement is invalid if it is so).
 
 Aside from the previous and current board, there are other data necessary to check the validity of the movement. These data evolve during the game based on the movements made. It is stored in a structure called \t{Metadata}. This structure holds the fields:
 
@@ -583,13 +575,11 @@ So the next level we need to investigate is that of the \t{Attack}'s. This is wh
 
 \subsection{Secondary Chess Actions}
 
-The main functionality VAR provides is the movement validation discussed in the previous section. However, to make playing chess possible, other secondary actions need to be implemented.
-
-One of these is the possibility of discarding a movement. While the \t{Validator} in \t{ValidationAndResponse} only changes for valid moves, this is not reflected on the Chess GUI, it just stays as the user modified it. If the user forgets the last valid board setup, he/she can press \t{Discard Move}. Internally, this does nothing more than retrieve the board state from \t{Validator} so that the Chess GUI can be refreshed to show this.
+The main functionality VAR provides is the movement validation discussed in the previous section. However, to make playing chess possible, other secondary actions need to be implemented. One of these is the possibility of discarding a movement. While the \t{Validator} in \t{ValidationAndResponse} only changes for valid moves, this is not reflected on the Chess GUI, it just stays as the user modified it. If the user forgets the last valid board setup, he/she can press \t{Discard Move}. Internally, this does nothing more than retrieve the board state from \t{Validator} so that the Chess GUI can be refreshed to show this.
 
 A game of chess does not necessarily need to end with a checkmate. A player can surrender, or players can agree on a draw. For this, the surrender and draw buttons were added. For surrendering, this works perfectly, as it is just a one-sided decision. The end-of-game reason is also noted in the logs. For the draw, the current player has to offer a draw, and the enemy player has to accept. Currently, all this is done through one button: pressing it once means offering, and pressing it twice means it was accepted. There is no way to decline a draw offer, one just ignores it. This is different from the online GUIs I am used to, but in a way, is not a drawback: even in real life, where players play with time (clock), if a draw is offered, the time to accept the offer by the enemy is taken from the player who offered it, and if it is ignored, nothing happens.
 
-There is also a \t{New Game} button. This is so that the GUI can be reset and a new \t{Validator} can be instantiated, although this part of the code is a little bit sketchy at the moment.
+There is also a \t{New Game} button. This is so that the GUI can be reset and a new \t{Validator} can be instantiated. When a game ends and the user wishes to play again, he/she presses this button.
 
 
 % ---------------------------------------- Movement Logging ---------------------------------------- %
@@ -613,7 +603,7 @@ The implementation for this was simple, it uses the common \t{C++} output file s
 % ------------------------------------------- Parameters ------------------------------------------- %
 % -------------------------------------------------------------------------------------------------- %
 
-\section{Parameters}
+\section{Parameters} \label{sec:parameters}
 
 It was mentioned numerous times that there are certain parameters the user can manipulate, and that one goal of the project is to encourage enthusiasts to play around with these parameters and the algorithms that use them. Now it is time to discuss how these parameters were implemented in OpenCB.
 

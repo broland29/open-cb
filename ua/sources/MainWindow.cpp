@@ -392,8 +392,10 @@ void MainWindow::settingsButtonClicked()
     SettingsDialog* settingsDialog = new SettingsDialog(this);
 
     // establish connections to new dialog
+    QObject::connect(settingsDialog, &SettingsDialog::restoreDefaultsSignal, this, &MainWindow::restoreDefaultsSlot);
     QObject::connect(settingsDialog, &SettingsDialog::setParametersSignal, this, &MainWindow::setParametersSlot);
     QObject::connect(settingsDialog, &SettingsDialog::getParametersSignal, this, &MainWindow::getParametersSlot);
+    // restoreDefaultsReplySlot = setParametersReplySlot
     QObject::connect(this, &MainWindow::setParametersReplySignal, settingsDialog, &SettingsDialog::setParametersReplySlot);
     QObject::connect(this, &MainWindow::getParametersReplySignal, settingsDialog, &SettingsDialog::getParametersReplySlot);
 
@@ -628,4 +630,9 @@ void MainWindow::setParametersSlot(Parameters parameters)
 void MainWindow::getParametersSlot()
 {
     emit getParametersSignal();
+}
+
+void MainWindow::restoreDefaultsSlot()
+{
+    emit restoreDefaultsSignal();
 }

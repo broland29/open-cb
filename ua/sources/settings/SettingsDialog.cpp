@@ -100,17 +100,12 @@ SettingsDialog::SettingsDialog(QWidget* parent)
 	buttonLayout->addWidget(cancelButton);
 	centralLayout->addWidget(buttonWidget);
 
+	QObject::connect(restoreDefaultsButton, &QPushButton::clicked, this, &SettingsDialog::restoreDefaultsButtonClicked);
 	QObject::connect(saveButton, &QPushButton::clicked, this, &SettingsDialog::saveButtonClicked);
 	QObject::connect(refreshButton, &QPushButton::clicked, this, &SettingsDialog::refreshButtonClicked);
 	QObject::connect(cancelButton, &QPushButton::clicked, this, &SettingsDialog::cancelButtonClicked);
 
 	// MainWindow shall emit getParametersSignal to fill fields after constructing and tieing slots and signals
-}
-
-
-void loadParameters()
-{
-
 }
 
 
@@ -154,6 +149,12 @@ QWidget* SettingsDialog::wrapParameters(std::map<QString, AbstractParameter*> pa
 	}
 
 	return wrapperWidget;
+}
+
+
+void SettingsDialog::restoreDefaultsButtonClicked()
+{
+	emit restoreDefaultsSignal();
 }
 
 
@@ -250,4 +251,5 @@ void SettingsDialog::cancelButtonClicked()
 void SettingsDialog::setParametersReplySlot(bool succeeded, QString message)
 {
 	messageLabel->setText(message);
+	emit getParametersSignal();
 }

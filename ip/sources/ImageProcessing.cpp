@@ -286,6 +286,12 @@ void ImageProcessing::test()
 }
 
 
+void ImageProcessing::restoreDefaultsSlot()
+{
+	Parameters parameters;  // a new instance has default values;
+	setParametersSlot(parameters);
+}
+
 void ImageProcessing::setParametersSlot(Parameters newParameters)
 {
 	// camera indices are special: they are used "non-stop" by camera handlers; so even though parameter gets updated

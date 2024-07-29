@@ -53,14 +53,17 @@ private:
 	QWidget* wrapParameters(std::map<QString, AbstractParameter*> parameterWidgets, int columns = 3);
 
 public slots:
+	void restoreDefaultsButtonClicked();
 	void saveButtonClicked();
 	void refreshButtonClicked();
 	void cancelButtonClicked();
 
+	// restoreDefaultsReplySlot = setParametersReplySlot
 	void setParametersReplySlot(bool succeeded, QString message);
 	void getParametersReplySlot(Parameters parameters);
 
 signals:
+	void restoreDefaultsSignal();
 	void setParametersSignal(Parameters parameters);
 	void getParametersSignal();
 };

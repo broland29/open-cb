@@ -61,6 +61,7 @@ int main(int argc, char* argv[])
 	QObject::connect(mainWindow, &MainWindow::shuffleAndSplitSignal, imageProcessing, &ImageProcessing::shuffleAndSplitSlot);
 	QObject::connect(mainWindow, &MainWindow::clearAllImagesSignal, imageProcessing, &ImageProcessing::clearAllImagesSlot);
 	
+	QObject::connect(mainWindow, &MainWindow::restoreDefaultsSignal, imageProcessing, &ImageProcessing::restoreDefaultsSlot);
 	QObject::connect(mainWindow, &MainWindow::setParametersSignal, imageProcessing, &ImageProcessing::setParametersSlot);
 	QObject::connect(mainWindow, &MainWindow::getParametersSignal, imageProcessing, &ImageProcessing::getParametersSlot);
 
@@ -79,6 +80,7 @@ int main(int argc, char* argv[])
 	QObject::connect(imageProcessing, &ImageProcessing::shuffleAndSplitReplySignal, mainWindow, &MainWindow::shuffleAndSplitReplySlot);
 	QObject::connect(imageProcessing, &ImageProcessing::clearAllImagesReplySignal, mainWindow, &MainWindow::clearAllImagesReplySlot);
 	
+	// restoreDefaultsReplySignal = setParametersReplySignal (resetting defaults is a set parameters operation)
 	QObject::connect(imageProcessing, &ImageProcessing::setParametersReplySignal, mainWindow, &MainWindow::setParametersReplySlot);
 	QObject::connect(imageProcessing, &ImageProcessing::getParametersReplySignal, mainWindow, &MainWindow::getParametersReplySlot);
 

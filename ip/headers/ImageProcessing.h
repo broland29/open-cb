@@ -66,6 +66,7 @@ signals:
 	void clearAllImagesReplySignal(bool succeeded, QString message);
 	void changeSettingsReplySignal(bool succeeded, QString message);
 
+	void restoreDefaultsReplySignal(bool succeeded, QString message);
 	void setParametersReplySignal(bool succeeded, QString message);
 	void getParametersReplySignal(Parameters parameters);
 
@@ -88,6 +89,7 @@ public slots:
 	void clearAllImagesSlot();
 	void changeSettingsSlot();
 
+	void restoreDefaultsSlot();
 	void setParametersSlot(Parameters parameters);
 	void getParametersSlot();
 

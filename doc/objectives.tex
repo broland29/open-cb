@@ -3,20 +3,18 @@
 
 
 % ------------------------------------------------------------------------------------------- %
-% ------------------------------------- What is OpenCB? ------------------------------------- %
+% ------------------------------------- Main Objectives ------------------------------------- %
 % ------------------------------------------------------------------------------------------- %
 
-\section{What is OpenCB?} \label{sec:what-is-opencb}
+\section{Main Objectives} \label{sec:main-objectives}
 
-OpenCB is an add-on for chess. It is a mixture of hardware and software. It fulfills two core roles: validating moves according to the rules of chess and reconstructing a chessboard's state, i.e. what piece is on each cell.
+The main mission of the project is to assist beginner chess players by validating their chess moves. OpenCB is thought to be an add-on for chess. This mission is fulfilled by making use of a mixture of hardware and software. The validation of movements is done through a graphical user interface, which can be accessed by the user as a desktop application. The chess position on the board can be detected by the system, with the help of webcams. Each validated movement is then logged, so that the players can later study the game. 
 
-The setup required to properly run the application consists of a chessboard, two webcams and a computer. The webcams should be mounted on the two sides of the chessboard, preferably on the sides where players don't sit, at an angle that makes it possible to capture the whole chessboard. The webcams shall be connected to a computer running OpenCB, a Windows desktop application. Through the graphical user interface, the players shall request the detection of the board, the validation of a movement and numerous other actions which lead to or assist the fulfillment of these two functionalities.
+OpenCB is designed for chess players of all skill levels, but especially for beginners. The system can greatly help those who struggle to verify the correctness of their chess moves. For hobbyists and those interested, OpenCB is a showcase of various image processing and machine learning algorithms having parameters that can be changed on the run, without touching the code. At the same time, by having a clear code base, OpenCB welcomes developers' contributions and encourages them to reuse the software to their liking. 
 
-OpenCB is designed for chess players of all skill levels, but especially for beginners. Checking the validity of chess movements can greatly help those who struggle to verify the correctness of their chess moves. For hobbyists and those interested, OpenCB is a showcase of various image processing and machine learning algorithms having parameters that can be changed on the run, without touching the code. At the same time, by having a clear code base, OpenCB welcomes developers' contributions and encourages them to reuse the software to their liking. 
+The project provides generic solutions, which work for a large variety of chessboards and pieces. It takes careful steps to avoid losing the physical aspect of the game. It can be used without investing financial resources, the only required hardware being the webcams. For good performance on the classification side, OpenCB encourages building your dataset and provides help to do it interactively. Its architecture consists of loosely coupled modules, offering a great starting point for future projects.
 
-The project provides generic solutions, which work for a large variety of chessboards and pieces. It takes careful steps to avoid losing the physical aspect of the game. It can be used without spending lots of money. For good performance on the classification side, OpenCB encourages building your dataset and provides help to do it interactively. Its architecture consists of loosely coupled modules, offering a great starting point for future projects.
-
-The project's name is a wordplay. ``Open'' comes from OpenCV, the technology used for image processing, but also refers to the open-source nature of the project. ``CB'' is an acronym for chessboard, the central element of the project. The official title of the thesis mentions two of the most important goals: state detection and chess move validation, while it also declares that the application is a vision system, having image processing at its core.
+The project's name is a wordplay. ``Open'' comes from \t{OpenCV}, the technology used for image processing, but also refers to the open-source nature of the project. ``CB'' is an acronym for chessboard, the central element of the project. The official title of the thesis mentions two of the most important goals: state detection and chess move validation, while it also declares that the application is a vision system, having image processing at its core.
 
 
 
@@ -55,7 +53,7 @@ The overall system shall be split into three main parts: Image Processing Module
             VAR shall keep track of validated chess moves in a text file, using long algebraic notation.
         \end{enumeratenum}
 
-    \item {\b{Image Processing}}
+    \item {\b{Image Processing Module}}
         \begin{enumeratenum}
             \item \b{Grab Frames} \label{req:ip-grab-frames}\\
             IP shall be able to continuously grab frames from the two cameras and send them to UA. The frequency of grabbing should allow a video-like preview of what the cameras see.
@@ -79,7 +77,7 @@ The overall system shall be split into three main parts: Image Processing Module
             IP shall be able to clear all cell images on demand.  
 
             \item \b{Change Classifier} \label{req:ip-change-classifier}\\
-            IP shall let the user choose between three classifiers: K Nearest Neighbours, Support Vector Machine, and Convolutional Neural Network. When the user changes his/her preference, IP shall update the active classifier.
+            IP shall let the user choose between three classifiers: K-Nearest Neighbours, Support Vector Machine, and Convolutional Neural Network. When the user changes his/her preference, IP shall update the active classifier.
 
             \item \b{Save Classifier} \label{req:ip-save-classifier}\\
             IP shall be able to save the active classifier to disk if trained, in a way that it can later be retrieved through Load Classifier (\ref{req:ip-load-classifier}). At most one instance of each classifier shall be saved.

@@ -149,6 +149,8 @@ public slots:
     void getParametersReplySlot(Parameters parameters);
     void setParametersSlot(Parameters parameters);
     void getParametersSlot();
+    void restoreDefaultsSlot();
+    // restoreDefaultsReplySlot = setParametersReplySlot
 
 signals:
     void validateMoveSignal(QVector<QString> encodings);
@@ -178,4 +180,6 @@ signals:
     void getParametersSignal();
     void setParametersReplySignal(bool succeeded, QString message);
     void getParametersReplySignal(Parameters parameters);
+    void restoreDefaultsSignal();
+    void restoreDefaultsReplySignal(bool succeeded, QString message);
 };

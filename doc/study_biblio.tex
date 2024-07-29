@@ -10,7 +10,7 @@ The birth of OpenCB was initiated by a great variety of personal ideas, academic
 
 \section{Similar Problems, Solutions and Inspirations} \label{sec:similar-problemns-solutions-and-inspirations}
 
-The big questions that summarized the initial discovering phase of the project sounded like \i{How to validate a chess move?} \i{Which are the optimal steps to process raw images in our favor?} \i{Shall we use classification, pattern matching or object tracking for chessboard state reconstruction?}. Ultimately, there was a clear need for a set of algorithms, for a way to tackle this huge problem, to start from the bottom and slowly build up the system.
+The big questions that summarized the initial discovery phase of the project sounded like \i{How to validate a chess move?} \i{Which are the optimal steps to process raw images in our favor?} \i{Shall we use classification, pattern matching or object tracking for chessboard state reconstruction?}. Ultimately, there was a clear need for a set of algorithms, for a way to tackle this huge problem, to start from the bottom and slowly build up the system.
 
 There will be three papers presented. Other papers were read as well, but these three served as pivot points during design. The reason they were so useful is that they discuss similar problems. Each one of them shows a different perspective, with different approaches. Some ideas are shared; this is a good indication that they are useful ideas and should be considered.
 
@@ -95,7 +95,7 @@ We can say that, compared to ChessUp and Square Off, our solution has the advant
 
 \section{FIDE Laws of Chess} \label{subsec:fide-laws-of-chess}
 
-The International Chess Federation or World Chess Federation has the acronym FIDE, coming from the French Fédération Internationale des Échecs. They act as the governing body of international chess competitions. Their publication \ I {FIDE Laws of Chess}\cite{fide} conveniently summarizes the well-known rules of chess, as well as defines some rules applied at their competitions and tournaments which might differ from place to place, organization to organization.
+The International Chess Federation or World Chess Federation has the acronym FIDE, coming from the French Fédération Internationale des Échecs. They act as the governing body of international chess competitions. Their publication \i{FIDE Laws of Chess}\cite{fide} conveniently summarizes the well-known rules of chess, as well as defines some rules applied at their competitions and tournaments which might differ from place to place, organization to organization.
 
 The paper has sections \i{Basic Rules of Play}, \i{Competitive Rules of Play} and \i{Appendices}. Our focus is on the first section, as this includes the articles \i{The Nature and Objectives of the Game of Chess}, \i{The Initial Position of the Pieces on the Chessboard}, \i{The Moves of the Pieces}, \i{The Act of Moving the Pieces} and \i{The Completion of the Game}. This handbook is available online and is a good study for new players, as well as a great refresher for those who have not played for a long time or have questions related to the rules.
 
@@ -116,7 +116,7 @@ My introduction to the domain of Image Processing was through the Image Processi
 
 The book \i{Image Processing, Laboratory Works}\cite{ip_labs} presents introductory topics, as well as some more advanced algorithms, to offer support to implement them with the use of \t{OpenCV}. It contains chapters \i{Introduction to the OpenCV library}, \i{Color spaces}, \i{The histogram of image intensity levels}, \i{Geometrical features of binary objects}, \i{Connected-component labeling}, \i{Border tracing algorithm}, \i{Morphological operations of binary images}, \i{Statistical properties of grayscale images}, \i{Image filtering in the spatial and frequency domains}, \i{Noise modeling and digital image filtering}, \i{Edge detection}.
 
-The idea of using \t{OpenCV} and \t{C++} for the license thesis began here. Some implementations, like the one for Canny edge detection, were already made during the third year's second semester and only needed minimal modifications. The topics cover a wide range of image processing and thus give a good impression of what can be achieved using them or similar algorithms. Good practices were learned during the usage of this book, and it served as a go-to when questions arose.
+The idea of using \t{OpenCV} and \t{C++} for the license thesis began here. Some implementations, like the one for Canny edge detection, were already made during the third year's second semester and only needed minimal modifications. The topics cover a wide range of image processing methods and thus give a good impression of what can be achieved using them or similar algorithms. Good practices were learned during the usage of this book, and it served as a go-to when questions arose.
 
 
 % --------------------- Pattern Recognition Systems, Laboratory Works ----------------------- %
@@ -132,7 +132,7 @@ Many of these algorithms amazed me, as they provided solutions for seemingly imp
 
 \subsection{A survey on Hough Transform}
 
-The paper \i{A survey on Hough Transform}\cite{hough_survey} provides a comprehensive presentation of the Hough algorithm. Its abstract notes: \i{Our survey, along with more than 200 references, will help the researchers and students to get a comprehensive view of HT and guide them in applying it properly to their problems of interest}. In the \i{Introduction} section, the general idea is presented, after which, in the section \i{Formulation}, different line representations and parametrizations are shown. While the base idea is simple if you get hold of it, there are many variations to achieve better results and to become more time- and space-efficient. Many real-life applications are listed, like medical imaging, motion detection and robot navigation.
+The paper \i{A survey on Hough Transform}\cite{hough_survey} provides a comprehensive presentation of the Hough algorithm. Its abstract notes: \i{Our survey, along with more than 200 references, will help the researchers and students to get a comprehensive view of HT and guide them in applying it properly to their problems of interest}. In the \i{Introduction} section, the general idea is presented, after which, in the section \i{Formulation}, different line representations and parametrizations are shown. While the base idea is simple if you get a hold of it, there are many variations to achieve better results and to become more time- and space-efficient. Many real-life applications are listed, like medical imaging, motion detection and robot navigation.
 
 
 
@@ -145,7 +145,7 @@ The paper \i{A survey on Hough Transform}\cite{hough_survey} provides a comprehe
 
 % ---------------------------------- K Nearest Neighbors ------------------------------------ %
 
-\subsection{K Nearest Neighbors}
+\subsection{K-Nearest Neighbors}
 
 While the KNN algorithm is straightforward and well explained in \i{Pattern Recognition Systems, Laboratory Works}\cite{prs_labs}, I was curious what others have to say about it. I found the paper \i{K-nearest neighbor from Leif E. Peterson}\cite{knn}. He gives a good overview of the algorithm, formalizes ideas, and tries to explain every term he runs into. After the second section, the discussion becomes very generic, issuing topics like building the confusion matrix, standardization and fuzzification, cross-validation and some performance evaluation. It was a good refresher and a reassurance that my ideas were in place.
 
@@ -162,7 +162,7 @@ The second article describes the usage of SVM for assigning predefined categorie
 
 The third article uses SVM for detecting squares that contain faces. What stood out to me was that it is a binomial classification (face and non-face), and that a big part of the success of the experimentation is said to come from training on images containing 0 faces and putting every false positive into the training set. They experiment on real-time systems, but you can imagine what can be done with a Windows NT Pentium 200-MHz computer.
 
-The last article tries to demystify the implementation of SVMs, however, it quickly became too technical for me, since it insists a lot on the different solutions for solving the QP (quadratic programming) problem, and discusses optimizations rather than the base algorithm. Overall it is nice to see that these algorithms have been around for so long and that the theory was developed early, sometimes the only thing holding back being the lack of computational power.
+The last article tries to demystify the implementation of SVMs, however, it quickly became too technical for me, since it insists a lot on the different solutions for solving the QP (quadratic programming) problem, and discusses optimizations rather than the base algorithm. Overall it is nice to see that these algorithms have been around for so long. In the case of classifiers, many ideas and theories were held back only by the lack of computational power.
 
 
 % ----------------------------- Convolutional Neural Network -------------------------------- %
